@@ -1,0 +1,20 @@
+
+**/settings/Mainnet.toml
+**/settings/Testnet.toml
+
+dist
+
+# removing to resolve issue with testnet reset
+# will use files obtained locally beforehand
+# .cache/
+# still want to ignore these two
+.cache
+# .cache/requirements will upload contracts
+
+.requirements/
+/coverage_report
+history.txt
+coverage.lcov
+node_modules
+.aider*
+.env
