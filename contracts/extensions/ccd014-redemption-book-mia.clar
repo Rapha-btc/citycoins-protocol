@@ -81,9 +81,15 @@
 ;; Lets the par check cross-multiply instead of dividing twice. See below-par?.
 (define-constant PAR_PRICE_RATIO (/ NATIVE_PRICE_DIVISOR PAR_SCALE))
 
-;; 48 tenures spaced 366 blocks apart, reaching ~17.2k blocks back. Averaging over
-;; a long sparse window makes the price expensive to move: an attacker would have
-;; to distort miner spend across months of tenures, not a handful of blocks.
+;; Offsets in STACKS blocks - 48 samples spaced 366 apart, deepest at 17,203.
+;; At the current ~53 stacks blocks per tenure that reaches ~2 days (~320 bitcoin
+;; blocks) back, sampling ~48 tenures roughly every 7th one, about 1.1h apart.
+;; Sparse and wide is what makes the price expensive to move: per-tenure commit
+;; noise is autocorrelated over hours, so an attacker has to hold miner spend
+;; distorted across days of tenures, not a handful of blocks. Calibration from the
+;; source market (.rfq-sbtc-stx-jing-v2, 3.5 months of mainnet commits): worst
+;; deviation vs CEX mid tightens from -40%/+54% with 6 consecutive tenures to
+;; -23%/+30% with this spread.
 (define-constant TENURE_SAMPLE_OFFSETS (list
   u1 u367 u733 u1099 u1465 u1831 u2197 u2563
   u2929 u3295 u3661 u4027 u4393 u4759 u5125 u5491
