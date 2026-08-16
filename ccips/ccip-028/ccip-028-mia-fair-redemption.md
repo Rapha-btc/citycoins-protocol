@@ -204,6 +204,15 @@ invitation to be front-run - the same failure the fair book was built to remove
 from the redemption side. It would be inconsistent to solve it in one place and
 reintroduce it in the other.
 
+That threshold is not a fixed ceiling. The size at which a sandwich turns
+profitable moves with pool depth at spot, the swap's slippage tolerance, and
+prevailing fees. Today the swap is nowhere near it - a $15k sBTC to STX clip
+against roughly $150k of STX liquidity does not clear an attacker's costs. So the
+observation that the attack does not appear at these sizes is right about today.
+It is a claim about present depth, not about the design: if depth thins or fees
+change, the threshold moves, and any sizing rule that leans on staying under it
+has to be revisited each round.
+
 The desk maintains an on-chain allowlist (`whitelisted-clients`, with a proposal
 and cooldown before confirmation). The swap extension's contract principal is the
 client. Any counterparty diligence applies to the entity behind the DAO, not to
