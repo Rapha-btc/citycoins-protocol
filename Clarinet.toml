@@ -94,6 +94,12 @@ contract_id = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-nyc-stac
 [[project.requirements]]
 contract_id = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3"
 
+[[project.requirements]]
+contract_id = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao"
+
+[[project.requirements]]
+contract_id = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.extension-trait"
+
 [contracts.base-dao]
 path = "contracts/base-dao.clar"
 
@@ -625,5 +631,10 @@ parser_version = 2
 
 [contracts.ccd015-redemption-book-mia]
 path = "contracts/extensions/ccd015-redemption-book-mia.clar"
+clarity_version = 5
+epoch = 3.4
+
+[contracts.ccd016-redemption-book-mia-stx]
+path = "contracts/extensions/ccd016-redemption-book-mia-stx.clar"
 clarity_version = 5
 epoch = 3.4

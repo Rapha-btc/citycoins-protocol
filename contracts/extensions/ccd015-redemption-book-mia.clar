@@ -38,16 +38,13 @@
 
 ;; TRAITS
 
-;; DEPLOYMENT NOTE: every treasury and staking principal in this file is a fully
-;; qualified mainnet address (see the *_TREASURY / POX5_STAKING constants), so
-;; the formula and the funding pipe read and move real mainnet state regardless
-;; of which address deploys this contract. Only two references stay relative -
-;; .extension-trait and .base-dao - and the mainnet artifact must qualify both
-;; to the DAO deployer SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH, exactly the
-;; transformation visible in deployed ccd013, which lives at a different
-;; address than the DAO it serves.
+;; Every principal in this file is a fully qualified mainnet address - trait,
+;; base-dao, treasuries, tokens - exactly like deployed ccd013, which lives at
+;; a different address than the DAO it serves. The file as written IS the
+;; mainnet artifact: no qualification pass at deployment, deployable from any
+;; address.
 
-(impl-trait .extension-trait.extension-trait)
+(impl-trait 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.extension-trait.extension-trait)
 
 ;; CONSTANTS
 
@@ -156,8 +153,11 @@
 ;; PUBLIC FUNCTIONS
 
 (define-public (is-dao-or-extension)
-  (ok (asserts! (or (is-eq tx-sender .base-dao)
-    (contract-call? .base-dao is-extension contract-caller)) ERR_UNAUTHORIZED
+  (ok (asserts! (or
+    (is-eq tx-sender 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao)
+    (contract-call? 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao
+      is-extension contract-caller
+    )) ERR_UNAUTHORIZED
   ))
 )
 
