@@ -1,7 +1,7 @@
-;; SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.ccd014-pox5-staking-mia
+;; SPN4Y5QPGQA8882ZXW90ADC2DHYXMSTN8VAR8C3X.ccd014-pox5-staking-mia
 
 ;; Title: CCD014 - MIA PoX-5 Staking
-;; Version: 1.0.0
+;; Version: 2
 ;; Summary: An extension that stakes the MiamiCoin mining treasury's STX under
 ;;   PoX-5 and forwards the sBTC rewards to the MIA rewards treasury.
 ;; Description: PoX-5 (Stacks 4.0) removed delegated stacking. `pox-5.stake`
@@ -19,8 +19,9 @@
 ;;     explicit asset allowance. A signer-manager reached through the
 ;;     `signer-manager-trait`, or any other callee, cannot move assets this
 ;;     contract did not intend to move: `stake-stx` permits staking and no
-;;     transfer at all, `unstake-stx` permits nothing, and the two forwarding
-;;     functions permit exactly the balance being forwarded.
+;;     transfer at all, `unstake-stx` permits the PoX interaction and no
+;;     transfer either, and the two forwarding functions permit exactly the
+;;     balance being forwarded.
 ;;   - The signer is a DAO-set allowlist of exactly one principal. Trait
 ;;     arguments cannot be stored in Clarity, so callers pass the
 ;;     signer-manager and this contract checks it against `approved-signer`.
@@ -46,7 +47,7 @@
 (define-constant ERR_UNAUTHORIZED (err u14000)) ;; caller is not the DAO or an authorized extension
 (define-constant ERR_NO_APPROVED_SIGNER (err u14001)) ;; the DAO has not set a signer yet
 (define-constant ERR_SIGNER_NOT_APPROVED (err u14002)) ;; the supplied signer-manager is not the approved one
-(define-constant ERR_INVALID_NUM_CYCLES (err u14003)) ;; cycle count outside 1..96, or above the DAO-set maximum
+(define-constant ERR_INVALID_NUM_CYCLES (err u14003)) ;; cycle count above pox-5's 96, or nothing left to extend by
 (define-constant ERR_NOTHING_TO_STAKE (err u14004)) ;; no unlocked STX held by this contract
 (define-constant ERR_NOTHING_TO_FORWARD (err u14005)) ;; no sBTC held by this contract
 (define-constant ERR_NOTHING_TO_RETURN (err u14006)) ;; no unlocked STX to send onward
@@ -63,7 +64,8 @@
 
 ;; The single signer-manager the DAO has approved. `none` disables staking.
 (define-data-var approved-signer (optional principal) none)
-;; Lock length used by `stake-stx`, and the ceiling for `stake-update`.
+;; Lock length used by `stake-stx`, and the ceiling on what a single
+;; `stake-update` may add. Zero disables both.
 (define-data-var num-cycles uint u12)
 
 ;; PUBLIC FUNCTIONS
@@ -112,7 +114,7 @@
 (define-public (set-num-cycles (cycles uint))
   (begin
     (try! (is-dao-or-extension))
-    (asserts! (and (>= cycles u1) (<= cycles MAX_NUM_CYCLES))
+    (asserts! (<= cycles MAX_NUM_CYCLES)
       ERR_INVALID_NUM_CYCLES
     )
     (print {
@@ -158,14 +160,25 @@
   )
 )
 
-;; Extend an existing position and fold in any STX that has accumulated here
-;; since the last call. `cycles-to-extend` is capped at `num-cycles` so a caller
-;; cannot lengthen the lock beyond what the DAO configured.
+;; Extend an existing position back out to `num-cycles`, and fold in any STX
+;; that has accumulated here since the last call.
+;;
+;; The increment is derived from the live position rather than passed straight
+;; through: pox-5 caps the resulting TOTAL lock at 96 cycles, not the increment,
+;; so handing it the configured length raw makes every call on a healthy
+;; position ask for `remaining + num-cycles` and be rejected. `cycles-to-extend`
+;; is therefore the headroom left under the cap, capped in turn at `num-cycles`.
+;; See `get-cycles-to-extend`.
 ;;
 ;; Permissionless, same reasoning as `stake-stx`. `signer-manager` may differ
 ;; from `old-signer-manager` to migrate signers, but must still be the approved
 ;; one. The allowance covers the whole resulting position and permits no
 ;; transfers.
+;;
+;; This is the path that has to be closed to exit for good: `unstake-stx` only
+;; shortens the lock to the end of the current cycle, and anyone may call this
+;; to re-lock it for another term. Setting `num-cycles` to zero stops it: the
+;; headroom is then capped at zero and the assert below rejects the call.
 (define-public (stake-update
     (signer-manager <signer-manager-trait>)
     (old-signer-manager <signer-manager-trait>)
@@ -174,10 +187,14 @@
       (account (stx-account current-contract))
       (amount (get unlocked account))
       (staked (+ (get locked account) amount))
-      (cycles-to-extend (var-get num-cycles))
+      (cycles-to-extend (get-cycles-to-extend))
     )
     (try! (assert-approved-signer (contract-of signer-manager)))
+    ;; nothing to extend: either staking is disabled (`num-cycles` u0) or the
+    ;; position is already locked for the maximum pox-5 allows
+    (asserts! (> cycles-to-extend u0) ERR_INVALID_NUM_CYCLES)
     (print {
+      event: "stake-update",
       amount-increase: amount,
       cycles-to-extend: cycles-to-extend,
       signer: (contract-of signer-manager),
@@ -195,6 +212,10 @@
 ;; Wind the position down: PoX-5 shortens the lock to the end of the current
 ;; reward cycle. DAO-gated, because leaving the signer set is a governance
 ;; decision rather than routine maintenance. Nothing may leave the contract.
+;;
+;; On its own this does not end the position for good -- `stake-update` is
+;; permissionless and re-locks it. A proposal that means to exit should call
+;; `set-num-cycles` with u0 alongside this, in the same transaction.
 (define-public (unstake-stx (old-signer-manager <signer-manager-trait>))
   (begin
     (try! (is-dao-or-extension))
@@ -270,6 +291,51 @@
 
 (define-read-only (get-num-cycles)
   (var-get num-cycles)
+)
+
+;; Cycles still on the position after the current one, as pox-5 counts them:
+;; `first-reward-cycle + num-cycles` is the first cycle the STX is unlocked in,
+;; and `stake-update` validates `that - current-cycle - 1` against the 96-cycle
+;; cap. Zero once the position has lapsed, or when there is no position.
+(define-read-only (get-cycles-remaining)
+  (let (
+      (current-cycle (contract-call? 'SP000000000000000000002Q6VF78.pox-5
+        current-pox-reward-cycle
+      ))
+      (unlock-cycle (match (contract-call? 'SP000000000000000000002Q6VF78.pox-5
+        get-staker-info current-contract
+      )
+        info (+ (get first-reward-cycle info) (get num-cycles info))
+        u0
+      ))
+    )
+    (if (> unlock-cycle (+ current-cycle u1))
+      (- unlock-cycle current-cycle u1)
+      u0
+    )
+  )
+)
+
+;; What `stake-update` may add: the DAO-set length, or whatever headroom is
+;; left under pox-5's cap, whichever is smaller. Zero means the call would be
+;; rejected -- either the position is already at the cap, or `num-cycles` is
+;; zero because the DAO has switched staking off.
+(define-read-only (get-cycles-to-extend)
+  (let (
+      (remaining (get-cycles-remaining))
+      ;; guarded rather than a bare subtraction: an underflow would abort the
+      ;; transaction instead of returning an error
+      (headroom (if (> MAX_NUM_CYCLES remaining)
+        (- MAX_NUM_CYCLES remaining)
+        u0
+      ))
+      (configured (var-get num-cycles))
+    )
+    (if (< configured headroom)
+      configured
+      headroom
+    )
+  )
 )
 
 ;; Everything a caller needs to decide whether to stake, extend, or forward.
