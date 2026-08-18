@@ -1,4 +1,4 @@
-;; Title: CCD016 - MiamiCoin Redemption Book, STX-denominated (MIA)
+;; Title: CCD015 - MiamiCoin Redemption Book, STX-denominated (MIA)
 ;; Version: 0.1.0 (DRAFT - unaudited, not deployed)
 ;; Summary: Vault-converted STX crosses a book of MIA sell offers at or below par; the MIA bought is burned.
 ;; Description:
@@ -10,7 +10,7 @@
 ;;   1. THE CONTRACT IS THE ONLY BUYER. Upstream, a settler spends their own STX
 ;;      and receives the par-equivalent MIA, keeping the book's surplus in the
 ;;      contract. Here `cross-book` spends only the STX this contract already
-;;      holds - pushed in by the ccd017 one-way vault after it converts the
+;;      holds - pushed in by the ccd016 one-way vault after it converts the
 ;;      DAO's sBTC rewards. Anyone may trigger it, and it takes no arguments:
 ;;      funding is a plain transfer in, the budget IS the balance.
 ;;   2. MIA IS BURNED, not delivered. No settler leg, no surplus accounting,
@@ -49,18 +49,18 @@
 ;; CONSTANTS
 
 ;; error codes
-(define-constant ERR_UNAUTHORIZED (err u16000))
-(define-constant ERR_INVALID_OFFER (err u16001))
-(define-constant ERR_OFFER_NOT_FOUND (err u16002))
-(define-constant ERR_BOOK_FULL (err u16003))
-(define-constant ERR_HAS_OFFER (err u16004))
-(define-constant ERR_BELOW_MIN_DEPOSIT (err u16005))
-(define-constant ERR_NO_FILL (err u16006))
-(define-constant ERR_PAUSED (err u16007))
-(define-constant ERR_ABOVE_PAR (err u16008))
-(define-constant ERR_NO_BUDGET (err u16010))
-(define-constant ERR_PAR_NOT_SET (err u16011))
-(define-constant ERR_PAR_CALCULATION (err u16012))
+(define-constant ERR_UNAUTHORIZED (err u15000))
+(define-constant ERR_INVALID_OFFER (err u15001))
+(define-constant ERR_OFFER_NOT_FOUND (err u15002))
+(define-constant ERR_BOOK_FULL (err u15003))
+(define-constant ERR_HAS_OFFER (err u15004))
+(define-constant ERR_BELOW_MIN_DEPOSIT (err u15005))
+(define-constant ERR_NO_FILL (err u15006))
+(define-constant ERR_PAUSED (err u15007))
+(define-constant ERR_ABOVE_PAR (err u15008))
+(define-constant ERR_NO_BUDGET (err u15010))
+(define-constant ERR_PAR_NOT_SET (err u15011))
+(define-constant ERR_PAR_CALCULATION (err u15012))
 
 (define-constant MICRO_CITYCOINS (pow u10 u6)) ;; MIA v2 carries 6 decimals
 (define-constant ONE_MILLION_MIA (* u1000000 MICRO_CITYCOINS))
@@ -77,7 +77,7 @@
 ;; the DAO ratified as combined v1 + v2 supply (see ccd013 initialize-redemption).
 (define-constant MIA_TOKEN_V2 'SP1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8Y634C7R.miamicoin-token-v2)
 
-;; The same treasury principals ccd014-pox5-staking-mia and ccd015 hard-code,
+;; The same treasury principals ccd014-pox5-staking-mia and the sats book hard-code,
 ;; kept under the same names so the contracts read as one system.
 ;; STX backing the par formula counts, alongside the pox5 stake
 (define-constant MINING_TREASURY 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-mining-v3)
@@ -383,7 +383,7 @@
     offer-count: (len (var-get offer-book)),
     par-scaled: (var-get par-scaled),
     calculated-par: (calculate-par),
-    ;; the crossing budget: STX already pushed in by the ccd017 vault
+    ;; the crossing budget: STX already pushed in by the ccd016 vault
     budget-ustx: (stx-get-balance current-contract),
     total-burned-mia: (var-get total-burned-mia),
     total-spent-ustx: (var-get total-spent-ustx),
