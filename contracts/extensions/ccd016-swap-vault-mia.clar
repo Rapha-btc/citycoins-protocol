@@ -104,7 +104,11 @@
 ;; DATA VARS
 
 (define-data-var owner-pubkey (buff 33) DEFAULT_PUBKEY)
+;; Two DAO-appointed keeper slots: redundancy for the day-to-day operations
+;; (execution, revocation, reclaim) so one keeper going dark never stalls the
+;; pipeline. Either slot alone carries the full keeper privilege.
 (define-data-var keeper (optional principal) none)
+(define-data-var keeper-2 (optional principal) none)
 
 (define-map used-pubkey-authorizations
   (buff 32)
@@ -162,6 +166,13 @@
   )
 )
 
+(define-public (set-keeper-2 (new-keeper (optional principal)))
+  (begin
+    (try! (is-dao-or-extension))
+    (ok (var-set keeper-2 new-keeper))
+  )
+)
+
 ;; --- funding (the pipe from the rewards treasury) ---------------------------
 
 ;; Pull the rewards treasury's entire sBTC balance into the vault.
@@ -216,7 +227,7 @@
   (begin
     (asserts!
       (or
-        (is-eq (some tx-sender) (var-get keeper))
+        (is-keeper)
         (is-ok (is-dao-or-extension))
       )
       ERR_NOT_OWNER
@@ -380,7 +391,7 @@
   (begin
     (asserts!
       (or
-        (is-eq (some tx-sender) (var-get keeper))
+        (is-keeper)
         (is-ok (is-dao-or-extension))
       )
       ERR_NOT_OWNER
@@ -475,6 +486,7 @@
   {
     pubkey: (var-get owner-pubkey),
     keeper: (var-get keeper),
+    keeper-2: (var-get keeper-2),
     stx-destination: STX_FAIR_BOOK,
     stx-balance: (stx-get-balance current-contract),
     sbtc-balance: (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token
@@ -489,6 +501,14 @@
 
 ;; PRIVATE FUNCTIONS
 
+;; Either keeper slot carries the full keeper privilege.
+(define-private (is-keeper)
+  (or
+    (is-eq (some tx-sender) (var-get keeper))
+    (is-eq (some tx-sender) (var-get keeper-2))
+  )
+)
+
 (define-private (verify-and-consume
     (msg-hash (buff 32))
     (sig (buff 65))
@@ -497,7 +517,7 @@
   (begin
     (asserts!
       (or
-        (is-eq (some tx-sender) (var-get keeper))
+        (is-keeper)
         (is-ok (is-dao-or-extension))
       )
       ERR_NOT_OWNER
