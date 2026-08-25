@@ -39,8 +39,14 @@ unchanged: `ask * price < amount * par-scaled * PAR_PRICE_RATIO`.
 
 ## Two guards, both must pass
 
-`get-price` runs both before any fill. If either fails the whole
-`cross-book` reverts and nothing is bought.
+`get-price` runs both once, before any fill. If either guard fails there is
+no trustworthy rate, so `cross-book` reverts before touching the book and
+nothing is bought.
+
+This is about the rate, not about offers. Offers are checked one by one in
+`settle-step`: an offer at or above par is skipped and stays on the book,
+and the cross continues through every cheaper offer. One offer above par
+never blocks the others.
 
 1. **Fresh** (`ERR_ORACLE_STALE`, u14014): each DIA value's timestamp must
    be at most `MAX_DIA_AGE` (2h) before the previous block's time. A dead
