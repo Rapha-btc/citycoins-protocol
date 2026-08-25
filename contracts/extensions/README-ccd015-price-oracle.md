@@ -93,8 +93,43 @@ free on-chain alternative already used by Zest and ALEX.
 | u14015 | ERR_OUT_OF_BAND | DIA rate outside [native/2, native*2] |
 | u14016 | ERR_NO_BLOCK_TIME | no previous block (height 0) |
 
+## Verification: stxer mainnet-fork harness
+
+`npm run sim:ccd015` runs `simulations/stxer-ccd015-oracle-coverage.js`, a
+self-verifying harness against live mainnet state (75 assertions, exit 1 on
+any failure). Last green run 2026-08-25, tip 8841110:
+
+- Phase 1: https://stxer.xyz/simulations/mainnet/9170d37c585c24e3d0af83d5f55e2ceb
+- Phase 2: https://stxer.xyz/simulations/mainnet/baa072bd3ba06ef2e13f231ce4b55eb5
+
+What it covers:
+
+- DIA-implied price equals `BTC_USD * 1e8 / STX_USD` bit for bit; native
+  band probed at coinbase 1000 and 500 STX (DIA sat at 0.80x native at
+  1000, 1.60x at 500: inside the band either way).
+- Oracle guards with DIA impersonated from its real updater key: a 3h-old
+  push -> `u14014`; STX/USD x10 -> `u14015`; STX/USD /10 -> `u14015`; each
+  reverts `cross-book` with the book's sats untouched; band off accepts
+  the same price with `native u0`; band on + live values restores.
+- DAO gate: `update-par`, `set-band-enabled`, `set-paused` reject
+  strangers (`u14000`) and accept an extension (base-dao patched on the fork
+  so a proxy contract plays a passed proposal; ccd015 itself unmodified).
+- `ERR_PAR_NOT_SET` on a funded book before `update-par`; pause blocks
+  cross and place; min-deposit, zero ask, duplicate offer rejected.
+- Both funding paths: `fund-from-treasury` (sBTC already allow-listed on
+  the rewards treasury on mainnet) and a plain transfer.
+- Crossing: book sorted cheapest-first; cross #1 fills A in full, B
+  pro-rata, skips C (above par); sellers receive exactly their sats; MIA
+  supply shrinks by exactly the amount acquired (burn); remainder stays on
+  the book at the right amount/ask; `u14010` on empty budget; cross #2 fills
+  the B remainder pro-rata from a plain transfer; `u14006` when only
+  above-par offers remain; cancels refund every escrowed MIA.
+
+Bug found by the harness and fixed in v0.4.0: `cross-book` declared its
+sBTC allowance as `(with-ft SBTC_TOKEN "sbtc" ...)`. The asset is named
+`sbtc-token`, so every payout under that allowance aborted (`u128`). The
+book could not have paid a single seller.
+
 ## Not yet done
 
-- `simulations/stxer-ccd015-par-check.ts` still exercises `get-native-price`
-  only; it needs `get-price` plus a forced out-of-band and a stale case.
 - Unaudited, not deployed.

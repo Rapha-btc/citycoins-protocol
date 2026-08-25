@@ -367,7 +367,10 @@
         ;; as-contract? switches tx-sender to this contract so settle-step can pay
         ;; from current-contract, and caps total sBTC out at `budget` - a runtime
         ;; backstop that holds even if the fill arithmetic below is wrong.
-        (res (try! (as-contract? ((with-ft SBTC_TOKEN "sbtc" budget))
+        ;; asset name is the define-fungible-token name ("sbtc-token"), not
+        ;; the contract name: a wrong name makes every transfer under the
+        ;; allowance abort (u128), found by the stxer coverage harness
+        (res (try! (as-contract? ((with-ft SBTC_TOKEN "sbtc-token" budget))
               (fold settle-step (var-get offer-book) {
                 remaining: budget,
                 price: price,
