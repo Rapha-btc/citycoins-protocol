@@ -1,5 +1,5 @@
 ;; Title: CCD015 - MiamiCoin Redemption Book (MIA)
-;; Version: 0.3.0 (DRAFT - unaudited, not deployed)
+;; Version: 0.4.0 (DRAFT - unaudited, not deployed)
 ;; Summary: Treasury sBTC rewards cross a book of MIA sell offers below par; the MIA bought is burned.
 ;; Description:
 ;;   A fork of SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.mia-orderbook-faktory,
@@ -20,10 +20,15 @@
 ;;   3. MIA IS BURNED, not delivered. Upstream ships acquired MIA to the taker.
 ;;      Here it leaves supply permanently.
 ;;
-;;   Offers ask in sats; par is denominated in STX. `get-native-price` bridges the
-;;   two, inlined from the Jing RFQ market so the same chain state yields the same
-;;   rate - PROVIDED coinbase-ustx matches in both. Every fill is checked against
-;;   par at cross time.
+;;   Offers ask in sats; par is denominated in STX. The STX/BTC rate that bridges
+;;   the two comes from the DIA push oracle (STX/USD and BTC/USD, both 8
+;;   decimals), read at cross time. `get-native-price` - inlined from the Jing
+;;   RFQ market - is kept as a 2x / 0.5x BAND around the DIA rate: a DIA value
+;;   outside [native/2, native*2] is rejected and the cross reverts. So DIA
+;;   sets the price and the chain's own miner-commit rate says whether that
+;;   price is even plausible. The DAO can switch the band off (set-band-enabled)
+;;   if miner-commit behaviour degrades; then DIA is trusted alone. Every fill
+;;   is checked against par at that rate.
 ;;
 ;;   Accounting: a fill BURNS MIA AT PAR - extinguishing a claim worth
 ;;   (par * amount) on the STX treasury - while PAYING ONLY the sats ask. Because
@@ -61,6 +66,10 @@
 (define-constant ERR_NO_BUDGET (err u14010))
 (define-constant ERR_PAR_NOT_SET (err u14011))
 (define-constant ERR_PAR_CALCULATION (err u14012))
+(define-constant ERR_ORACLE_DIA (err u14013))
+(define-constant ERR_ORACLE_STALE (err u14014))
+(define-constant ERR_OUT_OF_BAND (err u14015))
+(define-constant ERR_NO_BLOCK_TIME (err u14016))
 
 (define-constant MICRO_CITYCOINS (pow u10 u6)) ;; MIA v2 carries 6 decimals
 (define-constant ONE_MILLION_MIA (* u1000000 MICRO_CITYCOINS))
@@ -107,6 +116,22 @@
 ;; Lets the par check cross-multiply instead of dividing twice. See below-par?.
 (define-constant PAR_PRICE_RATIO (/ NATIVE_PRICE_DIVISOR PAR_SCALE))
 
+;; --- DIA price ---------------------------------------------------------------
+;; SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0.dia-oracle get-value returns
+;; { value (8 decimals), timestamp (ms) } for "STX/USD" and "BTC/USD". In the
+;; native scaling (uSTX per sat * NATIVE_PRICE_DIVISOR) that is simply
+;;   price = BTC_USD * PRICE_PRECISION / STX_USD
+;; because 1 sat = BTC_USD/1e16 USD and 1 uSTX = STX_USD/1e14 USD, and the
+;; 8-decimal scales cancel. Staleness: each value's timestamp must be within
+;; MAX_DIA_AGE seconds of the previous block's time. DIA's updater pushes all
+;; four keys in one set-multiple-values every 10-50 min (measured 2026-08-25),
+;; so 2h clears the worst normal gap; a dead feed shows up only as an old
+;; timestamp, which is what this catches. Drift of a live-but-wrong value is
+;; the native band's job.
+(define-constant MAX_DIA_AGE u7200)
+;; The native band: DIA must land within [native/2, native*2].
+(define-constant BAND_DIVISOR u2)
+
 ;; Offsets in STACKS blocks - 48 samples spaced 366 apart, deepest at 17,203.
 ;; At the current ~53 stacks blocks per tenure that reaches ~2 days (~320 bitcoin
 ;; blocks) back, sampling ~48 tenures roughly every 7th one, about 1.1h apart.
@@ -146,6 +171,9 @@
 ;; Must be kept current by proposal across emission changes: this value scales
 ;; every par comparison linearly, and a stale value silently moves the ceiling.
 (define-data-var coinbase-ustx uint u1000000000)
+
+;; DIA-vs-native band on by default; DAO kill switch (see header)
+(define-data-var band-enabled bool true)
 
 (define-data-var total-burned-mia uint u0)
 (define-data-var total-spent-sats uint u0)
@@ -190,6 +218,14 @@
     (asserts! (> ustx u0) ERR_ZERO_PRICE)
     (var-set coinbase-ustx ustx)
     (ok (print { notification: "set-coinbase-ustx", payload: { coinbase-ustx: ustx } }))
+  )
+)
+
+(define-public (set-band-enabled (on bool))
+  (begin
+    (try! (is-dao-or-extension))
+    (var-set band-enabled on)
+    (ok (print { notification: "set-band-enabled", payload: { band-enabled: on } }))
   )
 )
 
@@ -326,7 +362,8 @@
     (asserts! (> budget u0) ERR_NO_BUDGET)
     (asserts! (> (var-get par-scaled) u0) ERR_PAR_NOT_SET)
     (let (
-        (price (try! (get-native-price)))
+        (rate (try! (get-price)))
+        (price (get price rate))
         ;; as-contract? switches tx-sender to this contract so settle-step can pay
         ;; from current-contract, and caps total sBTC out at `budget` - a runtime
         ;; backstop that holds even if the fill arithmetic below is wrong.
@@ -352,6 +389,9 @@
         spent: spent,
         acquired: acquired,
         price: price,
+        native-price: (get native rate),
+        stx-usd: (get stx-usd rate),
+        btc-usd: (get btc-usd rate),
         remaining-sats: (get remaining res),
         offer-count: (len (var-get offer-book)),
       } })
@@ -379,6 +419,43 @@
       (asserts! (> avg-spend u0) ERR_ZERO_PRICE)
       (ok (/ (* DECIMAL_FACTOR (var-get coinbase-ustx) PRICE_PRECISION) avg-spend))
     )
+  )
+)
+
+;; One DIA key, staleness-checked. Literal principal: a contract-call? through
+;; a constant is not statically resolvable inside define-read-only.
+(define-read-only (get-dia-value (key (string-ascii 32)))
+  (let (
+      (res (unwrap! (contract-call?
+        'SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0.dia-oracle get-value key)
+        ERR_ORACLE_DIA))
+      ;; "now" = the previous block's timestamp (the current block has none yet).
+      ;; Only absent at height 0, so this branch is unreachable on mainnet.
+      (last-time (unwrap! (get-stacks-block-info? time (- stacks-block-height u1)) ERR_NO_BLOCK_TIME))
+      (ts (/ (get timestamp res) u1000))
+      (v (get value res))
+    )
+    (asserts! (> v u0) ERR_ZERO_PRICE)
+    (asserts! (>= (+ ts MAX_DIA_AGE) last-time) ERR_ORACLE_STALE)
+    (ok v)
+  )
+)
+
+;; The rate cross-book prices against: DIA, in native scaling, accepted only
+;; inside the native band while the band is on. `native` is u0 when the band is
+;; off (the oracle is not read, so a broken get-native-price cannot brick it).
+(define-read-only (get-price)
+  (let (
+      (stx-usd (try! (get-dia-value "STX/USD")))
+      (btc-usd (try! (get-dia-value "BTC/USD")))
+      (price (/ (* btc-usd PRICE_PRECISION) stx-usd))
+      (band-on (var-get band-enabled))
+      (native (if band-on (try! (get-native-price)) u0))
+    )
+    (asserts! (> price u0) ERR_ZERO_PRICE)
+    (asserts! (or (not band-on) (>= price (/ native BAND_DIVISOR))) ERR_OUT_OF_BAND)
+    (asserts! (or (not band-on) (<= price (* native BAND_DIVISOR))) ERR_OUT_OF_BAND)
+    (ok { price: price, native: native, stx-usd: stx-usd, btc-usd: btc-usd })
   )
 )
 
@@ -483,7 +560,9 @@
       'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token
       get-balance 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3),
     coinbase-ustx: (var-get coinbase-ustx),
+    band-enabled: (var-get band-enabled),
     native-price: (get-native-price),
+    price: (get-price),
     ;; literal principal - a contract-call? through a constant is not statically
     ;; resolvable, so the checker rejects it inside define-read-only
     available-sats: (contract-call?
