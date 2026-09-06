@@ -121,6 +121,16 @@ contract_id = "SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-swap-router-v-1-1"
 [[project.requirements]]
 contract_id = "SM1FKXGNZJWSTWDWXQZJNF7B5TV5ZB235JTCXYXKD.dlmm-pool-stx-sbtc-v-1-bps-15"
 
+# ccd016 v2: the deployed Lazer market + smart router (they pull jing-core-v3,
+# the Lazer oracle, Bitflow, Velar). Contracts passed only as trait arguments
+# (Lazer decoder, Velar pool/fees/wstx) are not auto-fetched: listed below.
+# The router's DLMM v2 pool is Clarity 6: needs clarinet >= 3.23.
+[[project.requirements]]
+contract_id = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap"
+
+[[project.requirements]]
+contract_id = "SPMV5HDZ4EMB8XY7HAYT3XW0DF7DZ4E8XEG2J1T8.pyth-lazer-decoder-v1"
+
 [[project.requirements]]
 contract_id = "SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4"
 
@@ -132,6 +142,22 @@ contract_id = "SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-pnau-decoder-v3"
 
 [[project.requirements]]
 contract_id = "SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.wormhole-core-v4"
+
+[[project.requirements]]
+contract_id = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jingswap-v1"
+
+[[project.requirements]]
+contract_id = "SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.wstx"
+
+[[project.requirements]]
+contract_id = "SP20X3DC5R091J8B6YPQT638J8NR1W83KN6TN5BJY.univ2-fees-v1_0_0-0070"
+
+[[project.requirements]]
+contract_id = "SP20X3DC5R091J8B6YPQT638J8NR1W83KN6TN5BJY.univ2-pool-v1_0_0-0070"
+
+[[project.requirements]]
+contract_id = "SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-registry_v1_0_0"
+
 
 [contracts.base-dao]
 path = "contracts/base-dao.clar"
@@ -677,6 +703,12 @@ path = "contracts/extensions/ccd016-swap-vault-mia.clar"
 clarity_version = 5
 epoch = 3.4
 
+[contracts.ccd016-swap-vault-mia-v2]
+path = "contracts/extensions/ccd016-swap-vault-mia-v2.clar"
+clarity_version = 5
+epoch = 4.0
+
+
 # Vendored Jing v2 pair (not yet deployed on mainnet): lets the vault's maker
 # leg compile and be tested locally. In prod the vault's JING_MARKET constant
 # is repointed to the deployed literal.
@@ -689,3 +721,4 @@ epoch = 3.4
 path = "contracts/vendored/markets-sbtc-stx-jing-v2.clar"
 clarity_version = 5
 epoch = 3.4
+
