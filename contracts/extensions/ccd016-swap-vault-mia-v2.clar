@@ -123,8 +123,8 @@
 ;; The deployed Jing market on Pyth Lazer (markets-sbtc-stx-jing-v4 lineage):
 ;; the maker venue and the price oracle. The smart router splits a taker
 ;; order across the book, Bitflow DLMM, Bitflow XYK and Velar at execution.
-(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap)
-(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jingswap-v1)
+(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4)
+(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v3)
 (define-constant WSTX_TOKEN 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2)
 (define-constant ASSET_WSTX "wstx")
 
@@ -479,12 +479,12 @@
 ;; checker a contract-call? through a define-constant alias is a dynamic
 ;; dispatch and the function is rejected as writing.
 (define-read-only (get-status)
-  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap get-current-cycle)))
+  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-current-cycle)))
     {
       sbtc-balance: (sbtc-balance),
       stx-balance: (stx-get-balance current-contract),
-      jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap get-token-x-deposit cycle current-contract),
-      jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap get-token-x-parked current-contract),
+      jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-deposit cycle current-contract),
+      jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-parked current-contract),
       idle: (is-idle),
       ;; sBTC still sitting in the rewards treasury, claimable via fund-from-treasury
       pending-treasury-sats: (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token get-balance REWARDS_TREASURY)),
@@ -494,11 +494,11 @@
 
 ;; Nothing to sell and nothing resting: the next funding opens a new batch.
 (define-read-only (is-idle)
-  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap get-current-cycle)))
+  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-current-cycle)))
     (and
       (is-eq (sbtc-balance) u0)
-      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap get-token-x-deposit cycle current-contract) u0)
-      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jingswap get-token-x-parked current-contract) u0)
+      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-deposit cycle current-contract) u0)
+      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-parked current-contract) u0)
     )
   )
 )
