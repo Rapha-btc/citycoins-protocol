@@ -120,11 +120,11 @@
 ;; so vault and book must ship from the same address, book first.
 (define-constant STX_FAIR_BOOK .ccd015-redemption-book-mia-stx) ;; in prod change this to the literal
 
-;; The deployed Jing market on Pyth Lazer (markets-sbtc-stx-jing-v4 lineage):
+;; The deployed Jing market on Pyth Lazer (markets-sbtc-stx-jing-v5 lineage):
 ;; the maker venue and the price oracle. The smart router splits a taker
 ;; order across the book, Bitflow DLMM, Bitflow XYK and Velar at execution.
-(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4)
-(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v3)
+(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5)
+(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v4)
 (define-constant WSTX_TOKEN 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2)
 (define-constant ASSET_WSTX "wstx")
 
@@ -288,7 +288,7 @@
 
 ;; Rest `amount` sats on the Jing book at mid * (1 - leeway). The market
 ;; refuses a resting limit that live bids already cross (ERR_MUST_USE_SWAP
-;; u1022); use jing-take then. Merges into an existing resting position and
+;; u1016 on v5); use jing-take then. Merges into an existing resting position and
 ;; refreshes its limit.
 (define-public (jing-place
     (amount uint)
@@ -335,7 +335,7 @@
 
 ;; Take against the Jing book, fill-or-kill, at the phase limit: mid minus
 ;; leeway while the window is open, mid minus slippage once it elapsed. The market's `swap` refuses a caller with a resting
-;; position (u1024): reclaim first in the liquidation phase.
+;; position (u1018 on v5): reclaim first in the liquidation phase.
 (define-public (jing-take
     (amount uint)
     (update (buff 8192))
@@ -479,12 +479,12 @@
 ;; checker a contract-call? through a define-constant alias is a dynamic
 ;; dispatch and the function is rejected as writing.
 (define-read-only (get-status)
-  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-current-cycle)))
+  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-current-cycle)))
     {
       sbtc-balance: (sbtc-balance),
       stx-balance: (stx-get-balance current-contract),
-      jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-deposit cycle current-contract),
-      jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-parked current-contract),
+      jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-deposit cycle current-contract),
+      jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-parked current-contract),
       idle: (is-idle),
       ;; sBTC still sitting in the rewards treasury, claimable via fund-from-treasury
       pending-treasury-sats: (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token get-balance REWARDS_TREASURY)),
@@ -494,11 +494,11 @@
 
 ;; Nothing to sell and nothing resting: the next funding opens a new batch.
 (define-read-only (is-idle)
-  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-current-cycle)))
+  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-current-cycle)))
     (and
       (is-eq (sbtc-balance) u0)
-      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-deposit cycle current-contract) u0)
-      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v4 get-token-x-parked current-contract) u0)
+      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-deposit cycle current-contract) u0)
+      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-parked current-contract) u0)
     )
   )
 )
