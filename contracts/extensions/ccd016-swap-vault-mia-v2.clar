@@ -1,5 +1,5 @@
 ;; Title: CCD016 - MiamiCoin One-Way Swap Vault v2 (sBTC -> STX), keeperless
-;; Version: 0.2.0 (DRAFT - unaudited, not deployed)
+;; Version: 0.3.0 (DRAFT - unaudited, not deployed; market v6 pegged orders)
 ;; Summary: Converts the DAO's sBTC rewards to STX at an oracle-bound price with no operator; anyone can drive it. STX can only reach the ccd015 book, sBTC can only return to the treasury.
 ;; Description:
 ;;   Solution 2's execution layer, second cut. v1 needed a DAO-appointed keeper
@@ -20,23 +20,28 @@
 ;;      the new patience phase. That is the whole clock: one height, moved
 ;;      only by funding, only when no window is open.
 ;;   2. PATIENCE PHASE (window open): maker-first on the Jing market. Anyone
-;;      may rest the vault's sBTC on the book at mid * (1 - LEEWAY), reprice
-;;      the resting position to a fresh mid * (1 - LEEWAY), or take against
-;;      the book at that limit when bids already sit there. The limit is a
-;;      floor, not the price: the book settles an in-range ask at the mid, so
-;;      the vault receives the mid whenever the mid is at or above its limit.
-;;      LEEWAY = 5% keeps the ask in range through a 5% drop between the
-;;      update and settlement instead of falling out of the batch. It does
-;;      NOT sell 5% cheap: as long as the settlement mid is at or above the
-;;      limit set at placement, the fill is at that settlement mid, not at
-;;      mid minus leeway. The leeway is only paid in the case it exists for,
-;;      a mid that fell by up to 5%, and then only the actual drop.
+;;      may rest the vault's sBTC on the book as a ZERO-SPREAD PEG: an ask
+;;      that sits at the settlement mid, whatever the mid is at each
+;;      settlement, with a floor of mid * (1 - LEEWAY) taken at placement.
+;;      Market v6 recomputes the pegged price from its own verified mid
+;;      every settlement, so nobody reprices it: the keeper loop v1 had, and
+;;      the reprice call the first v2 cut had, are gone. The floor is a
+;;      guard, not a price: while the mid is at or above it the ask is at
+;;      the mid; below it the ask is switched off for that settlement (no
+;;      fill at all, not a fill at the floor) and comes back by itself when
+;;      the mid returns. LEEWAY = 5% is how far the mid may fall before the
+;;      guard trips; jing-refloor moves the guard to a fresh mid when it
+;;      did. When bids already rest at the mid the market refuses the peg
+;;      (a resting order may not cross): the vault waits for them to clear
+;;      or for the window to elapse. The patience phase never takes: no
+;;      call can sell the vault under the mid while the window is open.
 ;;      Why maker-first: the vault fills at the oracle mid, i.e. the CEX
 ;;      price with no AMM curve or slippage, and as a resting maker it pays
 ;;      the 10 bps book fee while collecting the 20 bps taker rebate when a
 ;;      taker crosses it: net +10 bps on top of CEX execution.
 ;;   3. LIQUIDATION PHASE (window elapsed): the market did not absorb the
-;;      size. Anyone may reclaim the resting deposit and sell through the
+;;      size. Anyone may reclaim the resting deposit, take against the book
+;;      at the floor (jing-take), or sell through the
 ;;      Jing smart router (book, Bitflow DLMM, Bitflow XYK, Velar, split at
 ;;      execution) with a floor of mid * (1 - SLIPPAGE) derived from the same
 ;;      oracle update; whatever no venue takes inside the floor comes home
@@ -61,10 +66,14 @@
 ;;      book (fuel-fair-book, permissionless); sBTC leaves only back to the
 ;;      rewards treasury (dao-recall-sbtc, by proposal).
 ;;
-;;   What a proposal controls: the window length, the leeway, the slippage
-;;   floor, the DIA band, and the recall. What nobody controls: the price
-;;   (Pyth sets it, DIA sanity-checks it) and the destinations. What anyone
-;;   can do: push the pipeline one step forward.
+;;   What anyone can do, three steps and nothing else: jing-place while the
+;;   window is open (in chunks, until every sat rests), jing-reclaim then
+;;   router-swap once it elapsed (the router picks the split), and
+;;   fuel-fair-book whenever STX sits here. What a proposal controls: the
+;;   window length, the leeway, the slippage floor, the DIA band, the
+;;   recall, and the precise tools: jing-refloor, jing-take and
+;;   router-swap-split. What nobody controls: the price (Pyth sets it, DIA
+;;   sanity-checks it) and the destinations.
 ;;
 ;;   Oracle: the Jing market's `refresh-mid (update)` verifies a signed Lazer
 ;;   update (max age 80 s, confidence required) and returns the mid in the
@@ -120,11 +129,11 @@
 ;; so vault and book must ship from the same address, book first.
 (define-constant STX_FAIR_BOOK .ccd015-redemption-book-mia-stx) ;; in prod change this to the literal
 
-;; The deployed Jing market on Pyth Lazer (markets-sbtc-stx-jing-v5 lineage):
+;; The Jing market on Pyth Lazer (markets-sbtc-stx-jing-v6: pegged orders):
 ;; the maker venue and the price oracle. The smart router splits a taker
 ;; order across the book, Bitflow DLMM, Bitflow XYK and Velar at execution.
-(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5)
-(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v4)
+(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6)
+(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5)
 (define-constant WSTX_TOKEN 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2)
 (define-constant ASSET_WSTX "wstx")
 
@@ -286,61 +295,65 @@
 
 ;; --- patience phase: Jing maker-first (window open) -------------------------
 
-;; Rest `amount` sats on the Jing book at mid * (1 - leeway). The market
-;; refuses a resting limit that live bids already cross (ERR_MUST_USE_SWAP
-;; u1016 on v5); use jing-take then. Merges into an existing resting position and
-;; refreshes its limit.
+;; Rest `amount` sats on the Jing book as a zero-spread peg: at the mid every
+;; settlement, off while the mid is under the floor mid * (1 - leeway) taken
+;; now. The market refuses a resting order that live bids already cross
+;; (ERR_MUST_USE_SWAP u1016): retry once they clear. Merges into an existing
+;; resting or parked position (v6 folds a parked amount back in) and
+;; refreshes the floor.
 (define-public (jing-place
     (amount uint)
     (update (buff 8192))
   )
-  (let ((limit (ask-of (try! (current-mid update)))))
+  (let ((floor (ask-of (try! (current-mid update)))))
     (asserts! (window-open) ERR_WINDOW_CLOSED)
     (try! (check-amount amount))
     (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount))
-      (try! (contract-call? JING_MARKET deposit-token-x amount limit update
+      (try! (contract-call? JING_MARKET deposit-token-x amount floor (some u0) update
         SBTC_TOKEN ASSET_SBTC
       ))
     ))
-    (ok (print { notification: "jing-place", payload: { amount: amount, limit-price: limit } }))
+    (ok (print { notification: "jing-place", payload: { amount: amount, floor: floor } }))
   )
 )
 
-;; Reprice the resting position to a fresh oracle limit: mid * (1 - leeway)
-;; while the window is open, mid * (1 - slippage) once it elapsed. If the new
-;; limit crosses resting STX size the market takes on the spot
-;; (fill-or-kill). The allowance is the taker rebate on the resting size,
-;; the only thing the crossing path can pull from the vault.
-(define-public (jing-reprice (update (buff 8192)))
+;; DAO only. Move the guard of the resting peg to a fresh oracle mid: mid *
+;; (1 - leeway) while the window is open, mid * (1 - slippage) once it
+;; elapsed. The price itself never needs moving (the peg follows the mid);
+;; this is only for a mid that fell under the floor and switched the ask off,
+;; a proposal-worthy event, not a community chore. The market refuses a floor
+;; that live bids already cross (u1016). Works on a live or a parked
+;; position; nothing moves but the floor.
+(define-public (jing-refloor (update (buff 8192)))
   (let (
-      (limit (phase-limit (try! (current-mid update))))
+      (floor (phase-limit (try! (current-mid update))))
       (cycle (contract-call? JING_MARKET get-current-cycle))
-      (resting (contract-call? JING_MARKET get-token-x-deposit cycle current-contract))
-      (rebate (/ (* resting (contract-call? JING_MARKET get-taker-rebate-bps))
-        BPS_PRECISION
+      (resting (+ (contract-call? JING_MARKET get-token-x-deposit cycle current-contract)
+        (contract-call? JING_MARKET get-token-x-parked current-contract)
       ))
     )
+    (try! (is-dao-or-extension))
     (asserts! (> resting u0) ERR_NOTHING_RESTING)
-    (let ((result (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC rebate))
-        (try! (contract-call? JING_MARKET reprice-or-swap-token-x limit update
-          SBTC_TOKEN ASSET_SBTC WSTX_TOKEN ASSET_WSTX
-        ))
-      ))))
-      (ok (print { notification: "jing-reprice", payload: {
-        resting: resting, limit-price: limit, out: (get token-y-received result),
-      } }))
-    )
+    (try! (as-contract? ()
+      (try! (contract-call? JING_MARKET set-token-x-limit floor (some u0) update))
+    ))
+    (ok (print { notification: "jing-refloor", payload: { resting: resting, floor: floor } }))
   )
 )
 
-;; Take against the Jing book, fill-or-kill, at the phase limit: mid minus
-;; leeway while the window is open, mid minus slippage once it elapsed. The market's `swap` refuses a caller with a resting
-;; position (u1018 on v5): reclaim first in the liquidation phase.
+;; DAO only (no chunk cap: the book settles at the oracle mid, so one call may
+;; clear a whole batch). Take against the Jing book, fill-or-kill, at the
+;; liquidation floor mid * (1 - slippage). Liquidation phase only: the patience phase is passive,
+;; the vault rests at the mid and takes nothing, so nobody can sell it under
+;; the mid before the window elapsed. The market's `swap` refuses a caller
+;; with a resting position (u1018): reclaim first.
 (define-public (jing-take
     (amount uint)
     (update (buff 8192))
   )
-  (let ((limit (phase-limit (try! (current-mid update)))))
+  (let ((limit (floor-of (try! (current-mid update)))))
+    (try! (is-dao-or-extension))
+    (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (try! (check-amount amount))
     (let ((result (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount))
         (try! (contract-call? JING_MARKET swap amount limit update
@@ -399,7 +412,7 @@
   )
 )
 
-;; Same liquidation sale through the router's manual entry: the caller picks
+;; DAO only. Same liquidation sale through the router's manual entry: the caller picks
 ;; the jing / dlmm / xyk / velar split (jing u0 while a position is still
 ;; resting on the book, the market refuses a taker with resting size). Every
 ;; leg's min comes from the oracle: mid minus SLIPPAGE for jing, dlmm, xyk
@@ -426,6 +439,7 @@
       })
       (market-mins (contract-call? JING_MARKET get-min-deposits))
     )
+    (try! (is-dao-or-extension))
     (asserts! (is-eq amount (+ jing dlmm xyk velar)) ERR_SPLIT_MISMATCH)
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (asserts! (<= amount (var-get max-chunk-sats)) ERR_CHUNK_TOO_BIG)
@@ -479,12 +493,12 @@
 ;; checker a contract-call? through a define-constant alias is a dynamic
 ;; dispatch and the function is rejected as writing.
 (define-read-only (get-status)
-  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-current-cycle)))
+  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-current-cycle)))
     {
       sbtc-balance: (sbtc-balance),
       stx-balance: (stx-get-balance current-contract),
-      jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-deposit cycle current-contract),
-      jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-parked current-contract),
+      jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-deposit cycle current-contract),
+      jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-parked current-contract),
       idle: (is-idle),
       ;; sBTC still sitting in the rewards treasury, claimable via fund-from-treasury
       pending-treasury-sats: (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token get-balance REWARDS_TREASURY)),
@@ -494,11 +508,11 @@
 
 ;; Nothing to sell and nothing resting: the next funding opens a new batch.
 (define-read-only (is-idle)
-  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-current-cycle)))
+  (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-current-cycle)))
     (and
       (is-eq (sbtc-balance) u0)
-      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-deposit cycle current-contract) u0)
-      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v5 get-token-x-parked current-contract) u0)
+      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-deposit cycle current-contract) u0)
+      (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-parked current-contract) u0)
     )
   )
 )
