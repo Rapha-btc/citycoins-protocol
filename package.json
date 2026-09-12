@@ -7,6 +7,7 @@
   "scripts": {
     "test": "vitest run",
     "sim:ccd015": "node simulations/stxer-ccd015-oracle-coverage.js",
+    "sim:ccd016": "node simulations/stxer-ccd016-v2-coverage.js",
     "test:report": "vitest run -- --coverage --costs",
     "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\""
   },
