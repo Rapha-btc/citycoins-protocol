@@ -88,6 +88,7 @@ const PROXY_SRC = `
 (define-public (take (amount uint) (update (buff 8192))) (contract-call? '${VAULT_ID} jing-take amount update))
 (define-public (set-window (blocks uint)) (contract-call? '${VAULT_ID} set-window-blocks blocks))
 (define-public (recall) (contract-call? '${VAULT_ID} dao-recall-sbtc))
+(define-public (set-cooldown (blocks uint)) (contract-call? '${VAULT_ID} set-router-cooldown blocks))
 `;
 
 let checks = 0, failures = 0;
@@ -204,6 +205,13 @@ async function main() {
   tx("S7 router-swap over the chunk cap -> u16039", STRANGER, VAULT_ID, "router-swap", [uintCV(5_000_001), UPD], "(err u16039)");
   tx("S7 stranger router-swap 300k sats at the floor (book empty: pools)", STRANGER, VAULT_ID, "router-swap", [uintCV(300_000), UPD], (v) => ok(v) && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
   ev("S7 vault got STX from the pools", VAULT_ID, "(get-status)", (v) => bare(field(v, "stx-balance")) > 0n);
+  // the cooldown: one router sale per burn block (default), so chunks cannot be chained in one block
+  tx("S7 router-swap again in the same burn block -> u16044 (cooldown)", STRANGER, VAULT_ID, "router-swap", [uintCV(1000), UPD], "(err u16044)");
+  ev("S7 config: cooldown 1 block, last sale stamped at this height", VAULT_ID, "(get-config)", (v) => field(v, "router-cooldown-blocks") === "u1" && bare(field(v, "last-router-swap")) > 0n);
+  tx("S7 stranger set-router-cooldown -> u16000", STRANGER, VAULT_ID, "set-router-cooldown", [uintCV(0)], "(err u16000)");
+  tx("S7 proxy set-router-cooldown 200 -> u16033 (cap 144)", DEPLOYER, PROXY_ID, "set-cooldown", [uintCV(200)], "(err u16033)");
+  advance(1);
+  tx("S7 next burn block: router-swap 1000 sats -> ok", STRANGER, VAULT_ID, "router-swap", [uintCV(1000), UPD], (v) => ok(v));
   tx("S7 stranger fuel-fair-book again", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
 
   // ---- S7b the router's BOOK leg: a bid rests at the mid, router-swap fills it there first ----
@@ -211,6 +219,7 @@ async function main() {
   const whaleSats0 = ev("S7b the bidder's sats before", VAULT_ID, sbtcBal(STX_WHALE), () => true);
   tx("S7b STX whale rests a 200 STX bid at the mid", STX_WHALE, MKT_ID, "deposit-token-y", [uintCV(200_000_000), uintCV(HUGE), noneCV(), UPD, wstxT, stringAsciiCV("wstx")], "(ok u200000000)");
   const stxBefore7b = ev("S7b vault STX before", VAULT_ID, "(stx-get-balance '" + VAULT_ID + ")", () => true);
+  advance(1);
   tx("S7b stranger router-swap 100k sats: the book leg takes the bid at the mid, the rest goes to the pools, unsold 0", STRANGER, VAULT_ID, "router-swap", [uintCV(100_000), UPD], (v) => ok(v) && v.includes("(unsold u0)"));
   const cyc1 = ev("S7b market cycle after: the book settled", MKT_ID, "(get-current-cycle)", () => true);
   const whaleSats1 = ev("S7b the bidder's sats after: it bought the vault's sBTC", VAULT_ID, sbtcBal(STX_WHALE), () => true);

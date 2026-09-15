@@ -114,6 +114,7 @@
 (define-constant ERR_CHUNK_TOO_BIG (err u16039))
 (define-constant ERR_SPLIT_MISMATCH (err u16040))
 (define-constant ERR_SOME_FUNDS (err u16043))
+(define-constant ERR_COOLDOWN (err u16044))
 
 (define-constant PRICE_PRECISION u100000000)
 (define-constant DECIMAL_FACTOR u100)
@@ -144,6 +145,7 @@
 (define-constant MAX_SLIPPAGE_BPS u1000) ;; -10%
 (define-constant MAX_DIA_BAND_BPS u5000) ;; 50%
 (define-constant MAX_CHUNK_SATS u100000000) ;; 1 BTC
+(define-constant MAX_COOLDOWN_BLOCKS u144) ;; one day
 ;; Velar's own floor: twice its 30 bps fee, so a sandwich there breaks even too
 (define-constant VELAR_SLIPPAGE_BPS u60)
 ;; DIA pushes every 10-50 min; 2h clears the worst normal gap (see ccd015)
@@ -162,6 +164,13 @@
 (define-data-var max-chunk-sats uint u5000000)
 ;; Pyth mid must sit within this of the DIA rate; 0 = DIA check off
 (define-data-var dia-band-bps uint u1000)
+;; burn blocks between two router sales (router-swap and router-swap-split
+;; share the clock). One chunk per Bitcoin block: a bot cannot chain chunks
+;; in one block to walk DLMM and XYK down to the floor and route the rest to
+;; Velar, where a sandwich clears its fees (60 bps round trip under the 1%
+;; floor); between blocks the pools re-arb to the mid. 0 = off.
+(define-data-var router-cooldown-blocks uint u1)
+(define-data-var last-router-swap uint u0)
 ;; burn height the current batch opened at; none while the vault is empty.
 ;; Set only when funding finds the vault empty (or no clock at all);
 ;; cleared by the exit that empties the vault, or by close-batch. Never
@@ -226,6 +235,14 @@
     (try! (is-dao-or-extension))
     (asserts! (<= bps MAX_DIA_BAND_BPS) ERR_OUT_OF_RANGE)
     (ok (var-set dia-band-bps bps))
+  )
+)
+
+(define-public (set-router-cooldown (blocks uint))
+  (begin
+    (try! (is-dao-or-extension))
+    (asserts! (<= blocks MAX_COOLDOWN_BLOCKS) ERR_OUT_OF_RANGE)
+    (ok (var-set router-cooldown-blocks blocks))
   )
 )
 
@@ -416,6 +433,7 @@
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (asserts! (<= amount (var-get max-chunk-sats)) ERR_CHUNK_TOO_BIG)
     (try! (check-amount amount))
+    (try! (cooldown-tick))
     (let ((result (try! (as-contract?
         ((with-ft SBTC_TOKEN ASSET_SBTC (+ amount (get min-token-x mins))))
         (try! (contract-call? JING_ROUTER smart-swap-sbtc-for-stx amount limit
@@ -463,6 +481,7 @@
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (asserts! (<= amount (var-get max-chunk-sats)) ERR_CHUNK_TOO_BIG)
     (try! (check-amount amount))
+    (try! (cooldown-tick))
     (let ((result (try! (as-contract?
         ((with-ft SBTC_TOKEN ASSET_SBTC (+ amount (get min-token-x market-mins))))
         (try! (contract-call? JING_ROUTER swap-sbtc-for-stx amount jing limit
@@ -488,6 +507,8 @@
     slippage-bps: (var-get slippage-bps),
     dia-band-bps: (var-get dia-band-bps),
     max-chunk-sats: (var-get max-chunk-sats),
+    router-cooldown-blocks: (var-get router-cooldown-blocks),
+    last-router-swap: (var-get last-router-swap),
     jing-market: JING_MARKET,
     jing-router: JING_ROUTER,
     stx-destination: STX_FAIR_BOOK,
@@ -637,6 +658,14 @@
 ;; STX floor for `amount` sats at `limit`: uSTX = sats * price / (1e8 * 100)
 (define-private (floor-out (amount uint) (limit uint))
   (/ (* amount limit) (* PRICE_PRECISION DECIMAL_FACTOR))
+)
+
+;; one router sale per cooldown; stamps the height on the way through
+(define-private (cooldown-tick)
+  (begin
+    (asserts! (>= burn-block-height (+ (var-get last-router-swap) (var-get router-cooldown-blocks))) ERR_COOLDOWN)
+    (ok (var-set last-router-swap burn-block-height))
+  )
 )
 
 (define-private (check-amount (amount uint))
