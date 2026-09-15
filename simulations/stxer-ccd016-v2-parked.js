@@ -14,27 +14,29 @@
 // from its real updater key with the Lazer prices, so Pyth and DIA agree.
 //
 // The vault PARKED on the v6 book. v6 never refunds a maker on a full
-// side, it parks the loser (the core's size rule parks the smallest
-// ordinary maker when a bigger newcomer arrives and no price rule applies).
-// The open region is 40 makers (50 slots minus the 10 seats the market
-// reserves for band rungs): 39 fillers rest 2,000 sats each, the vault
-// rests 1,000 (the market minimum), a 5,000-sat newcomer arrives: the vault
-// is parked.
-//   P1 status shows jing-parked 1000 (the side is 40 makers, 50 minus 10 seats), jing-resting 0, not empty
+// side, it parks the loser. Since 2026-09-14 (jing d1b32bd) an in-range
+// resident can only be parked by a bigger IN-RANGE newcomer when nobody on
+// the side is out of range (the core's size rule among everyone); an
+// out-of-range newcomer fights inside the out-of-range region only. So the
+// book here is all in range: the open region is 40 makers (50 slots minus
+// the 10 seats the market reserves for band rungs), 39 fillers rest
+// 2,000-sat zero-spread pegs, the vault rests 1,000 (the market minimum),
+// a 5,000-sat in-range newcomer arrives: the vault, smallest, is parked.
+//   P1 status shows jing-parked 1000, jing-resting 0, not empty
 //   P2 the DAO reclaims mid-window: the parked amount comes home
-//   P3 jing-place again on the full side: the zero-spread peg is IN RANGE,
-//      so v6 lets it in and demotes an out-of-range filler; a fresh
-//      5,000-sat out-of-range maker then parks the vault again (size rule)
+//   P3 jing-place again on the full in-range side with the smallest size:
+//      the market refuses (u1010), the sats stay home; a filler leaves,
+//      jing-place lands; a fresh in-range 5,000 parks the vault again
 //   P4 Sonic Mast's case: a stranger readmits the vault's parked sats
 //      through the market's readmit-token-x once there is room: back on
 //      the book at the mid, harmless
-//   P5 window elapses, the newcomer parks it once more, jing-reclaim by
-//      anyone brings the PARKED amount home, empty, clock cleared by the
-//      router-swap that sells it
+//   P5 another fresh in-range maker parks it once more, the window
+//      elapses, jing-reclaim by anyone brings the PARKED amount home,
+//      router-swap sells it, empty, clock cleared
 // Run: PYTH_API_KEY=<key> node simulations/stxer-ccd016-v2-coverage.js
 import fs from "node:fs";
 import {
-  ClarityVersion, uintCV, boolCV, noneCV, listCV, tupleCV, stringAsciiCV, bufferCV, trueCV, falseCV,
+  ClarityVersion, uintCV, boolCV, noneCV, someCV, listCV, tupleCV, stringAsciiCV, bufferCV, trueCV, falseCV,
   contractPrincipalCV, standardPrincipalCV, deserializeCV, cvToString, getAddressFromPrivateKey,
 } from "@stacks/transactions";
 import { SimulationBuilder, getSimulationResult } from "stxer";
@@ -162,7 +164,8 @@ async function main() {
   tx("proxy allows sBTC on the treasury (idempotent)", DEPLOYER, PROXY_ID, "allow-sbtc", [], ok);
   const status = (label, want) => ev(label, VAULT_ID, "(get-status)", want);
   const clock = (label, want) => ev(label, VAULT_ID, "(get-clock)", want);
-  const ASK = (MID * 102n) / 100n; // the fillers' fixed ask, 2% over the mid: out of range, never crossed here
+  const FLOOR9 = (MID * 90n) / 100n; // every filler and newcomer is a zero-spread peg (some u0), floor 10% under: in range at the mid
+  const PEG = (sats) => [uintCV(sats), uintCV(FLOOR9), someCV(uintCV(0)), UPD, sbtcT, stringAsciiCV("sbtc-token")];
   const sbtcXfer = (label, to, sats) => tx(label, SBTC_WHALE, SBTC, "transfer", [uintCV(sats), standardPrincipalCV(SBTC_WHALE), to, noneCV()], "(ok true)");
 
   // ---- P0 the vault rests 1,000 sats, 49 fillers 2,000 each: the side is full ----
@@ -171,13 +174,13 @@ async function main() {
   tx("P0 stranger jing-place: 1,000 sats rest as the peg", STRANGER, VAULT_ID, "jing-place", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   for (const [i, f] of FILLERS.slice(0, 39).entries()) {
     sbtcXfer(`P0 fund filler ${i + 1}`, standardPrincipalCV(f), FILL);
-    tx(`P0 filler ${i + 1} rests 2,000 sats at mid + 2%`, f, MKT_ID, "deposit-token-x", [uintCV(FILL), uintCV(ASK), noneCV(), UPD, sbtcT, stringAsciiCV("sbtc-token")], `(ok u${FILL})`);
+    tx(`P0 filler ${i + 1} rests a 2,000-sat peg at the mid`, f, MKT_ID, "deposit-token-x", PEG(FILL), `(ok u${FILL})`);
   }
   ev("P0 x side full: 40 makers (50 minus 10 reserved seats)", MKT_ID, "(len (get-token-x-depositors u0))", "u40");
   status("P0 vault: 1,000 resting", (v) => field(v, "jing-resting") === `u${FUND}` && field(v, "jing-parked") === "u0");
 
-  // ---- P1 a bigger newcomer: the size rule parks the smallest, the vault ----
-  tx("P1 newcomer (whale) deposits 5,000 sats at mid + 2% on the full side", SBTC_WHALE, MKT_ID, "deposit-token-x", [uintCV(5_000), uintCV(ASK), noneCV(), UPD, sbtcT, stringAsciiCV("sbtc-token")], "(ok u5000)");
+  // ---- P1 a bigger in-range newcomer, nobody out of range: the core's size rule parks the smallest, the vault ----
+  tx("P1 newcomer (whale) rests a 5,000-sat peg at the mid on the full side", SBTC_WHALE, MKT_ID, "deposit-token-x", PEG(5_000n), "(ok u5000)");
   ev("P1 the vault is parked with its 1,000 sats", MKT_ID, `(get-token-x-parked '${VAULT_ID})`, `u${FUND}`);
   ev("P1 nothing of the vault rests", MKT_ID, `(get-token-x-deposit u0 '${VAULT_ID})`, "u0");
   status("P1 status: parked 1,000, resting 0, not empty", (v) => field(v, "jing-parked") === `u${FUND}` && field(v, "jing-resting") === "u0" && field(v, "sbtc-balance") === "u0" && field(v, "empty") === "false");
@@ -188,13 +191,16 @@ async function main() {
   tx("P2 proxy dao-reclaim: the parked amount comes home", DEPLOYER, PROXY_ID, "reclaim", [], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   status("P2 1,000 home, parked 0", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "jing-parked") === "u0" && field(v, "jing-resting") === "u0");
 
-  // ---- P3 re-place on the full side: an in-range peg gets in, a fresh out-of-range maker parks it again ----
-  tx("P3 jing-place again on the full side: the peg is IN RANGE, v6 lets it in and demotes an out-of-range filler", STRANGER, VAULT_ID, "jing-place", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND})`));
+  // ---- P3 re-place on the full in-range side ----
+  tx("P3 jing-place again: the smallest size on a full in-range side -> the market refuses (u1010), sats stay home", STRANGER, VAULT_ID, "jing-place", [UPD], "(err u1010)");
+  status("P3 1,000 still home", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "jing-resting") === "u0");
+  tx("P3 filler 3 cancels: room", FILLERS[2], MKT_ID, "cancel-token-x-deposit", [sbtcT, stringAsciiCV("sbtc-token")], (v) => ok(v));
+  tx("P3 jing-place lands", STRANGER, VAULT_ID, "jing-place", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   status("P3 1,000 resting again", (v) => field(v, "jing-resting") === `u${FUND}` && field(v, "sbtc-balance") === "u0");
-  ev("P3 x side still 40", MKT_ID, "(len (get-token-x-depositors u0))", "u40");
+  ev("P3 x side 40 again", MKT_ID, "(len (get-token-x-depositors u0))", "u40");
   const NEW1 = FILLERS[39], NEW2 = FILLERS[40];
   sbtcXfer("P3 fund a fresh maker", standardPrincipalCV(NEW1), 5_000n);
-  tx("P3 a fresh 5,000-sat maker at mid + 2%: out of range, no price edge, the size rule parks the smallest: the vault", NEW1, MKT_ID, "deposit-token-x", [uintCV(5_000), uintCV(ASK), noneCV(), UPD, sbtcT, stringAsciiCV("sbtc-token")], "(ok u5000)");
+  tx("P3 a fresh 5,000-sat peg at the mid: in range, nobody out of range, the size rule parks the smallest: the vault", NEW1, MKT_ID, "deposit-token-x", PEG(5_000n), "(ok u5000)");
   status("P3 parked 1,000 once more", (v) => field(v, "jing-parked") === `u${FUND}` && field(v, "jing-resting") === "u0");
 
   // ---- P4 Sonic Mast: a stranger readmits the vault's parked sats ----
@@ -206,7 +212,7 @@ async function main() {
 
   // ---- P5 elapse, park again, permissionless reclaim of a PARKED amount ----
   sbtcXfer("P5 fund another fresh maker", standardPrincipalCV(NEW2), 5_000n);
-  tx("P5 another fresh 5,000-sat maker: the vault is parked a third time", NEW2, MKT_ID, "deposit-token-x", [uintCV(5_000), uintCV(ASK), noneCV(), UPD, sbtcT, stringAsciiCV("sbtc-token")], "(ok u5000)");
+  tx("P5 another fresh 5,000-sat peg at the mid: the vault is parked a third time", NEW2, MKT_ID, "deposit-token-x", PEG(5_000n), "(ok u5000)");
   status("P5 parked 1,000", (v) => field(v, "jing-parked") === `u${FUND}`);
   tx("P5 proxy set-window-blocks 1", DEPLOYER, PROXY_ID, "set-window", [uintCV(1)], "(ok true)");
   advance(2);
