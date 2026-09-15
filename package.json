@@ -9,7 +9,10 @@
     "sim:ccd015": "node simulations/stxer-ccd015-oracle-coverage.js",
     "sim:ccd016": "node simulations/stxer-ccd016-v2-coverage.js",
     "test:report": "vitest run -- --coverage --costs",
-    "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\""
+    "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\"",
+    "rv:build": "bash tests/rv/build.sh all",
+    "rv:ccd015": "rv . ccd015-redemption-book-mia-stx invariant --runs=500",
+    "rv:ccd016": "rv . ccd016-swap-vault-mia-v2 invariant --runs=500"
   },
   "author": "",
   "license": "ISC",
@@ -25,5 +28,8 @@
     "vite": "^7.1.4",
     "vitest": "^3.2.4",
     "vitest-environment-clarinet": "^2.3.0"
+  },
+  "devDependencies": {
+    "@stacks/rendezvous": "^1.0.0-rc.1"
   }
 }

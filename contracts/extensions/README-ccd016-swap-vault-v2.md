@@ -67,6 +67,22 @@ Lazer prices.
 | `300972c447b57a5f486942d0d5c52b5b` | 49/49 | `simulations/stxer-ccd016-v2-happy-path.js` (`PYTH_API_KEY`), the HAPPY PATH twice: batch 1 funded (window opens), placed, a 400 STX taker buys the whole 100k-sat batch at the mid in the patience phase (a second maker rests 1M sats at mid + 1% behind the vault, as a real book would; v6 refuses a partial fill), the vault is empty of sBTC with STX home, `fuel-fair-book` sends the STX to the book and clears the clock; batch 2 funded (a SECOND window, fresh batch-start), placed, a 1-sat funding while it rests opens nothing, the window elapses, `jing-reclaim` by anyone, `router-swap` by anyone sells the whole batch at the floor (unsold 0), the exit clears the clock, `fuel-fair-book`; batch 3 funded: a THIRD window opens, placed |
 | `9d1f78cd39feb2416da23dba34e5b669` | 67/67 | `simulations/stxer-ccd016-v2-clock-keyless.js`, no Pyth key, the CLOCK alone: funding an empty vault opens (`opened true`), a top-up while open joins, elapse, 1 sat to the treasury + fund-from-treasury on the leftovers pulls the sat and opens nothing (still elapsed), close-batch refused while not empty (u16043), recall empties the vault and clears the clock, close-batch with no clock u16032, the next funding opens fresh, a plain transfer into the empty vault has no clock of its own (reclaim u16031) and joins the next funding, which opens, recall clears again; then the DIA escape hatch (steps 60-68): `contracts/proposals/ccip027-ccd016-dia-band-off.clar` deployed, a stranger calling its `execute` directly is refused by the vault (u16000), an enabled extension runs it through the real base-dao `execute` and the band goes 1000 -> 0, the same proposal again is refused by base-dao (u901, already executed), a restore proposal puts 1000 back |
 
+## Property fuzzing (Rendezvous, 2026-09-15)
+
+`tests/rv/` fuzzes the vault and the ccd015 STX book on the jing v6 fuzz
+stack (the market with settlement live through a mock Lazer oracle, a mock
+treasury, a mock router that buys at the mid, a mock DIA that echoes the
+mid times a skew): random call sequences from ten accounts, invariants
+checked after each. Book, 7 invariants (sorted, MIA and STX conservation,
+burn matches the token, one offer per owner, bounded, entries in range),
+500 runs, real movement on every path (place, change, cancel, cross-book,
+update-par). Vault, 6 (clock flags, dials inside their caps, cooldown
+stamp, the resting order is a zero-spread peg with a guard), 500 runs.
+Zero falsified invariants. The vault's own book paths are thin under pure
+randomness (the window elapses inside most runs); the fork harnesses above
+cover those end to end. `npm run rv:build`, `npm run rv:ccd015`, `npm run
+rv:ccd016`; details in `tests/rv/README.md`.
+
 ## What a liquidation looks like on chain, fee by fee (sim `e2e2c16b…`)
 
 `router-swap` 100,000 sats by a stranger, a 200 STX bid resting at the mid
