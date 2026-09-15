@@ -3,7 +3,7 @@
 // (0.3.0: zero-spread peg on markets-sbtc-stx-jing-v6, community = three
 // steps, DAO = the precise tools). Nothing of the next Jing stack is on
 // mainnet, so the fork deploys it first under chavita from the jing repo
-// sources (JING_SRC): jing-core-v5, markets-sbtc-stx-jing-v6 (ONE sim-only
+// sources (JING_SRC): jing-core-v5, jing-ladder, markets-sbtc-stx-jing-v6 (ONE sim-only
 // patch: MAX_STALENESS widened so the single real Lazer update survives the
 // block advance), swap-router-sbtc-stx-jing-v5. Then the ccd015 STX book and
 // the vault at the same deployer (the vault binds the book relatively).
@@ -44,7 +44,7 @@ const SBTC = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
 const WSTX = "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2";
 const DIA = `${DIA_UPDATER}.dia-oracle`;
 
-const CORE = "jing-core-v5", MKT = "markets-sbtc-stx-jing-v6", ROUTER = "swap-router-sbtc-stx-jing-v5";
+const CORE = "jing-core-v5", LADDER = "jing-ladder", MKT = "markets-sbtc-stx-jing-v6", ROUTER = "swap-router-sbtc-stx-jing-v5";
 const BOOK = "ccd015-redemption-book-mia-stx", VAULT = "ccd016-swap-vault-mia-v2", PROXY = "sim-dao-proxy";
 const CORE_ID = `${DEPLOYER}.${CORE}`, MKT_ID = `${DEPLOYER}.${MKT}`, BOOK_ID = `${DEPLOYER}.${BOOK}`, VAULT_ID = `${DEPLOYER}.${VAULT}`, PROXY_ID = `${DEPLOYER}.${PROXY}`;
 const [sbtcAddr, sbtcName] = SBTC.split("."), [wstxAddr, wstxName] = WSTX.split("."), [trAddr, trName] = REWARDS_TREASURY.split(".");
@@ -106,7 +106,7 @@ async function main() {
   console.log(`Lazer mid ${MID} (1 STX ~ ${(10n ** 16n) / MID} sats); DIA impersonated with the same prices; tip ${tip.height}`);
 
   // sources
-  const coreSrc = src(`${JING_SRC}/${CORE}.clar`);
+  const coreSrc = src(`${JING_SRC}/${CORE}.clar`), ladderSrc = src(`${JING_SRC}/${LADDER}.clar`);
   let mktSrc = src(`${JING_SRC}/${MKT}.clar`);
   if (!mktSrc.includes("(define-constant MAX_STALENESS u80)")) throw new Error("MAX_STALENESS anchor missing");
   mktSrc = mktSrc.replace("(define-constant MAX_STALENESS u80)", "(define-constant MAX_STALENESS u999999999)");
@@ -138,7 +138,7 @@ async function main() {
   const ok = (v) => String(v).startsWith("(ok");
 
   // ---- S0 the stack ----
-  deploy(CORE, coreSrc); deploy(MKT, mktSrc);
+  deploy(CORE, coreSrc); deploy(LADDER, ladderSrc); deploy(MKT, mktSrc); // v6 reads the ladder for the protected seats
   tx("core-v5 verifies market v6", DEPLOYER, CORE_ID, "set-verified-contract", [contractPrincipalCV(DEPLOYER, MKT)], "(ok true)");
   tx("market v6 initialize", DEPLOYER, MKT_ID, "initialize", [contractPrincipalCV(DEPLOYER, MKT), sbtcT, wstxT, uintCV(1000), uintCV(1_000_000), uintCV(1), uintCV(45)], "(ok true)");
   deploy(ROUTER, routerSrc);

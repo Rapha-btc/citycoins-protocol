@@ -58,6 +58,51 @@ Lazer prices.
 | `8821da4c7e090564582a4fbfa62c3476` | 61/61 | fund-from-treasury opens the window; jing-place in two chunks rests `(some u0)` with floor = mid - 5% and price = mid; take / router-swap / reclaim refused while open, refloor DAO-only and working, setters gated and range-checked; a 100 STX taker fills the vault at the mid with the exact STX received (net - 10 bps + the whole rebate) and the peg rolls with its rule; fuel-fair-book moves exactly that to the book; the window elapses by proposal + block advance; reclaim by anyone; router-swap by anyone at the floor (pools), chunk cap enforced; a DAO take against a resting bid fills at the mid; recall to the treasury by proposal only; idle at the end |
 | `5df232a3282ec928cfb1b6536fe7b3d0` | 58/61 | 2026-09-13 rerun against jing v6 at `b606103` (the deploy set after bounty mtxs6nxg7a6d97081b11: parked-swap refusal, sentinel skips, switched-off refusal, `distance-slots` with the N-best-prices region, demotion and one park path). No contract change here: the vault only calls deposit / cancel / withdraw / readmit and the router's swap, whose signatures are unchanged, and it already treats a parked position as resting. Every vault-on-book step is green. The three misses are S7 "router-swap 300k sats at the floor (book empty: pools)" and the two checks that follow it: the router's `u3002` min-out guard, because the AMM pools at that day's fork tip could not return the vault's floor for 300k sats. Same 58/61 with the same three misses on the pre-bounty source `f04ebb5` (`20e8e8246ee6e019e92c047ee6a57a56`), so it is the market, not the change. Rerun S7 on a day the pools sit near mid, or size it under the pools' depth at the floor |
 
+| `b3c85f0afca647d9b0c4d88f38f6afa2` | 61/61 | 2026-09-14 rerun on the source at 32f4a63 (bounty round below: the clock opens only from an empty vault, `jing-place` places the whole balance, `is-empty`, `close-batch`), jing v6 at d9ee89e (the harness now deploys `jing-ladder` before the market, which reads it for the protected seats). S7 green again: the pools sat near mid |
+| `f95fe162f0cf4269621f436240a00100` | 59/59 | `simulations/stxer-ccd016-v2-clock-keyless.js`, no Pyth key, the CLOCK alone on 32f4a63: funding an empty vault opens (`opened true`), a top-up while open joins, start-clock refused while a batch is on the clock (u16042), elapse, start-clock on leftovers refused, 1 sat to the treasury + fund-from-treasury pulls the sat and opens nothing, close-batch refused while not empty, recall clears the clock, the next funding opens fresh, a plain transfer into the empty vault starts one clock once, second refused, recall clears again |
+
+## Audit bounty mu0oy1vzf432efb13c31 (10,500 sats, 2026-09-14): four submissions, verdicts, fixes
+
+Source only, at `84451ea`+. Every finding was read against the source one at
+a time. No winner picked yet: the bounty runs until it closes and later
+entries get the same treatment. Nothing here is deployed.
+
+| # | Submitter | Finding | Holds | Rating filed | Decision |
+|---|-----------|---------|-------|--------------|----------|
+| 1 | Patient Reed / apeirs | `start-clock` re-arms the window for free after every elapse (it checked only "not idle" and "window not open"); same via 1 sat to the treasury + `fund-from-treasury`. Reclaim, router-swap and take stay u16031 forever: the permissionless liquidation never comes | yes | MEDIUM | **Fixed** (`32f4a63`, section 1). Leading submission: first, exact, with the fund path named. No funds at risk, the DAO could still reclaim or recall by proposal, but "nobody holds a key" needs the liquidation reachable by anyone. |
+| 2 | Celestial Mast | `fund-from-treasury` re-arms an expired window while the vault holds the old batch (22/22 fork run) | yes | availability | Duplicate of 1's second path, seven hours later. Same fix. |
+| 3 | Glowing Key | `jing-place` is permissionless and rewrites the floor of the whole merged position from a caller-chosen Lazer update; for 1 sat anyone re-floors the batch at a dip mid × 0.95 and takes it at the dip. Fix proposed: a monotonic floor | yes, as read | MEDIUM-HIGH | **Rejected, by design.** The fill is at the market's verified mid, DIA-banded; nobody fakes the price and the taker buys a real dip like any taker. The floor is a policy guard ("do not sell into a wick"), not a security bound, and with the mid verified a lower floor only decides whether the vault sells at the real price or sits unsold, which is the job. A min on `jing-place` would only price the call and strand the last chunk. Follow-up: `jing-refloor` opens to anyone, so nobody needs the 1-sat trick to wake a switched-off peg. `jing-place` now places the whole balance (no amount argument), which was never needed. |
+| 4 | Sonic Mast | Market `readmit-token-x` takes any `who`: anyone re-rests the vault's parked sats after the window elapsed, no DAO gate | yes | LOW-MEDIUM | **No change.** The peg fills at the verified mid, better than the liquidation floor, and `jing-reclaim` still works. Whether the market should let anyone readmit anyone is a Jing question (bounty mu0ox53v1fae7181582b). |
+
+### 1. The clock opens only from an empty vault (fixed 32f4a63)
+
+Before: `open-window` set `batch-start` whenever no window was open, and
+`start-clock` asked only "not idle" and "not window-open". Leftovers of an
+elapsed batch satisfied both, so one call every 288 blocks kept the
+patience phase alive and the liquidation phase never arrived; a 1-sat
+transfer to the treasury plus `fund-from-treasury` did the same.
+
+After, one rule: a batch opens only when the vault is EMPTY (no sats home,
+none on the book). `fund-from-treasury` reads `is-empty` BEFORE the pull and
+opens a window only then (`opened` in the event); otherwise the sats join
+whatever phase the batch is in and the clock does not move. `start-clock`
+requires no batch on the clock at all (u16042 `ERR_BATCH_ACTIVE`): it is
+for sats that landed by plain transfer in an empty vault. The exit that
+empties the vault clears the clock (`close-if-empty` in `jing-take`,
+`router-swap`, `router-swap-split`, `dao-recall-sbtc`, and in
+`fuel-fair-book`, since a batch the book sold out has no exit call here and
+its proceeds are what the community flushes). `close-batch` (anyone) is the
+manual version for an empty vault whose clock still shows.
+
+Consequence, accepted: rewards landing next to an elapsed batch's leftovers
+skip the patience phase and go straight to liquidation until the vault is
+empty again. Anyone clears that with `jing-reclaim` + `router-swap`; if the
+book has no bids at mid AND every pool sits more than 1% under mid, the
+leftover waits for the pools (blocks) or for a DAO take or recall, which
+also clears the clock. Never permanent. `is-idle` was renamed `is-empty`
+(the status field `empty`) since it means "no sBTC anywhere", not "nothing
+happening".
+
 Prior v2 cut (fixed ask at mid - leeway, `jing-reprice`) is superseded; the
 fixed ask and the zero-spread peg fill in the same cycles, the peg only
 differs after a drop past the floor (off instead of resting above the mid).
