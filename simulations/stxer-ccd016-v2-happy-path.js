@@ -173,8 +173,11 @@ async function main() {
   ev("B1 settlement at the mid", MKT_ID, "(get price (unwrap-panic (get-settlement u0)))", `u${MID}`);
   status("B1 sold out: nothing resting, no sats home, STX home, EMPTY", (v) => field(v, "jing-resting") === "u0" && field(v, "sbtc-balance") === "u0" && bare(field(v, "stx-balance")) > 0n && field(v, "empty") === "true");
   clock("B1 the clock still shows (no exit call ran here)", (v) => field(v, "batch-start") !== "none");
-  tx("B1 stranger fuel-fair-book: the STX goes to the book, the clock clears", STRANGER, VAULT_ID, "fuel-fair-book", [], (v) => ok(v) && v.includes(BOOK_ID));
-  clock("B1 clock cleared by the flush", (v) => field(v, "batch-start") === "none" && field(v, "window-open") === "false");
+  tx("B1 stranger close-batch: the vault is empty, the stale clock clears (the sold-out-by-the-book case)", STRANGER, VAULT_ID, "close-batch", [], (v) => ok(v) && v.includes("close-batch"));
+  clock("B1 clock cleared by close-batch", (v) => field(v, "batch-start") === "none" && field(v, "window-open") === "false");
+  tx("B1 close-batch again -> u16032 (no clock)", STRANGER, VAULT_ID, "close-batch", [], "(err u16032)");
+  tx("B1 stranger fuel-fair-book: the STX goes to the book", STRANGER, VAULT_ID, "fuel-fair-book", [], (v) => ok(v) && v.includes(BOOK_ID));
+  clock("B1 clock still clear after the flush", (v) => field(v, "batch-start") === "none" && field(v, "window-open") === "false");
   advance(3);
 
   // ---- B2: batch 2, emptied in the liquidation phase ----

@@ -91,6 +91,12 @@ const PROXY_SRC = `
 (define-public (set-window (blocks uint)) (contract-call? '${VAULT_ID} set-window-blocks blocks))
 (define-public (recall) (contract-call? '${VAULT_ID} dao-recall-sbtc))
 (define-public (set-cooldown (blocks uint)) (contract-call? '${VAULT_ID} set-router-cooldown blocks))
+(define-public (set-leeway (bps uint)) (contract-call? '${VAULT_ID} set-leeway-bps bps))
+(define-public (set-slippage (bps uint)) (contract-call? '${VAULT_ID} set-slippage-bps bps))
+(define-public (set-chunk (sats uint)) (contract-call? '${VAULT_ID} set-max-chunk-sats sats))
+(define-public (set-dia (bps uint)) (contract-call? '${VAULT_ID} set-dia-band-bps bps))
+(define-public (split (amount uint) (jing uint) (dlmm uint) (xyk uint) (velar uint) (update (buff 8192))) (contract-call? '${VAULT_ID} router-swap-split amount jing dlmm xyk velar update))
+(define-public (probe) (ok { clock: (contract-call? '${VAULT_ID} get-clock), config: (contract-call? '${VAULT_ID} get-config), status: (contract-call? '${VAULT_ID} get-status) }))
 `;
 
 let checks = 0, failures = 0;
@@ -154,12 +160,19 @@ async function main() {
   tx("DIA: push the Lazer prices, fresh", DIA_UPDATER, DIA, "set-multiple-values", [diaPush(lz.py, lz.px, FRESH_MS)], "(ok true)");
   ev("S0 config binds market v6 + router v5", VAULT_ID, "(get-config)", (v) => v.includes(MKT_ID) && v.includes(`${DEPLOYER}.${ROUTER}`) && v.includes(BOOK_ID));
   ev("S0 empty", VAULT_ID, "(is-empty)", "true");
+  // trace coverage: a read-only called from a transaction leaves a stxer trace, an eval does not
+  tx("S0 probe (traced): no clock -> batch-start none, window-ends none", DEPLOYER, PROXY_ID, "probe", [], (v) => ok(v) && v.includes("(batch-start none)") && v.includes("(window-ends none)"));
+  tx("S0 jing-place with no clock -> u16030 (window-open reads no clock)", STRANGER, VAULT_ID, "jing-place", [UPD], "(err u16030)");
+  tx("S0 close-batch with no clock -> u16032", STRANGER, VAULT_ID, "close-batch", [], "(err u16032)");
+  tx("S0 callback -> ok", STRANGER, VAULT_ID, "callback", [standardPrincipalCV(STRANGER), bufferCV(Buffer.alloc(0))], "(ok true)");
 
   // ---- S1 funding from the treasury opens the window ----
   tx("S1 sBTC whale sends 1M sats to the rewards treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(FUND), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
   tx("S1 proxy allows sBTC on the treasury (idempotent)", DEPLOYER, PROXY_ID, "allow-sbtc", [], ok);
   tx("S1 stranger fund-from-treasury -> 1M sats into the vault, window opens", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   ev("S1 window open", VAULT_ID, "(window-open)", "true");
+  tx("S1 probe (traced): the clock shows, window-ends some", DEPLOYER, PROXY_ID, "probe", [], (v) => ok(v) && v.includes("(window-open true)") && !v.includes("(window-ends none)"));
+  tx("S1 close-batch while funded -> u16043", STRANGER, VAULT_ID, "close-batch", [], "(err u16043)");
   ev("S1 vault holds 1M sats", VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "empty") === "false");
 
   // ---- S2 the community places, in chunks ----
@@ -179,6 +192,16 @@ async function main() {
   ev("S3 order still a zero-spread peg", MKT_ID, `(get-token-x-order '${VAULT_ID})`, (v) => field(v, "spread-bps") === "(some u0)");
   tx("S3 stranger set-window-blocks -> u16000", STRANGER, VAULT_ID, "set-window-blocks", [uintCV(1)], "(err u16000)");
   tx("S3 proxy set-window-blocks 2000 -> u16033 (cap 1008)", DEPLOYER, PROXY_ID, "set-window", [uintCV(2000)], "(err u16033)");
+  tx("S3 proxy set-leeway-bps 1001 -> u16033 (cap 1000)", DEPLOYER, PROXY_ID, "set-leeway", [uintCV(1001)], "(err u16033)");
+  tx("S3 proxy set-leeway-bps 500 -> ok (unchanged)", DEPLOYER, PROXY_ID, "set-leeway", [uintCV(500)], "(ok true)");
+  tx("S3 proxy set-slippage-bps 1001 -> u16033 (cap 1000)", DEPLOYER, PROXY_ID, "set-slippage", [uintCV(1001)], "(err u16033)");
+  tx("S3 proxy set-slippage-bps 100 -> ok (unchanged)", DEPLOYER, PROXY_ID, "set-slippage", [uintCV(100)], "(ok true)");
+  tx("S3 proxy set-max-chunk-sats 0 -> u16033", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(0)], "(err u16033)");
+  tx("S3 proxy set-max-chunk-sats 1 BTC + 1 -> u16033 (cap 1 BTC)", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(100_000_001)], "(err u16033)");
+  tx("S3 proxy set-max-chunk-sats 0.05 BTC -> ok (unchanged)", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(5_000_000)], "(ok true)");
+  tx("S3 proxy set-dia-band-bps 5001 -> u16033 (cap 5000)", DEPLOYER, PROXY_ID, "set-dia", [uintCV(5001)], "(err u16033)");
+  tx("S3 proxy set-router-cooldown 1 -> ok (unchanged)", DEPLOYER, PROXY_ID, "set-cooldown", [uintCV(1)], "(ok true)");
+  tx("S3 stranger set-leeway-bps -> u16000", STRANGER, VAULT_ID, "set-leeway-bps", [uintCV(500)], "(err u16000)");
 
   // ---- S4 a taker buys the vault's sBTC at the mid ----
   tx(`S4 STX whale sells ${TAKE_STX / 1_000_000n} STX (taker): the vault fills at the mid`, STX_WHALE, MKT_ID, "swap", [uintCV(TAKE_STX), uintCV(HUGE), UPD, sbtcT, stringAsciiCV("sbtc-token"), wstxT, stringAsciiCV("wstx"), falseCV()], ok);
@@ -200,6 +223,7 @@ async function main() {
   advance(2);
   ev("S6 window elapsed", VAULT_ID, "(window-elapsed)", "true");
   tx("S6 jing-place after the window -> u16030", STRANGER, VAULT_ID, "jing-place", [UPD], "(err u16030)");
+  tx(`S6 proxy jing-refloor after the window -> floor = mid - 1% (slippage), not mid - 5% (leeway)`, DEPLOYER, PROXY_ID, "refloor", [UPD], (v) => ok(v) && v.includes(`(floor u${(MID * (BPS - 100n)) / BPS})`));
 
   // ---- S7 liquidation by anyone ----
   tx(`S7 stranger jing-reclaim -> ${FUND - XC} sats home`, STRANGER, VAULT_ID, "jing-reclaim", [], (v) => ok(v) && v.includes(`(amount u${FUND - XC})`));
@@ -231,8 +255,16 @@ async function main() {
   // ---- S8 DAO-only take against a resting bid ----
   tx("S8 STX whale rests a 200 STX bid at the mid", STX_WHALE, MKT_ID, "deposit-token-y", [uintCV(200_000_000), uintCV(HUGE), noneCV(), UPD, wstxT, stringAsciiCV("wstx")], "(ok u200000000)");
   tx("S8 stranger jing-take after the window -> still u16000", STRANGER, VAULT_ID, "jing-take", [uintCV(50_000), UPD], "(err u16000)");
+  tx("S8 proxy set-dia-band-bps 0 -> ok (the ccip027 dial: DIA no longer consulted)", DEPLOYER, PROXY_ID, "set-dia", [uintCV(0)], "(ok true)");
   tx("S8 proxy jing-take 50k sats -> fills at the mid (FOK)", DEPLOYER, PROXY_ID, "take", [uintCV(50_000), UPD], (v) => ok(v) && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
   ev("S8 vault STX from the take", VAULT_ID, "(get-status)", (v) => bare(field(v, "stx-balance")) > 0n);
+
+  // ---- S8b the DAO's explicit split (router-swap-split): mismatch refused, a DLMM-only split sells ----
+  tx("S8b stranger router-swap-split -> u16000", STRANGER, VAULT_ID, "router-swap-split", [uintCV(2000), uintCV(0), uintCV(2000), uintCV(0), uintCV(0), UPD], "(err u16000)");
+  tx("S8b proxy split 2000 = 0 + 1000 + 0 + 0 -> u16040 (mismatch)", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(1000), uintCV(0), uintCV(0), UPD], "(err u16040)");
+  advance(1);
+  tx("S8b proxy split 2000 sats, all to the DLMM -> ok, unsold 0", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(2000), uintCV(0), uintCV(0), UPD], (v) => ok(v) && v.includes("(unsold u0)"));
+  tx("S8b proxy split again in the same burn block -> u16044 (the cooldown is shared)", DEPLOYER, PROXY_ID, "split", [uintCV(1000), uintCV(0), uintCV(1000), uintCV(0), uintCV(0), UPD], "(err u16044)");
 
   // ---- S9 recall: sBTC only ever goes back to the treasury ----
   ev("S9 treasury sats before recall", VAULT_ID, sbtcBal(REWARDS_TREASURY), () => true);
