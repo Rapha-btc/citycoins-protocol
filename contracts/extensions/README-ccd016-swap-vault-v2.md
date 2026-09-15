@@ -59,7 +59,8 @@ Lazer prices.
 | `5df232a3282ec928cfb1b6536fe7b3d0` | 58/61 | 2026-09-13 rerun against jing v6 at `b606103` (the deploy set after bounty mtxs6nxg7a6d97081b11: parked-swap refusal, sentinel skips, switched-off refusal, `distance-slots` with the N-best-prices region, demotion and one park path). No contract change here: the vault only calls deposit / cancel / withdraw / readmit and the router's swap, whose signatures are unchanged, and it already treats a parked position as resting. Every vault-on-book step is green. The three misses are S7 "router-swap 300k sats at the floor (book empty: pools)" and the two checks that follow it: the router's `u3002` min-out guard, because the AMM pools at that day's fork tip could not return the vault's floor for 300k sats. Same 58/61 with the same three misses on the pre-bounty source `f04ebb5` (`20e8e8246ee6e019e92c047ee6a57a56`), so it is the market, not the change. Rerun S7 on a day the pools sit near mid, or size it under the pools' depth at the floor |
 
 | `b3c85f0afca647d9b0c4d88f38f6afa2` | 61/61 | 2026-09-14 rerun on the source at 32f4a63 (bounty round below: the clock opens only from an empty vault, `jing-place` places the whole balance, `is-empty`, `close-batch`), jing v6 at d9ee89e (the harness now deploys `jing-ladder` before the market, which reads it for the protected seats). S7 green again: the pools sat near mid |
-| `f95fe162f0cf4269621f436240a00100` | 59/59 | `simulations/stxer-ccd016-v2-clock-keyless.js`, no Pyth key, the CLOCK alone on 32f4a63: funding an empty vault opens (`opened true`), a top-up while open joins, start-clock refused while a batch is on the clock (u16042), elapse, start-clock on leftovers refused, 1 sat to the treasury + fund-from-treasury pulls the sat and opens nothing, close-batch refused while not empty, recall clears the clock, the next funding opens fresh, a plain transfer into the empty vault starts one clock once, second refused, recall clears again |
+| `04a15e2b93da4ee1c46d4910f716f911` | 60/60 | keyed rerun after `start-clock` was removed (below) |
+| `55e7b7178baabea1516a0186cba36885` | 58/58 | `simulations/stxer-ccd016-v2-clock-keyless.js`, no Pyth key, the CLOCK alone: funding an empty vault opens (`opened true`), a top-up while open joins, elapse, 1 sat to the treasury + fund-from-treasury on the leftovers pulls the sat and opens nothing (still elapsed), close-batch refused while not empty (u16043), recall empties the vault and clears the clock, close-batch with no clock u16032, the next funding opens fresh, a plain transfer into the empty vault has no clock of its own (reclaim u16031) and joins the next funding, which opens, recall clears again |
 
 ## Audit bounty mu0oy1vzf432efb13c31 (10,500 sats, 2026-09-14): four submissions, verdicts, fixes
 
@@ -84,11 +85,12 @@ transfer to the treasury plus `fund-from-treasury` did the same.
 
 After, one rule: a batch opens only when the vault is EMPTY (no sats home,
 none on the book). `fund-from-treasury` reads `is-empty` BEFORE the pull and
-opens a window only then (`opened` in the event); otherwise the sats join
-whatever phase the batch is in and the clock does not move. `start-clock`
-requires no batch on the clock at all (u16042 `ERR_BATCH_ACTIVE`): it is
-for sats that landed by plain transfer in an empty vault. The exit that
-empties the vault clears the clock (`close-if-empty` in `jing-take`,
+opens a window only then, or when no clock is set at all (`opened` in the
+event); otherwise the sats join whatever phase the batch is in and the
+clock does not move. `start-clock` is GONE: it existed for sats that landed
+by plain transfer, and those now simply wait for the next funding, which
+opens the window for them. The exit that empties the vault clears the
+clock (`close-if-empty` in `jing-take`,
 `router-swap`, `router-swap-split`, `dao-recall-sbtc`, and in
 `fuel-fair-book`, since a batch the book sold out has no exit call here and
 its proceeds are what the community flushes). `close-batch` (anyone) is the

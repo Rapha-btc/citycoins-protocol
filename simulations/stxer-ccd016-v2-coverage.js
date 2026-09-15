@@ -156,7 +156,6 @@ async function main() {
   tx("S1 stranger fund-from-treasury -> 1M sats into the vault, window opens", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   ev("S1 window open", VAULT_ID, "(window-open)", "true");
   ev("S1 vault holds 1M sats", VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "empty") === "false");
-  tx("S1 start-clock while a batch is on the clock -> u16042", STRANGER, VAULT_ID, "start-clock", [], "(err u16042)");
 
   // ---- S2 the community places, in chunks ----
   tx("S2 stranger jing-place: the whole 1M", STRANGER, VAULT_ID, "jing-place", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND})`) && v.includes(`(floor u${FLOOR})`));

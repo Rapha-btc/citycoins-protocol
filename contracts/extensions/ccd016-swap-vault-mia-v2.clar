@@ -11,8 +11,8 @@
 ;;   is nothing left for a caller to choose except WHEN, and a clock bounds
 ;;   that too:
 ;;
-;;   1. CLOCK. When sBTC arrives (fund-from-treasury, or a plain transfer
-;;      followed by start-clock) and the vault was empty, a batch opens and a
+;;   1. CLOCK. When fund-from-treasury finds the vault empty (or with no
+;;      clock at all), a batch opens and a
 ;;      window of WINDOW burn blocks starts (default 288 = about two days,
 ;;      cap one week). sBTC arriving while the window is open joins the
 ;;      batch without resetting it; sBTC arriving after it elapsed opens a
@@ -113,7 +113,6 @@
 (define-constant ERR_NO_BLOCK_TIME (err u16038))
 (define-constant ERR_CHUNK_TOO_BIG (err u16039))
 (define-constant ERR_SPLIT_MISMATCH (err u16040))
-(define-constant ERR_BATCH_ACTIVE (err u16042))
 (define-constant ERR_SOME_FUNDS (err u16043))
 
 (define-constant PRICE_PRECISION u100000000)
@@ -164,12 +163,13 @@
 ;; Pyth mid must sit within this of the DIA rate; 0 = DIA check off
 (define-data-var dia-band-bps uint u1000)
 ;; burn height the current batch opened at; none while the vault is empty.
-;; Set only when a batch opens FROM IDLE (funding an empty vault, or
-;; start-clock on sats that landed in an empty vault); cleared by the exit
-;; that empties the vault, or by close-batch. Never moved while a batch is
-;; on the clock, open or elapsed: an elapsed batch's leftovers stay in
-;; liquidation, and sats landing next to them join it (bounty finding: a
-;; free start-clock / 1-sat funding re-armed the window forever).
+;; Set only when funding finds the vault empty (or no clock at all);
+;; cleared by the exit that empties the vault, or by close-batch. Never
+;; moved while a batch is on the clock, open or elapsed: an elapsed batch's
+;; leftovers stay in liquidation, and sats landing next to them join it
+;; (bounty finding: a free start-clock / 1-sat funding re-armed the window
+;; forever; start-clock is gone, a plain transfer waits for the next
+;; funding).
 (define-data-var batch-start (optional uint) none)
 
 ;; PUBLIC FUNCTIONS
@@ -255,7 +255,7 @@
 ;; --- funding (the pipe from the rewards treasury) ---------------------------
 
 ;; Pull the rewards treasury's entire sBTC balance into the vault and open a
-;; batch if the vault was empty. Permissionless and argumentless: a caller
+;; batch if the vault was empty (or had no clock). Permissionless and argumentless: a caller
 ;; controls neither amount nor destination. Requires this contract to be an
 ;; enabled extension (the treasury gates withdraw-ft on is-dao-or-extension)
 ;; and sBTC on the treasury's allowlist - both set by the enabling proposal.
@@ -265,8 +265,10 @@
         (contract-call? SBTC_TOKEN get-balance REWARDS_TREASURY)
         ERR_NO_BUDGET
       ))
-      ;; read BEFORE the pull: only an empty vault opens a batch
-      (empty (is-empty))
+      ;; read BEFORE the pull: a batch opens only when the vault was empty,
+      ;; or when nothing is on the clock at all (sats that landed by plain
+      ;; transfer have no window of their own; they join this batch)
+      (empty (or (is-empty) (is-none (var-get batch-start))))
     )
     (asserts! (> amount u0) ERR_NO_BUDGET)
     (try! (contract-call? REWARDS_TREASURY withdraw-ft
@@ -276,19 +278,6 @@
     (ok (print { notification: "fund-from-treasury", payload: {
       amount: amount, opened: empty, batch-start: (var-get batch-start),
     } }))
-  )
-)
-
-;; sBTC that arrived by plain transfer in an EMPTY vault has no window;
-;; anyone opens one. Refused while a batch is on the clock (open or
-;; elapsed), so it cannot reset a clock: sats landing next to an old
-;; batch's leftovers join that batch's phase.
-(define-public (start-clock)
-  (begin
-    (asserts! (not (is-empty)) ERR_NO_FUNDS)
-    (asserts! (is-none (var-get batch-start)) ERR_BATCH_ACTIVE)
-    (open-window)
-    (ok (unwrap-panic (var-get batch-start)))
   )
 )
 

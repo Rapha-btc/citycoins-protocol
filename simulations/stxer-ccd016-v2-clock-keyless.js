@@ -7,13 +7,13 @@
 // update); the sats stay home, the window is shortened by proposal and the
 // chain advanced, and every clock path is exercised on the leftovers.
 //
-// Covers: funding an empty vault opens the window (opened true); start-clock
-// refused while a batch is on the clock (u16042); window elapse; start-clock
-// on elapsed leftovers refused; 1 sat to the treasury + fund-from-treasury
-// pulls the sat and opens nothing (still elapsed); close-batch refused while
-// not empty; recall empties the vault and clears the clock; close-batch with
-// no clock u16032; a plain transfer into the empty vault: start-clock once,
-// second refused; recall clears again; fuel-fair-book with nothing u16006.
+// Covers: funding an empty vault opens the window (opened true); a top-up
+// while open joins; window elapse; 1 sat to the treasury + fund-from-treasury
+// on the leftovers pulls the sat and opens nothing (still elapsed);
+// close-batch refused while not empty; recall empties the vault and clears
+// the clock; close-batch with no clock u16032; the next funding opens fresh;
+// a plain transfer into the empty vault has no clock (reclaim u16031) and
+// joins the next funding, which opens; recall clears again.
 //
 // Run: node simulations/stxer-ccd016-v2-clock-keyless.js
 import fs from "node:fs";
@@ -108,7 +108,6 @@ async function main() {
   patch(BASE_DAO, baseDaoPatched, "patch base-dao: vault + proxy are extensions", ClarityVersion.Clarity2);
   ev("S0 empty", VAULT_ID, "(is-empty)", "true");
   ev("S0 no clock", VAULT_ID, "(get-clock)", (v) => field(v, "batch-start") === "none" && field(v, "window-open") === "false" && field(v, "window-elapsed") === "false");
-  tx("S0 start-clock when empty -> u16006", STRANGER, VAULT_ID, "start-clock", [], "(err u16006)");
   tx("S0 close-batch with no clock -> u16032", STRANGER, VAULT_ID, "close-batch", [], "(err u16032)");
 
   // ---- S1 funding an empty vault opens the window ----
@@ -117,7 +116,6 @@ async function main() {
   tx("S1 stranger fund-from-treasury -> 1M sats in, window opens (vault was empty)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND})`) && v.includes("(opened true)"));
   const c1 = ev("S1 clock: open", VAULT_ID, "(get-clock)", (v) => field(v, "window-open") === "true" && field(v, "window-elapsed") === "false");
   status("S1 1M home, not empty", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "empty") === "false");
-  tx("S1 start-clock while a batch is on the clock -> u16042", STRANGER, VAULT_ID, "start-clock", [], "(err u16042)");
   tx("S1 a top-up while open: 100 sats to the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(100), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
   tx("S1 fund-from-treasury while open -> joins, opens nothing", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(amount u100)") && v.includes("(opened false)"));
   const c1b = ev("S1 clock unchanged by the top-up", VAULT_ID, "(get-clock)", (v) => field(v, "window-open") === "true");
@@ -130,8 +128,7 @@ async function main() {
   status("S2 1,000,100 home, not empty", (v) => field(v, "sbtc-balance") === `u${FUND + 100n}` && field(v, "empty") === "false");
 
   // ---- S3 the re-arm (Reed / Mast): refused on leftovers ----
-  tx("S3 start-clock on elapsed leftovers -> u16042 (was: re-armed 288 blocks, forever)", STRANGER, VAULT_ID, "start-clock", [], "(err u16042)");
-  ev("S3 still elapsed", VAULT_ID, "(window-elapsed)", "true");
+  ev("S3 start-clock is gone: no function to re-arm with", VAULT_ID, "(window-elapsed)", "true");
   tx("S3 1 sat lands in the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(1), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
   tx("S3 fund-from-treasury on a non-empty vault -> pulls the sat, opens nothing (was: re-armed)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(amount u1)") && v.includes("(opened false)"));
   ev("S3 still elapsed: the sat joined the liquidation phase", VAULT_ID, "(window-elapsed)", "true");
@@ -155,17 +152,19 @@ async function main() {
   tx("S5 proxy recall again -> ok, clock clears", DEPLOYER, PROXY_ID, "recall", [], ok);
   ev("S5 clock cleared", VAULT_ID, "(get-clock)", (v) => field(v, "batch-start") === "none");
 
-  // ---- S6 a plain transfer into an EMPTY vault: anyone starts the clock, once ----
+  // ---- S6 a plain transfer into an EMPTY vault: no clock of its own, it joins the next funding ----
   tx("S6 whale sends 1000 sats straight to the empty vault", SBTC_WHALE, SBTC, "transfer", [uintCV(1000), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(DEPLOYER, VAULT), noneCV()], "(ok true)");
-  ev("S6 no clock yet", VAULT_ID, "(window-open)", "false");
-  tx("S6 stranger start-clock -> ok", STRANGER, VAULT_ID, "start-clock", [], ok);
+  ev("S6 no clock: neither open nor elapsed", VAULT_ID, "(get-clock)", (v) => field(v, "batch-start") === "none" && field(v, "window-open") === "false" && field(v, "window-elapsed") === "false");
+  tx("S6 reclaim with no clock -> u16031", STRANGER, VAULT_ID, "jing-reclaim", [], "(err u16031)");
+  tx("S6 close-batch while not empty -> u16043", STRANGER, VAULT_ID, "close-batch", [], "(err u16043)");
+  tx("S6 200 sats land in the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(200), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
+  tx("S6 fund-from-treasury: vault not empty but no clock -> opens (the stray sats join)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND + 301n})`) && v.includes("(opened true)")); // the treasury still holds S5's recalled sats
   ev("S6 window open", VAULT_ID, "(window-open)", "true");
-  tx("S6 start-clock again -> u16042", STRANGER, VAULT_ID, "start-clock", [], "(err u16042)");
+  status("S6 1,001,301 home", (v) => field(v, "sbtc-balance") === `u${FUND + 1301n}`);
   tx("S6 proxy set-window-blocks 1", DEPLOYER, PROXY_ID, "set-window", [uintCV(1)], "(ok true)");
   advance(2);
   ev("S6 elapsed", VAULT_ID, "(window-elapsed)", "true");
-  tx("S6 start-clock on the elapsed plain-transfer batch -> u16042", STRANGER, VAULT_ID, "start-clock", [], "(err u16042)");
-  tx("S6 proxy recall -> ok, the clock clears with the vault", DEPLOYER, PROXY_ID, "recall", [], (v) => ok(v) && v.includes("(amount u1000)"));
+  tx("S6 proxy recall -> ok, the clock clears with the vault", DEPLOYER, PROXY_ID, "recall", [], (v) => ok(v) && v.includes(`(amount u${FUND + 1301n})`));
   ev("S6 clock cleared, empty", VAULT_ID, "(get-clock)", (v) => field(v, "batch-start") === "none");
   ev("S6 empty", VAULT_ID, "(is-empty)", "true");
 
