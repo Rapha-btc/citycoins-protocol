@@ -114,6 +114,7 @@
 (define-constant ERR_CHUNK_TOO_BIG (err u16039))
 (define-constant ERR_SPLIT_MISMATCH (err u16040))
 (define-constant ERR_BATCH_ACTIVE (err u16042))
+(define-constant ERR_SOME_FUNDS (err u16043))
 
 (define-constant PRICE_PRECISION u100000000)
 (define-constant DECIMAL_FACTOR u100)
@@ -296,7 +297,7 @@
 ;; it so the next sats open a fresh window.
 (define-public (close-batch)
   (begin
-    (asserts! (is-empty) ERR_NO_FUNDS)
+    (asserts! (is-empty) ERR_SOME_FUNDS)
     (asserts! (is-some (var-get batch-start)) ERR_NO_CLOCK)
     (var-set batch-start none)
     (ok (print { notification: "close-batch", payload: { burn-height: burn-block-height } }))

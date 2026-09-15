@@ -109,7 +109,7 @@ async function main() {
   ev("S0 empty", VAULT_ID, "(is-empty)", "true");
   ev("S0 no clock", VAULT_ID, "(get-clock)", (v) => field(v, "batch-start") === "none" && field(v, "window-open") === "false" && field(v, "window-elapsed") === "false");
   tx("S0 start-clock when empty -> u16006", STRANGER, VAULT_ID, "start-clock", [], "(err u16006)");
-  tx("S0 close-batch with no clock -> u16006 (empty check first)", STRANGER, VAULT_ID, "close-batch", [], "(err u16032)");
+  tx("S0 close-batch with no clock -> u16032", STRANGER, VAULT_ID, "close-batch", [], "(err u16032)");
 
   // ---- S1 funding an empty vault opens the window ----
   tx("S1 sBTC whale sends 1M sats to the rewards treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(FUND), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
@@ -136,7 +136,7 @@ async function main() {
   tx("S3 fund-from-treasury on a non-empty vault -> pulls the sat, opens nothing (was: re-armed)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(amount u1)") && v.includes("(opened false)"));
   ev("S3 still elapsed: the sat joined the liquidation phase", VAULT_ID, "(window-elapsed)", "true");
   status("S3 1,000,101 home", (v) => field(v, "sbtc-balance") === `u${FUND + 101n}`);
-  tx("S3 close-batch while not empty -> u16006", STRANGER, VAULT_ID, "close-batch", [], "(err u16006)");
+  tx("S3 close-batch while not empty -> u16043", STRANGER, VAULT_ID, "close-batch", [], "(err u16043)");
   tx("S3 jing-reclaim with nothing on the book -> the market's refusal (nothing to cancel)", STRANGER, VAULT_ID, "jing-reclaim", [], (v) => String(v).startsWith("(err"));
 
   // ---- S4 recall empties the vault and clears the clock ----
