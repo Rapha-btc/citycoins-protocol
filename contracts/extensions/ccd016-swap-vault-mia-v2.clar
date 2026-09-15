@@ -12,7 +12,7 @@
 ;;   that too:
 ;;
 ;;   1. CLOCK. When sBTC arrives (fund-from-treasury, or a plain transfer
-;;      followed by start-clock) and the vault was idle, a batch opens and a
+;;      followed by start-clock) and the vault was empty, a batch opens and a
 ;;      window of WINDOW burn blocks starts (default 288 = about two days,
 ;;      cap one week). sBTC arriving while the window is open joins the
 ;;      batch without resetting it; sBTC arriving after it elapsed opens a
@@ -113,6 +113,7 @@
 (define-constant ERR_NO_BLOCK_TIME (err u16038))
 (define-constant ERR_CHUNK_TOO_BIG (err u16039))
 (define-constant ERR_SPLIT_MISMATCH (err u16040))
+(define-constant ERR_BATCH_ACTIVE (err u16042))
 
 (define-constant PRICE_PRECISION u100000000)
 (define-constant DECIMAL_FACTOR u100)
@@ -161,9 +162,13 @@
 (define-data-var max-chunk-sats uint u5000000)
 ;; Pyth mid must sit within this of the DIA rate; 0 = DIA check off
 (define-data-var dia-band-bps uint u1000)
-;; burn height the current batch opened at; none until the first funding.
-;; Set on funding when no window is open (none, or elapsed); never moved
-;; while a window is open.
+;; burn height the current batch opened at; none while the vault is empty.
+;; Set only when a batch opens FROM IDLE (funding an empty vault, or
+;; start-clock on sats that landed in an empty vault); cleared by the exit
+;; that empties the vault, or by close-batch. Never moved while a batch is
+;; on the clock, open or elapsed: an elapsed batch's leftovers stay in
+;; liquidation, and sats landing next to them join it (bounty finding: a
+;; free start-clock / 1-sat funding re-armed the window forever).
 (define-data-var batch-start (optional uint) none)
 
 ;; PUBLIC FUNCTIONS
@@ -234,6 +239,7 @@
     (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC balance))
       (try! (contract-call? SBTC_TOKEN transfer balance current-contract REWARDS_TREASURY none))
     ))
+    (close-if-empty)
     (ok (print { notification: "dao-recall-sbtc", payload: { amount: balance } }))
   )
 )
@@ -248,34 +254,52 @@
 ;; --- funding (the pipe from the rewards treasury) ---------------------------
 
 ;; Pull the rewards treasury's entire sBTC balance into the vault and open a
-;; batch if the vault was idle. Permissionless and argumentless: a caller
+;; batch if the vault was empty. Permissionless and argumentless: a caller
 ;; controls neither amount nor destination. Requires this contract to be an
 ;; enabled extension (the treasury gates withdraw-ft on is-dao-or-extension)
 ;; and sBTC on the treasury's allowlist - both set by the enabling proposal.
 (define-public (fund-from-treasury)
-  (let ((amount (unwrap!
-      (contract-call? SBTC_TOKEN get-balance REWARDS_TREASURY)
-      ERR_NO_BUDGET
-    )))
+  (let (
+      (amount (unwrap!
+        (contract-call? SBTC_TOKEN get-balance REWARDS_TREASURY)
+        ERR_NO_BUDGET
+      ))
+      ;; read BEFORE the pull: only an empty vault opens a batch
+      (empty (is-empty))
+    )
     (asserts! (> amount u0) ERR_NO_BUDGET)
     (try! (contract-call? REWARDS_TREASURY withdraw-ft
       'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token amount current-contract
     ))
-    (open-window)
+    (and empty (open-window))
     (ok (print { notification: "fund-from-treasury", payload: {
-      amount: amount, batch-start: (var-get batch-start),
+      amount: amount, opened: empty, batch-start: (var-get batch-start),
     } }))
   )
 )
 
-;; sBTC that arrived by plain transfer has no window; anyone opens one.
-;; Refused while a window is open, so this cannot be used to reset a clock.
+;; sBTC that arrived by plain transfer in an EMPTY vault has no window;
+;; anyone opens one. Refused while a batch is on the clock (open or
+;; elapsed), so it cannot reset a clock: sats landing next to an old
+;; batch's leftovers join that batch's phase.
 (define-public (start-clock)
   (begin
-    (asserts! (not (is-idle)) ERR_NO_FUNDS)
-    (asserts! (not (window-open)) ERR_WINDOW_OPEN)
+    (asserts! (not (is-empty)) ERR_NO_FUNDS)
+    (asserts! (is-none (var-get batch-start)) ERR_BATCH_ACTIVE)
     (open-window)
     (ok (unwrap-panic (var-get batch-start)))
+  )
+)
+
+;; The batch is over (the vault is empty) but its clock still shows, which
+;; happens when the book sold it out with no exit call here: anyone clears
+;; it so the next sats open a fresh window.
+(define-public (close-batch)
+  (begin
+    (asserts! (is-empty) ERR_NO_FUNDS)
+    (asserts! (is-some (var-get batch-start)) ERR_NO_CLOCK)
+    (var-set batch-start none)
+    (ok (print { notification: "close-batch", payload: { burn-height: burn-block-height } }))
   )
 )
 
@@ -289,23 +313,26 @@
     (try! (as-contract? ((with-stx balance))
       (try! (stx-transfer? balance current-contract STX_FAIR_BOOK))
     ))
+    ;; a batch the book sold out has no exit call here: its proceeds do
+    (close-if-empty)
     (ok (print { notification: "fuel-fair-book", payload: { amount: balance, book: STX_FAIR_BOOK } }))
   )
 )
 
 ;; --- patience phase: Jing maker-first (window open) -------------------------
 
-;; Rest `amount` sats on the Jing book as a zero-spread peg: at the mid every
+;; Rest the vault's whole sBTC balance on the Jing book as a zero-spread peg: at the mid every
 ;; settlement, off while the mid is under the floor mid * (1 - leeway) taken
 ;; now. The market refuses a resting order that live bids already cross
 ;; (ERR_MUST_USE_SWAP u1016): retry once they clear. Merges into an existing
 ;; resting or parked position (v6 folds a parked amount back in) and
 ;; refreshes the floor.
-(define-public (jing-place
-    (amount uint)
-    (update (buff 8192))
-  )
-  (let ((floor (ask-of (try! (current-mid update)))))
+(define-public (jing-place (update (buff 8192)))
+  (let (
+      (floor (ask-of (try! (current-mid update))))
+      ;; the whole balance, always: a caller chooses nothing but WHEN
+      (amount (sbtc-balance))
+    )
     (asserts! (window-open) ERR_WINDOW_CLOSED)
     (try! (check-amount amount))
     (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount))
@@ -360,6 +387,7 @@
           SBTC_TOKEN ASSET_SBTC WSTX_TOKEN ASSET_WSTX true
         ))
       ))))
+      (close-if-empty)
       (ok (print { notification: "jing-take", payload: {
         amount: amount, limit-price: limit, out: (get token-y-received result),
       } }))
@@ -404,6 +432,7 @@
           (some update) mid min-out
         ))
       ))))
+      (close-if-empty)
       (ok (print { notification: "router-swap", payload: {
         amount: amount, limit-price: limit, mid: mid,
         out: (get out result), unsold: (get unsold result),
@@ -451,6 +480,7 @@
           (+ (floor-out (+ jing dlmm xyk) limit) (floor-out velar velar-limit))
         ))
       ))))
+      (close-if-empty)
       (ok (print { notification: "router-swap-split", payload: {
         amount: amount, jing: jing, dlmm: dlmm, xyk: xyk, velar: velar, limit-price: limit, velar-limit: velar-limit, mid: mid,
         out: (get out result), unsold: (get unsold result),
@@ -499,7 +529,7 @@
       stx-balance: (stx-get-balance current-contract),
       jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-deposit cycle current-contract),
       jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-parked current-contract),
-      idle: (is-idle),
+      empty: (is-empty),
       ;; sBTC still sitting in the rewards treasury, claimable via fund-from-treasury
       pending-treasury-sats: (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token get-balance REWARDS_TREASURY)),
     }
@@ -507,7 +537,7 @@
 )
 
 ;; Nothing to sell and nothing resting: the next funding opens a new batch.
-(define-read-only (is-idle)
+(define-read-only (is-empty)
   (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-current-cycle)))
     (and
       (is-eq (sbtc-balance) u0)
@@ -568,14 +598,14 @@
   (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token get-balance current-contract))
 )
 
-;; On funding: open a window when none is open (no clock, or elapsed). A
-;; window that is still open is never moved, so a mid-batch top-up cannot
-;; stretch the patience phase.
+;; A batch opens now. Callers check the vault was empty first.
 (define-private (open-window)
-  (if (window-open)
-    true
-    (var-set batch-start (some burn-block-height))
-  )
+  (var-set batch-start (some burn-block-height))
+)
+
+;; After an exit: an empty vault has no batch on the clock.
+(define-private (close-if-empty)
+  (and (is-empty) (var-set batch-start none))
 )
 
 ;; The mid the market would settle at right now, from a signed Lazer update

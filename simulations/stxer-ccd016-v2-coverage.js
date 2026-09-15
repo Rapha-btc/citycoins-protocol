@@ -13,13 +13,13 @@
 // and for a proxy contract that plays a passed proposal. DIA is impersonated
 // from its real updater key with the Lazer prices, so Pyth and DIA agree.
 //
-// Covers: fund-from-treasury opens the window; jing-place in two chunks rests
+// Covers: fund-from-treasury opens the window; jing-place (whole balance) rests
 // a zero-spread peg (order (some u0), floor = mid - leeway, price = mid);
 // window gates (take / router-swap / reclaim refused, refloor DAO-only and
 // working); a taker fills the vault at the mid (exact STX received); fuel-
 // fair-book; window elapse by proposal + block advance; reclaim by anyone;
 // router-swap by anyone at the floor; DAO-only take against a resting bid;
-// setters gated and range-checked; recall to the treasury; idle.
+// setters gated and range-checked; recall to the treasury; empty.
 //
 // Run: PYTH_API_KEY=<key> node simulations/stxer-ccd016-v2-coverage.js
 import fs from "node:fs";
@@ -148,20 +148,19 @@ async function main() {
   patch(BASE_DAO, baseDaoPatched, "patch base-dao: is-extension true for the vault + proxy", ClarityVersion.Clarity1);
   tx("DIA: push the Lazer prices, fresh", DIA_UPDATER, DIA, "set-multiple-values", [diaPush(lz.py, lz.px, FRESH_MS)], "(ok true)");
   ev("S0 config binds market v6 + router v5", VAULT_ID, "(get-config)", (v) => v.includes(MKT_ID) && v.includes(`${DEPLOYER}.${ROUTER}`) && v.includes(BOOK_ID));
-  ev("S0 idle", VAULT_ID, "(is-idle)", "true");
+  ev("S0 empty", VAULT_ID, "(is-empty)", "true");
 
   // ---- S1 funding from the treasury opens the window ----
   tx("S1 sBTC whale sends 1M sats to the rewards treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(FUND), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
   tx("S1 proxy allows sBTC on the treasury (idempotent)", DEPLOYER, PROXY_ID, "allow-sbtc", [], ok);
   tx("S1 stranger fund-from-treasury -> 1M sats into the vault, window opens", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   ev("S1 window open", VAULT_ID, "(window-open)", "true");
-  ev("S1 vault holds 1M sats", VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "idle") === "false");
-  tx("S1 start-clock while open -> u16031", STRANGER, VAULT_ID, "start-clock", [], "(err u16031)");
+  ev("S1 vault holds 1M sats", VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "empty") === "false");
+  tx("S1 start-clock while a batch is on the clock -> u16042", STRANGER, VAULT_ID, "start-clock", [], "(err u16042)");
 
   // ---- S2 the community places, in chunks ----
-  tx("S2 stranger jing-place 400k", STRANGER, VAULT_ID, "jing-place", [uintCV(400_000), UPD], (v) => ok(v) && v.includes(`(floor u${FLOOR})`));
-  tx("S2 stranger jing-place 600k (merges)", STRANGER, VAULT_ID, "jing-place", [uintCV(600_000), UPD], ok);
-  tx("S2 jing-place more than the vault holds -> u16006", STRANGER, VAULT_ID, "jing-place", [uintCV(1), UPD], "(err u16006)");
+  tx("S2 stranger jing-place: the whole 1M", STRANGER, VAULT_ID, "jing-place", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND})`) && v.includes(`(floor u${FLOOR})`));
+  tx("S2 jing-place again with 0 home -> u16006", STRANGER, VAULT_ID, "jing-place", [UPD], "(err u16006)");
   ev("S2 market order: zero-spread peg, floor = mid - 5%", MKT_ID, `(get-token-x-order '${VAULT_ID})`, (v) => field(v, "spread-bps") === "(some u0)" && field(v, "limit") === `u${FLOOR}`);
   ev("S2 the vault's price is the mid", MKT_ID, `(token-x-limit-at '${VAULT_ID} u${MID})`, `u${MID}`);
   ev("S2 status: 1M resting, 0 home", VAULT_ID, "(get-status)", (v) => field(v, "jing-resting") === `u${FUND}` && field(v, "sbtc-balance") === "u0");
@@ -196,7 +195,7 @@ async function main() {
   tx("S6 proxy set-window-blocks 1", DEPLOYER, PROXY_ID, "set-window", [uintCV(1)], "(ok true)");
   advance(2);
   ev("S6 window elapsed", VAULT_ID, "(window-elapsed)", "true");
-  tx("S6 jing-place after the window -> u16030", STRANGER, VAULT_ID, "jing-place", [uintCV(1000), UPD], "(err u16030)");
+  tx("S6 jing-place after the window -> u16030", STRANGER, VAULT_ID, "jing-place", [UPD], "(err u16030)");
 
   // ---- S7 liquidation by anyone ----
   tx(`S7 stranger jing-reclaim -> ${FUND - XC} sats home`, STRANGER, VAULT_ID, "jing-reclaim", [], (v) => ok(v) && v.includes(`(amount u${FUND - XC})`));
@@ -221,7 +220,7 @@ async function main() {
   const trAfter = plan[plan.length - 1];
   ev("S9 vault sats 0", VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === "u0");
   tx("S9 stranger fuel-fair-book (the take's STX)", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
-  ev("S9 idle again", VAULT_ID, "(is-idle)", "true");
+  ev("S9 empty again", VAULT_ID, "(is-empty)", "true");
 
   // ---- run ----
   const sid = await b.run();
