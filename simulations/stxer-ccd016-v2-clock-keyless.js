@@ -48,7 +48,9 @@ const sbtcT = contractPrincipalCV(sbtcAddr, sbtcName), wstxT = contractPrincipal
 const FUND = 1_000_000n; // sats into the treasury, then the vault
 const Q = FUND / 4n;
 const NO_UPDATE = bufferCV(Buffer.from("00", "hex"));
-const src = (f) => fs.readFileSync(f, "utf8");
+// comment-only lines stripped: the jing v6 market is over the 100,000-byte
+// deploy limit with its comments (the deploy form is stripped too)
+const src = (f) => fs.readFileSync(f, "utf8").split("\n").filter((l) => !/^\s*;;/.test(l)).join("\n");
 const sbtcBal = (a) => `(contract-call? '${SBTC} get-balance '${a})`;
 const decodeTx = (s) => { const r = s?.Result?.Transaction; if (!r) return "<no tx>"; if ("Err" in r) return `ENGINE-ERR: ${JSON.stringify(r.Err).slice(0, 200)}`; if (r.Ok?.vm_error) return `VM-ERR: ${r.Ok.vm_error}`; try { return cvToString(deserializeCV(r.Ok.result)); } catch (e) { return `decode-failed: ${e.message}`; } };
 const decodeEval = (s) => { const r = s?.Result?.Eval; if (!r) return "<no eval>"; if (!("Ok" in r)) return `ERR: ${JSON.stringify(r.Err).slice(0, 200)}`; try { return cvToString(deserializeCV(r.Ok)); } catch { return r.Ok; } };
