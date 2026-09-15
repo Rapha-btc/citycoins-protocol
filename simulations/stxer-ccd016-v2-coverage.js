@@ -18,7 +18,9 @@
 // window gates (take / router-swap / reclaim refused, refloor DAO-only and
 // working); a taker fills the vault at the mid (exact STX received); fuel-
 // fair-book; window elapse by proposal + block advance; reclaim by anyone;
-// router-swap by anyone at the floor; DAO-only take against a resting bid;
+// router-swap by anyone at the floor (pools), then again with a bid resting
+// so the router's BOOK leg fills at the mid and the market settles; DAO-only
+// take against a resting bid;
 // setters gated and range-checked; recall to the treasury; empty.
 //
 // Run: PYTH_API_KEY=<key> node simulations/stxer-ccd016-v2-coverage.js
@@ -204,6 +206,17 @@ async function main() {
   ev("S7 vault got STX from the pools", VAULT_ID, "(get-status)", (v) => bare(field(v, "stx-balance")) > 0n);
   tx("S7 stranger fuel-fair-book again", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
 
+  // ---- S7b the router's BOOK leg: a bid rests at the mid, router-swap fills it there first ----
+  const cyc0 = ev("S7b market cycle before", MKT_ID, "(get-current-cycle)", () => true);
+  const whaleSats0 = ev("S7b the bidder's sats before", VAULT_ID, sbtcBal(STX_WHALE), () => true);
+  tx("S7b STX whale rests a 200 STX bid at the mid", STX_WHALE, MKT_ID, "deposit-token-y", [uintCV(200_000_000), uintCV(HUGE), noneCV(), UPD, wstxT, stringAsciiCV("wstx")], "(ok u200000000)");
+  const stxBefore7b = ev("S7b vault STX before", VAULT_ID, "(stx-get-balance '" + VAULT_ID + ")", () => true);
+  tx("S7b stranger router-swap 100k sats: the book leg takes the bid at the mid, the rest goes to the pools, unsold 0", STRANGER, VAULT_ID, "router-swap", [uintCV(100_000), UPD], (v) => ok(v) && v.includes("(unsold u0)"));
+  const cyc1 = ev("S7b market cycle after: the book settled", MKT_ID, "(get-current-cycle)", () => true);
+  const whaleSats1 = ev("S7b the bidder's sats after: it bought the vault's sBTC", VAULT_ID, sbtcBal(STX_WHALE), () => true);
+  const stxAfter7b = ev("S7b vault STX after", VAULT_ID, "(stx-get-balance '" + VAULT_ID + ")", () => true);
+  tx("S7b stranger fuel-fair-book", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
+
   // ---- S8 DAO-only take against a resting bid ----
   tx("S8 STX whale rests a 200 STX bid at the mid", STX_WHALE, MKT_ID, "deposit-token-y", [uintCV(200_000_000), uintCV(HUGE), noneCV(), UPD, wstxT, stringAsciiCV("wstx")], "(ok u200000000)");
   tx("S8 stranger jing-take after the window -> still u16000", STRANGER, VAULT_ID, "jing-take", [uintCV(50_000), UPD], "(err u16000)");
@@ -241,6 +254,9 @@ async function main() {
   }
   check(`S5 the book received exactly ${STX_TO_VAULT} uSTX`, bare(bookAfter.raw) - bare(bookBefore.raw), (d) => d === STX_TO_VAULT);
   check("S9 the treasury received the recalled sats", bare(trAfter.raw) - bare(trBefore.raw), (d) => d > 0n);
+  check("S7b the market settled one cycle through the router's book leg", bare(cyc1.raw) - bare(cyc0.raw), (d) => d === 1n);
+  check("S7b the bidder received sBTC from the book leg", bare(whaleSats1.raw) - bare(whaleSats0.raw), (d) => d > 0n);
+  check("S7b the vault received STX for the chunk", bare(stxAfter7b.raw) - bare(stxBefore7b.raw), (d) => d > 0n);
   console.log(`\n${checks - failures}/${checks} checks green`);
   if (failures > 0) process.exit(1);
 }
