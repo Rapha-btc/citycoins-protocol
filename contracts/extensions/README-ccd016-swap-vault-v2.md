@@ -65,6 +65,30 @@ Lazer prices.
 | `300972c447b57a5f486942d0d5c52b5b` | 49/49 | `simulations/stxer-ccd016-v2-happy-path.js` (`PYTH_API_KEY`), the HAPPY PATH twice: batch 1 funded (window opens), placed, a 400 STX taker buys the whole 100k-sat batch at the mid in the patience phase (a second maker rests 1M sats at mid + 1% behind the vault, as a real book would; v6 refuses a partial fill), the vault is empty of sBTC with STX home, `fuel-fair-book` sends the STX to the book and clears the clock; batch 2 funded (a SECOND window, fresh batch-start), placed, a 1-sat funding while it rests opens nothing, the window elapses, `jing-reclaim` by anyone, `router-swap` by anyone sells the whole batch at the floor (unsold 0), the exit clears the clock, `fuel-fair-book`; batch 3 funded: a THIRD window opens, placed |
 | `55e7b7178baabea1516a0186cba36885` | 58/58 | `simulations/stxer-ccd016-v2-clock-keyless.js`, no Pyth key, the CLOCK alone: funding an empty vault opens (`opened true`), a top-up while open joins, elapse, 1 sat to the treasury + fund-from-treasury on the leftovers pulls the sat and opens nothing (still elapsed), close-batch refused while not empty (u16043), recall empties the vault and clears the clock, close-batch with no clock u16032, the next funding opens fresh, a plain transfer into the empty vault has no clock of its own (reclaim u16031) and joins the next funding, which opens, recall clears again |
 
+## What a liquidation looks like on chain, fee by fee (sim `e2e2c16b…`)
+
+`router-swap` 100,000 sats by a stranger, a 200 STX bid resting at the mid
+(tx `59f12386…` in the sim):
+
+| leg | sats in | out | fees |
+|---|---|---|---|
+| Jing book, taker | 67,981 = 67,846 order + 135 taker escrow (20 bps) | 199.797884 STX | escrow split: 67 sats protocol fee (10 bps) + 68 sats rebate to the bidder; the bidder pays 0.199997 STX (10 bps) to the protocol; 0.002119 STX dust back to the bidder |
+| Bitflow DLMM, bin 366 | 32,019 | 93.865825 STX | 160 sats pool fees |
+| total | 100,000 | 293.663709 STX, unsold 0 | |
+
+The market settles cycle 1 at the oracle mid, the bidder receives 67,914
+sats (67,846 + 68), the protocol fee recipient 67 sats and 0.199997 STX.
+Effective 340.5 sats per STX against a mid of 339.2: the book leg fills at
+the mid and the maker pays the STX-side fee. The router log says it all:
+`jing-in 67981, jing-out 199797884, dlmm-in 32019, dlmm-out 93865825,
+xyk 0, velar 0, unsold 0`.
+
+`jing-take` 50,000 sats by the DAO against the same kind of bid (tx
+`0586a2f2…`): 49,900 order + 100 escrow in; cycle 2 settles at the mid;
+the bidder gets 49,951 sats (49,900 + 51 rebate), the protocol 49 sats and
+0.147096 STX; the vault gets 146.949184 STX; the bid's unspent 52.903720
+STX rolls into the next cycle. 340.3 sats per STX.
+
 ## Audit bounty mu0oy1vzf432efb13c31 (10,500 sats, 2026-09-14): four submissions, verdicts, fixes
 
 Source only, at `84451ea`+. Every finding was read against the source one at
