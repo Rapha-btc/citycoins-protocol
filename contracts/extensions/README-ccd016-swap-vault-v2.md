@@ -94,8 +94,10 @@ STX rolls into the next cycle. 340.3 sats per STX.
 ## Audit bounty mu0oy1vzf432efb13c31 (10,500 sats, 2026-09-14): four submissions, verdicts, fixes
 
 Source only, at `84451ea`+. Every finding was read against the source one at
-a time. No winner picked yet: the bounty runs until it closes and later
-entries get the same treatment. Nothing here is deployed.
+a time. **Paid 2026-09-15 to Patient Reed / apeirs** (submission
+`mu0zoma224a949991206`, SP3BB5BAT…), 10,500 sats sBTC, tx
+`cda7ff2f60557491764e776286162883b80893fceb8caed81465ebe2e7a298c6`, bounty
+status `paid`. Nothing here is deployed.
 
 | # | Submitter | Finding | Holds | Rating filed | Decision |
 |---|-----------|---------|-------|--------------|----------|
