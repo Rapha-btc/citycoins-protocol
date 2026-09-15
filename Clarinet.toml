@@ -723,7 +723,7 @@ clarity_version = 5
 epoch = 3.4
 
 
-[contracts.ccip-ccd016-dia-band-off]
-path = "contracts/proposals/ccip-ccd016-dia-band-off.clar"
+[contracts.ccip027-ccd016-dia-band-off]
+path = "contracts/proposals/ccip027-ccd016-dia-band-off.clar"
 clarity_version = 5
 epoch = 4.0

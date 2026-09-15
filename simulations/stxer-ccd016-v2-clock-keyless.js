@@ -14,7 +14,7 @@
 // the clock; close-batch with no clock u16032; the next funding opens fresh;
 // a plain transfer into the empty vault has no clock (reclaim u16031) and
 // joins the next funding, which opens; recall clears again; the DIA
-// escape-hatch proposal (contracts/proposals/ccip-ccd016-dia-band-off.clar)
+// escape-hatch proposal (contracts/proposals/ccip027-ccd016-dia-band-off.clar)
 // executed through the real base-dao execute by an enabled extension sets
 // the band to 0, a stranger cannot, a restore proposal puts 1000 back.
 //
@@ -94,7 +94,7 @@ async function main() {
   const mktSrc = src(`${JING_SRC}/${MKT}.clar`), routerSrc = src(`${JING_SRC}/${ROUTER}.clar`);
   const bookSrc = src(`./contracts/extensions/${BOOK}.clar`);
   const vaultSrc = src(`./contracts/extensions/${VAULT}.clar`);
-  const PROP = "ccip-ccd016-dia-band-off", PROP_ID = `${DEPLOYER}.${PROP}`, RESTORE = "ccip-ccd016-dia-band-restore", RESTORE_ID = `${DEPLOYER}.${RESTORE}`;
+  const PROP = "ccip027-ccd016-dia-band-off", PROP_ID = `${DEPLOYER}.${PROP}`, RESTORE = "ccip-ccd016-dia-band-restore", RESTORE_ID = `${DEPLOYER}.${RESTORE}`;
   const propSrc = src(`./contracts/proposals/${PROP}.clar`);
   if (!propSrc.includes(".ccd016-swap-vault-mia-v2 set-dia-band-bps u0")) throw new Error("proposal does not set the band to 0");
   const baseDaoSrc = (await fetchJson(`/extended/v1/contract/${BASE_DAO}`)).source_code;

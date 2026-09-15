@@ -1,4 +1,4 @@
-;; Title: CCD016 swap vault: trust Lazer alone (DIA band off)
+;; Title: CCIP-027 - CCD016 swap vault: trust Lazer alone (DIA band off)
 ;; Escape hatch, not a routine: run only if the DIA push oracle goes stale or
 ;; silent for long enough that the vault's patience window would burn with
 ;; nothing on the book (jing-place cannot price without DIA while the band
