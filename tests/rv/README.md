@@ -1,4 +1,16 @@
-# Rendezvous (RV) property fuzzing: Solution 2
+# Rendezvous property testing
+
+Current vault verification (2026-09-18) uses the self-contained
+[full-source vault harness](../vault/README.md), replacing the older vault build
+below. Run `npm run rv:ccd016 -- --seed=20260918 --bail` or build with
+`npm run rv:vault:build` and run `npm run rv:vault -- --seed=20260918 --bail`.
+`rv:build` builds the old book target and the new vault target. The vault no longer
+needs a sibling Jing checkout. Rendezvous is now 1.0.3; its `update-context`
+callback is private. The old root vault-only manifest is historical.
+
+## Historical results and harness (2026-09-15)
+
+### Previous Solution 2 harness
 
 `@stacks/rendezvous@1.0.0-rc.1` harness for the STX book
 (`ccd015-redemption-book-mia-stx`) and the keeperless vault

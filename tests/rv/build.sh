@@ -111,12 +111,10 @@ PYEOF
 target="${1:-all}"
 case "$target" in
   all)
-    copy_jing_stack
-    for name in "${!SUTS[@]}"; do build_one "$name"; done ;;
-  ccd016-swap-vault-mia-v2)
-    copy_jing_stack
     build_one ccd015-redemption-book-mia-stx
-    build_one "$target" ;;
+    python3 tests/vault/build.py --rv ;;
+  ccd016-swap-vault-mia-v2)
+    python3 tests/vault/build.py --rv ;;
   *)
     build_one "$target" ;;
 esac

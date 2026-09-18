@@ -1,3 +1,4 @@
+;; Historical harness. Current canonical invariants: tests/vault/rv.invariants.clar.
 ;; ============================================================================
 ;; RENDEZVOUS INVARIANTS for ccd016-swap-vault-mia-v2 (keeperless one-way
 ;; vault on markets v6)
@@ -19,7 +20,7 @@
 
 (define-map context (string-ascii 100) { called: uint })
 
-(define-public (update-context (function-name (string-ascii 100)) (called uint))
+(define-private (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name { called: called })))
 
 (define-constant RV-MID-BASE u24000000000000)
@@ -105,13 +106,12 @@
       (and (not (window-open)) (not (window-elapsed)))))
 
 ;; ============================================================================
-;; 3: every dial sits inside its governance cap, and the window is never
-;; zero (a zero window would open elapsed).
+;; 3: every dial sits inside its governance cap; zero window is allowed.
 ;; ============================================================================
 
 (define-read-only (invariant-config-in-caps)
-  (and (> (var-get window-blocks) u0)
-       (<= (var-get window-blocks) MAX_WINDOW_BLOCKS)
+  (and (<= (var-get window-blocks) MAX_WINDOW_BLOCKS)
+       (<= (var-get no-pyth-slippage-bps) MAX_NO_PYTH_SLIPPAGE_BPS)
        (<= (var-get leeway-bps) MAX_LEEWAY_BPS)
        (<= (var-get slippage-bps) MAX_SLIPPAGE_BPS)
        (<= (var-get dia-band-bps) MAX_DIA_BAND_BPS)

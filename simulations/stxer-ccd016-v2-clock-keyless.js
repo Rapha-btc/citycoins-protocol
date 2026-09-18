@@ -20,13 +20,14 @@
 //
 // Run: node simulations/stxer-ccd016-v2-clock-keyless.js
 import fs from "node:fs";
+import {createHash} from "node:crypto";
 import {
   ClarityVersion, uintCV, noneCV, stringAsciiCV, bufferCV, trueCV,
   contractPrincipalCV, standardPrincipalCV, deserializeCV, cvToString,
 } from "@stacks/transactions";
 import { SimulationBuilder, getSimulationResult } from "stxer";
 const NODE = process.env.STACKS_API_URL || "http://77.42.3.101/stacks-api";
-const JING_SRC = process.env.JING_SRC || `${process.env.HOME}/projects/jing-contracts-v3/contracts`;
+const JING_SRC = process.env.JING_SRC || `${process.env.HOME}/projects/jingswap/contracts/jing-contracts-v3/contracts`;
 const DEPLOYER = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22"; // chavita: the jing deployer, the rungs, and the vault + book here
 const SBTC_WHALE = "SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2";
 const STRANGER = "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM";
@@ -35,7 +36,7 @@ const BASE_DAO = `${DAO}.base-dao`;
 const REWARDS_TREASURY = `${DAO}.ccd002-treasury-mia-rewards-v3`;
 const SBTC = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
 const WSTX = "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2";
-const CORE = "jing-core-v5", LADDER = "jing-ladder", MKT = "markets-sbtc-stx-jing-v6", ROUTER = "swap-router-sbtc-stx-jing-v5";
+const CORE = "sim-city-core-v5", LADDER = "sim-city-ladder", MKT = "sim-city-market-v6", ROUTER = "sim-city-router-v5";
 const RUNG_SRC_FILE = "jing-buy-stx-core-spread";
 const SPREADS = [0, 10, 20, 30];
 const RUNG = (bps) => `jing-buy-stx-spread-${bps}`;
@@ -50,7 +51,14 @@ const Q = FUND / 4n;
 const NO_UPDATE = bufferCV(Buffer.from("00", "hex"));
 // comment-only lines stripped: the jing v6 market is over the 100,000-byte
 // deploy limit with its comments (the deploy form is stripped too)
-const src = (f) => fs.readFileSync(f, "utf8").split("\n").filter((l) => !/^\s*;;/.test(l)).join("\n");
+// Fresh simulated aliases avoid duplicate contracts now that Jing v6 is deployed.
+const ALIASES = {"jing-core-v5": "sim-city-core-v5", "jing-ladder": "sim-city-ladder", "markets-sbtc-stx-jing-v6": "sim-city-market-v6", "swap-router-sbtc-stx-jing-v5": "sim-city-router-v5"};
+const src = f => {
+ let original=f; for(const [a,b] of Object.entries(ALIASES)) original=original.replace(b,a);
+ let text=fs.readFileSync(original,"utf8").split("\n").filter(l=>!/^\s*;;/.test(l)).join("\n");
+ for(const [a,b] of Object.entries(ALIASES)) text=text.replaceAll(a,b);
+ return text;
+};
 const sbtcBal = (a) => `(contract-call? '${SBTC} get-balance '${a})`;
 const decodeTx = (s) => { const r = s?.Result?.Transaction; if (!r) return "<no tx>"; if ("Err" in r) return `ENGINE-ERR: ${JSON.stringify(r.Err).slice(0, 200)}`; if (r.Ok?.vm_error) return `VM-ERR: ${r.Ok.vm_error}`; try { return cvToString(deserializeCV(r.Ok.result)); } catch (e) { return `decode-failed: ${e.message}`; } };
 const decodeEval = (s) => { const r = s?.Result?.Eval; if (!r) return "<no eval>"; if (!("Ok" in r)) return `ERR: ${JSON.stringify(r.Err).slice(0, 200)}`; try { return cvToString(deserializeCV(r.Ok)); } catch { return r.Ok; } };
@@ -107,7 +115,7 @@ async function main() {
   // ---- builder with a plan ----
   const plan = [];
   let b = SimulationBuilder.new({ stacksNodeAPI: NODE });
-  const deploy = (name, code, cv = ClarityVersion.Clarity5) => { b = b.withSender(DEPLOYER).addContractDeploy({ contract_name: name, source_code: code, clarity_version: cv }); plan.push({ kind: "deploy", label: `deploy ${name}` }); };
+  const deploy = (name, code, cv = ClarityVersion.Clarity6) => { b = b.withSender(DEPLOYER).addContractDeploy({ contract_name: name, source_code: code, clarity_version: cv }); plan.push({ kind: "deploy", label: `deploy ${name}` }); };
   const patch = (cid, code, label, cv) => { b = b.addSetContractCode({ contract_id: cid, source_code: code, clarity_version: cv }); plan.push({ kind: "patch", label }); };
   const tx = (label, sender, cid, fn, args, want) => { b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); plan.push({ kind: "tx", label, want }); };
   const ev = (label, cid, code, want) => { b = b.addEvalCode(cid, code); const slot = { kind: "eval", label, want }; plan.push(slot); return slot; };
@@ -218,6 +226,8 @@ async function main() {
   }
   check(`S4 the treasury received exactly ${FUND + 101n} sats`, bare(trAfter.raw) - bare(trBefore.raw), (d) => d === FUND + 101n);
   console.log(`\n${checks - failures}/${checks} checks green`);
+  fs.mkdirSync("simulations/results/ccd016-v2",{recursive:true});
+  fs.writeFileSync("simulations/results/ccd016-v2/clock-keyless.json", JSON.stringify({simulationId:sid, checks, failures, simulationRewrites:{dependencyAliases:ALIASES,commentsStripped:true,marketStalenessWidened:false}, sourceHash:createHash("sha256").update(fs.readFileSync("contracts/extensions/ccd016-swap-vault-mia-v2.clar")).digest("hex"), plan:plan.map(({want,...p})=>p), result:res},null,2)+"\n");
   if (failures > 0) process.exit(1);
 }
 main().catch((e) => { console.error(e); process.exit(1); });

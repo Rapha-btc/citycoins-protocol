@@ -1,11 +1,11 @@
 // stxer-ccd016-v2-coverage.js
 // SELF-VERIFYING stxer mainnet-fork harness for ccd016-swap-vault-mia-v2
-// (0.3.0: zero-spread peg on markets-sbtc-stx-jing-v6, community = three
+// (0.3.0: zero-spread peg on sim-city-market-v6, community = three
 // steps, DAO = the precise tools). Nothing of the next Jing stack is on
 // mainnet, so the fork deploys it first under chavita from the jing repo
-// sources (JING_SRC): jing-core-v5, jing-ladder, markets-sbtc-stx-jing-v6 (ONE sim-only
+// sources (JING_SRC): sim-city-core-v5, sim-city-ladder, sim-city-market-v6 (ONE sim-only
 // patch: MAX_STALENESS widened so the single real Lazer update survives the
-// block advance), swap-router-sbtc-stx-jing-v5. Then the ccd015 STX book and
+// block advance), sim-city-router-v5. Then the ccd015 STX book and
 // the vault at the same deployer (the vault binds the book relatively).
 //
 // The DAO gate is simulated as in stxer-ccd015-oracle-coverage.js: base-dao
@@ -25,6 +25,8 @@
 //
 // Run: PYTH_API_KEY=<key> node simulations/stxer-ccd016-v2-coverage.js
 import fs from "node:fs";
+import {createHash} from "node:crypto";
+import {fetchLazerUpdateAny} from "./_vault-lazer.mjs";
 import {
   ClarityVersion, uintCV, boolCV, noneCV, listCV, tupleCV, stringAsciiCV, bufferCV, trueCV, falseCV,
   contractPrincipalCV, standardPrincipalCV, deserializeCV, cvToString,
@@ -32,7 +34,7 @@ import {
 import { SimulationBuilder, getSimulationResult } from "stxer";
 
 const NODE = process.env.STACKS_API_URL || "http://77.42.3.101/stacks-api";
-const JING_SRC = process.env.JING_SRC || `${process.env.HOME}/projects/jing-contracts-v3/contracts`;
+const JING_SRC = process.env.JING_SRC || `${process.env.HOME}/projects/jingswap/contracts/jing-contracts-v3/contracts`;
 
 const DEPLOYER = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22"; // chavita: the jing deployer, and the vault + book here
 const SBTC_WHALE = "SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2";
@@ -46,7 +48,7 @@ const SBTC = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
 const WSTX = "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2";
 const DIA = `${DIA_UPDATER}.dia-oracle`;
 
-const CORE = "jing-core-v5", LADDER = "jing-ladder", MKT = "markets-sbtc-stx-jing-v6", ROUTER = "swap-router-sbtc-stx-jing-v5";
+const CORE = "sim-city-core-v5", LADDER = "sim-city-ladder", MKT = "sim-city-market-v6", ROUTER = "sim-city-router-v5";
 const BOOK = "ccd015-redemption-book-mia-stx", VAULT = "ccd016-swap-vault-mia-v2", PROXY = "sim-dao-proxy";
 const CORE_ID = `${DEPLOYER}.${CORE}`, MKT_ID = `${DEPLOYER}.${MKT}`, BOOK_ID = `${DEPLOYER}.${BOOK}`, VAULT_ID = `${DEPLOYER}.${VAULT}`, PROXY_ID = `${DEPLOYER}.${PROXY}`;
 const [sbtcAddr, sbtcName] = SBTC.split("."), [wstxAddr, wstxName] = WSTX.split("."), [trAddr, trName] = REWARDS_TREASURY.split(".");
@@ -56,7 +58,14 @@ const FUND = 1_000_000n; // sats into the treasury, then the vault
 const TAKE_STX = 100_000_000n; // the taker's gross STX
 // comment-only lines stripped: the jing v6 market is over the 100,000-byte
 // deploy limit with its comments (the deploy form is stripped too)
-const src = (f) => fs.readFileSync(f, "utf8").split("\n").filter((l) => !/^\s*;;/.test(l)).join("\n");
+// Fresh simulated aliases avoid duplicate contracts now that Jing v6 is deployed.
+const ALIASES = {"jing-core-v5": "sim-city-core-v5", "jing-ladder": "sim-city-ladder", "markets-sbtc-stx-jing-v6": "sim-city-market-v6", "swap-router-sbtc-stx-jing-v5": "sim-city-router-v5"};
+const src = f => {
+ let original=f; for(const [a,b] of Object.entries(ALIASES)) original=original.replace(b,a);
+ let text=fs.readFileSync(original,"utf8").split("\n").filter(l=>!/^\s*;;/.test(l)).join("\n");
+ for(const [a,b] of Object.entries(ALIASES)) text=text.replaceAll(a,b);
+ return text;
+};
 const sbtcBal = (a) => `(contract-call? '${SBTC} get-balance '${a})`;
 const decodeTx = (s) => { const r = s?.Result?.Transaction; if (!r) return "<no tx>"; if ("Err" in r) return `ENGINE-ERR: ${JSON.stringify(r.Err).slice(0, 200)}`; if (r.Ok?.vm_error) return `VM-ERR: ${r.Ok.vm_error}`; try { return cvToString(deserializeCV(r.Ok.result)); } catch (e) { return `decode-failed: ${e.message}`; } };
 const decodeEval = (s) => { const r = s?.Result?.Eval; if (!r) return "<no eval>"; if (!("Ok" in r)) return `ERR: ${JSON.stringify(r.Err).slice(0, 200)}`; try { return cvToString(deserializeCV(r.Ok)); } catch { return r.Ok; } };
@@ -65,17 +74,7 @@ const bare = (s) => BigInt((String(s).match(/u(\d+)/) || [])[1] ?? "-1");
 const field = (s, k) => (String(s).match(new RegExp(`\\(${k} (u?\\d+|none|true|false|\\(some u\\d+\\))\\)`)) || [])[1];
 
 async function fetchJson(path) { const r = await fetch(`${NODE}${path}`); if (!r.ok) throw new Error(`${path}: ${r.status}`); return r.json(); }
-async function fetchLazerUpdate() {
-  const key = process.env.PYTH_API_KEY;
-  if (!key) throw new Error("PYTH_API_KEY is required");
-  const r = await fetch("https://pyth-lazer.dourolabs.app/v1/latest_price", { method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
-    body: JSON.stringify({ priceFeedIds: [1, 45], properties: ["price", "exponent", "confidence", "publisherCount", "feedUpdateTimestamp"], formats: ["evm"], channel: "fixed_rate@1000ms", jsonBinaryEncoding: "hex" }) });
-  if (!r.ok) throw new Error(`Lazer ${r.status}: ${(await r.text()).slice(0, 200)}`);
-  const j = await r.json();
-  const f = Object.fromEntries(j.parsed.priceFeeds.map((e) => [e.priceFeedId, e]));
-  return { hex: j.evm.data, px: BigInt(f[1].price), py: BigInt(f[45].price), ts: Number(j.parsed.timestampUs) / 1e6 };
-}
+async function fetchLazerUpdate() { return fetchLazerUpdateAny(); }
 const diaPush = (stxUsd, btcUsd, tsMs) => listCV([
   tupleCV({ key: stringAsciiCV("STX/USD"), value: uintCV(stxUsd), timestamp: uintCV(tsMs) }),
   tupleCV({ key: stringAsciiCV("BTC/USD"), value: uintCV(btcUsd), timestamp: uintCV(tsMs) }),
@@ -141,7 +140,7 @@ async function main() {
   // ---- builder with a plan ----
   const plan = [];
   let b = SimulationBuilder.new({ stacksNodeAPI: NODE });
-  const deploy = (name, code, cv = ClarityVersion.Clarity5) => { b = b.withSender(DEPLOYER).addContractDeploy({ contract_name: name, source_code: code, clarity_version: cv }); plan.push({ kind: "deploy", label: `deploy ${name}` }); };
+  const deploy = (name, code, cv = ClarityVersion.Clarity6) => { b = b.withSender(DEPLOYER).addContractDeploy({ contract_name: name, source_code: code, clarity_version: cv }); plan.push({ kind: "deploy", label: `deploy ${name}` }); };
   const patch = (cid, code, label, cv) => { b = b.addSetContractCode({ contract_id: cid, source_code: code, clarity_version: cv }); plan.push({ kind: "patch", label }); };
   const tx = (label, sender, cid, fn, args, want) => { b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); plan.push({ kind: "tx", label, want }); };
   const ev = (label, cid, code, want) => { b = b.addEvalCode(cid, code); const slot = { kind: "eval", label, want }; plan.push(slot); return slot; };
@@ -301,6 +300,8 @@ async function main() {
   check("S7b the bidder received sBTC from the book leg", bare(whaleSats1.raw) - bare(whaleSats0.raw), (d) => d > 0n);
   check("S7b the vault received STX for the chunk", bare(stxAfter7b.raw) - bare(stxBefore7b.raw), (d) => d > 0n);
   console.log(`\n${checks - failures}/${checks} checks green`);
+  fs.mkdirSync("simulations/results/ccd016-v2",{recursive:true});
+  fs.writeFileSync("simulations/results/ccd016-v2/coverage.json", JSON.stringify({simulationId:sid, checks, failures, simulationRewrites:{dependencyAliases:ALIASES,commentsStripped:true,marketStalenessWidened:true}, sourceHash:createHash("sha256").update(fs.readFileSync("contracts/extensions/ccd016-swap-vault-mia-v2.clar")).digest("hex"), plan:plan.map(({want,...p})=>p), result:res},null,2)+"\n");
   if (failures > 0) process.exit(1);
 }
 main().catch((e) => { console.error(e); process.exit(1); });

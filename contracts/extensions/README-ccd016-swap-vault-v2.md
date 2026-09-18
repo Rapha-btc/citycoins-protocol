@@ -184,3 +184,12 @@ a sale needs `burn-block-height >= last + router-cooldown-blocks` (u16044
 to 144, 0 = off. Between Bitcoin blocks the pools re-arb to the mid.
 `jing-take` is not on the clock: it settles at the oracle mid on the book,
 nothing to sandwich. Covered in the coverage harness (`dc770f07…`, S7).
+
+
+## Current-source verification (2026-09-18)
+
+See the [verification README](../../simulations/README-ccd016-v2-verification.md):
+**423/423 Stxer fork checks**, **97/97 local branch outcomes**, and **2,000/2,000 RV
+invariant checks** with zero runtime exceptions and 72 completed emergency batches.
+It includes zero-block patience, DAO-only AMM swaps without Pyth/Jing, DIA/native
+fallback, failure rollback, exact source hashes, numerical examples and replay commands.

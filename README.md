@@ -90,3 +90,11 @@ This will show the results side-by-side, and is much more readable with a diff t
 ## Contributions
 
 All are welcome! Feel free to [submit an issue](https://github.com/citycoins/protocol/issues) or [open a pull request](https://github.com/citycoins/protocol/pulls).
+
+
+## MIA swap vault v2 verification
+
+[Current-source verification](simulations/README-ccd016-v2-verification.md) (2026-09-18):
+423/423 mainnet-fork checks, 97/97 local branch outcomes and 2,000 RV invariant
+checks; zero runtime exceptions, 72 completed emergency batches.
+[Local runtime and RV harness](tests/vault/README.md).

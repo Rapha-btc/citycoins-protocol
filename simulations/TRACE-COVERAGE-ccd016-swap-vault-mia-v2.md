@@ -1,4 +1,6 @@
-# Trace coverage: ccd016-swap-vault-mia-v2
+# Historical trace coverage: ccd016-swap-vault-mia-v2
+
+**Superseded for current-source validation by the [2026-09-18 verification](README-ccd016-v2-verification.md): 423 fork checks, 97/97 local branch outcomes and 2,000 RV checks.** The measurements below remain the archived pre-emergency source report.
 
 From `simulations/trace-coverage.mjs` on 2026-09-15, source at /home/raphastacks/projects/citycoins-protocol/contracts/extensions/ccd016-swap-vault-mia-v2.clar at 58c3529: 4 simulations, 247 transactions (6 without a trace), every evaluated expression read from the stxer debug traces.
 
