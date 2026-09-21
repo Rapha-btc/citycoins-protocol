@@ -147,6 +147,14 @@
 (define-constant MAX_SLIPPAGE_BPS u1000) ;; -10%
 (define-constant MAX_DIA_BAND_BPS u5000) ;; 50%
 (define-constant MAX_CHUNK_SATS u100000000) ;; 1 BTC
+
+;; sBTC transfers in are permissionless, so anyone can leave a sat or two in the
+;; vault. Dust that small cannot be sold - every router stage skips it and the
+;; swap returns zero - so an exact-zero emptiness test would let a 1-sat gift
+;; hold a batch open until the 432-block recovery. Treat it as empty instead;
+;; it simply rides into the next batch.
+(define-constant DUST_SATS u2)
+
 (define-constant MAX_COOLDOWN_BLOCKS u144) ;; one day
 ;; Velar's own floor: twice its 30 bps fee, so a sandwich there breaks even too
 (define-constant VELAR_SLIPPAGE_BPS u60)
@@ -396,10 +404,13 @@
 ;; the mid before the window elapsed. The market's `swap` refuses a caller
 ;; with a resting position (u1018): reclaim first.
 (define-public (jing-take
-    (amount uint)
+    (requested uint)
     (update (buff 8192))
   )
-  (let ((limit (floor-of (try! (current-mid update)))))
+  (let (
+      (amount (sweep-amount requested))
+      (limit (floor-of (try! (current-mid update))))
+    )
     (try! (is-dao-or-extension))
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (try! (check-amount amount))
@@ -435,10 +446,11 @@
 ;; as `unsold`. The allowance is `amount` plus the market's minimum deposit:
 ;; as-contract? counts gross transfers and the router re-sells refunded dust.
 (define-public (router-swap
-    (amount uint)
+    (requested uint)
     (update (buff 8192))
   )
   (let (
+      (amount (sweep-amount requested))
       (mid (try! (current-mid update)))
       (limit (floor-of mid))
       (min-out (floor-out amount limit))
@@ -594,7 +606,7 @@
 (define-read-only (is-empty)
   (let ((cycle (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-current-cycle)))
     (and
-      (is-eq (sbtc-balance) u0)
+      (<= (sbtc-balance) DUST_SATS)
       (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-deposit cycle current-contract) u0)
       (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6 get-token-x-parked current-contract) u0)
     )
@@ -660,6 +672,29 @@
 )
 
 ;; PRIVATE FUNCTIONS
+
+;; The amount a single-venue swap actually sells.
+;;
+;; A keeper sizes the final chunk from the balance it read a block earlier, so a
+;; sat donated in between leaves a remainder that keeps the batch open and forces
+;; a retry at the griefer's chosen pace. Once the whole balance fits in one chunk
+;; there is no reason to sell less than all of it, so sweep: the donation goes out
+;; with the funds and `close-if-empty` lands on zero in the same transaction.
+;;
+;; Above the cap the requested chunk is honoured unchanged - that is a mid-run
+;; slice, and sweeping it would breach `max-chunk-sats`.
+;;
+;; Split swaps are deliberately excluded: their amount must equal the sum of the
+;; per-venue legs, and there is no way to say which venue the extra dust belongs
+;; to.
+(define-private (sweep-amount (amount uint))
+  (let ((balance (sbtc-balance)))
+    (if (<= balance (var-get max-chunk-sats))
+      balance
+      amount
+    )
+  )
+)
 
 (define-private (sbtc-balance)
   (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token get-balance current-contract))
