@@ -117,6 +117,7 @@
 (define-constant ERR_SPLIT_MISMATCH (err u16040))
 (define-constant ERR_SOME_FUNDS (err u16043))
 (define-constant ERR_COOLDOWN (err u16044))
+(define-constant ERR_UPDATE_REQUIRED (err u16045))
 
 (define-constant PRICE_PRECISION u100000000)
 (define-constant DECIMAL_FACTOR u100)
@@ -284,9 +285,10 @@
   )
 )
 
-(define-public (dao-reclaim)
+(define-public (dao-reclaim (update (optional (buff 8192))))
   (begin
     (try! (is-dao-or-extension))
+    (try! (settle-escrow-first update))
     (reclaim-core)
   )
 )
@@ -352,10 +354,18 @@
 
 ;; Rest the vault's whole sBTC balance on the Jing book as a zero-spread peg: at the mid every
 ;; settlement, off while the mid is under the floor mid * (1 - leeway) taken
-;; now. The market refuses a resting order that live bids already cross
-;; (ERR_MUST_USE_SWAP u1016): retry once they clear. Merges into an existing
-;; resting or parked position (v6 folds a parked amount back in) and
-;; refreshes the floor.
+;; now. The market rests it at once when the STX side is empty, otherwise it
+;; escrows the sats until someone settles them with a price update published
+;; after the deposit; a settle that finds the peg crossing refunds them here
+;; instead of resting them. Merges into an existing resting or parked position
+;; (the market folds a parked amount back in) and refreshes the floor.
+;;
+;; Nothing here settles that escrow: the market's settle-token-x-deposit takes
+;; the depositor as an argument, so a keeper - or anyone at all - settles this
+;; vault with a fresh update, and the sats stay escrowed until someone does.
+;; The reclaim paths carry an update for exactly that reason, and a second
+;; jing-place before the settle is refused by the market (one pending deposit
+;; per maker).
 (define-public (jing-place (update (buff 8192)))
   (let (
       (floor (ask-of (try! (current-mid update))))
@@ -365,7 +375,7 @@
     (asserts! (window-open) ERR_WINDOW_CLOSED)
     (try! (check-amount amount))
     (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount))
-      (try! (contract-call? JING_MARKET deposit-token-x amount floor (some u0) update
+      (try! (contract-call? JING_MARKET deposit-token-x amount floor (some u0)
         SBTC_TOKEN ASSET_SBTC
       ))
     ))
@@ -377,9 +387,11 @@
 ;; (1 - leeway) while the window is open, mid * (1 - slippage) once it
 ;; elapsed. The price itself never needs moving (the peg follows the mid);
 ;; this is only for a mid that fell under the floor and switched the ask off,
-;; a proposal-worthy event, not a community chore. The market refuses a floor
-;; that live bids already cross (u1016). Works on a live or a parked
-;; position; nothing moves but the floor.
+;; a proposal-worthy event, not a community chore. The floor applies at once
+;; when the STX side is empty, otherwise it waits for settle-token-x-limit,
+;; which drops it if it crosses at that print. Works on a live or a parked
+;; position, not on an escrowed one (a pending deposit carries its own floor
+;; and is refloored by replacing it); nothing moves but the floor.
 (define-public (jing-refloor (update (buff 8192)))
   (let (
       (floor (phase-limit (try! (current-mid update))))
@@ -391,7 +403,7 @@
     (try! (is-dao-or-extension))
     (asserts! (> resting u0) ERR_NOTHING_RESTING)
     (try! (as-contract? ()
-      (try! (contract-call? JING_MARKET set-token-x-limit floor (some u0) update))
+      (try! (contract-call? JING_MARKET set-token-x-limit floor (some u0)))
     ))
     (ok (print { notification: "jing-refloor", payload: { resting: resting, floor: floor } }))
   )
@@ -433,9 +445,10 @@
 ;; once the window elapsed; the DAO any time via dao-reclaim. Funds can only
 ;; return here, so no other check is needed. The market only releases an
 ;; active deposit in its deposit phase; retry after settlement otherwise.
-(define-public (jing-reclaim)
+(define-public (jing-reclaim (update (optional (buff 8192))))
   (begin
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
+    (try! (settle-escrow-first update))
     (reclaim-core)
   )
 )
@@ -595,6 +608,9 @@
       stx-balance: (stx-get-balance current-contract),
       jing-resting: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3 get-token-x-deposit cycle current-contract),
       jing-parked: (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3 get-token-x-parked current-contract),
+      jing-escrowed: (default-to u0
+        (get amount (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3 get-token-x-pending-deposit current-contract))
+      ),
       empty: (is-empty),
       ;; sBTC still sitting in the rewards treasury, claimable via fund-from-treasury
       pending-treasury-sats: (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token get-balance REWARDS_TREASURY)),
@@ -609,6 +625,7 @@
       (<= (sbtc-balance) DUST_SATS)
       (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3 get-token-x-deposit cycle current-contract) u0)
       (is-eq (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3 get-token-x-parked current-contract) u0)
+      (is-none (contract-call? 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3 get-token-x-pending-deposit current-contract))
     )
   )
 )
@@ -767,10 +784,35 @@
   )
 )
 
+(define-private (settle-escrow-first (update (optional (buff 8192))))
+  (let ((escrowed (default-to u0
+      (get amount (contract-call? JING_MARKET get-token-x-pending-deposit current-contract))
+    )))
+    (if (> escrowed u0)
+      (begin
+        (try! (contract-call? JING_MARKET settle-token-x-deposit current-contract
+          (unwrap! update ERR_UPDATE_REQUIRED) SBTC_TOKEN ASSET_SBTC
+        ))
+        (ok true)
+      )
+      (ok true)
+    )
+  )
+)
+
 (define-private (reclaim-core)
-  (let ((refunded (try! (as-contract? ()
-      (try! (contract-call? JING_MARKET cancel-token-x-deposit SBTC_TOKEN ASSET_SBTC))
-    ))))
-    (ok (print { notification: "jing-reclaim", payload: { amount: refunded } }))
+  (let (
+      (cycle (contract-call? JING_MARKET get-current-cycle))
+      (resting (contract-call? JING_MARKET get-token-x-deposit cycle current-contract))
+      (parked (contract-call? JING_MARKET get-token-x-parked current-contract))
+    )
+    (if (or (> resting u0) (> parked u0))
+      (let ((refunded (try! (as-contract? ()
+          (try! (contract-call? JING_MARKET cancel-token-x-deposit SBTC_TOKEN ASSET_SBTC))
+        ))))
+        (ok (print { notification: "jing-reclaim", payload: { amount: refunded } }))
+      )
+      (ok (print { notification: "jing-reclaim", payload: { amount: u0 } }))
+    )
   )
 )
