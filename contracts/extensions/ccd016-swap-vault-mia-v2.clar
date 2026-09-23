@@ -288,7 +288,6 @@
 (define-public (dao-reclaim (update (optional (buff 8192))))
   (begin
     (try! (is-dao-or-extension))
-    (try! (settle-escrow-first update))
     (reclaim-core)
   )
 )
@@ -363,9 +362,9 @@
 ;; Nothing here settles that escrow: the market's settle-token-x-deposit takes
 ;; the depositor as an argument, so a keeper - or anyone at all - settles this
 ;; vault with a fresh update, and the sats stay escrowed until someone does.
-;; The reclaim paths carry an update for exactly that reason, and a second
-;; jing-place before the settle is refused by the market (one pending deposit
-;; per maker).
+;; A reclaim does not need that settle: the market's cancel returns pending
+;; escrow too. A second jing-place before the settle is refused by the market
+;; (one pending deposit per maker).
 (define-public (jing-place (update (buff 8192)))
   (let (
       (floor (ask-of (try! (current-mid update))))
@@ -441,14 +440,14 @@
 
 ;; --- liquidation phase: reclaim + any venue at the floor (window elapsed) ----
 
-;; Reclaim the resting sBTC from the Jing market back into the vault. Anyone,
-;; once the window elapsed; the DAO any time via dao-reclaim. Funds can only
-;; return here, so no other check is needed. The market only releases an
-;; active deposit in its deposit phase; retry after settlement otherwise.
+;; Reclaim the sBTC on the Jing market (pending, resting and parked) back into
+;; the vault. Anyone, once the window elapsed; the DAO any time via
+;; dao-reclaim. Funds can only return here, so no other check is needed. The
+;; update argument is kept for callers but no longer used: cancel needs no
+;; oracle and no settle.
 (define-public (jing-reclaim (update (optional (buff 8192))))
   (begin
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
-    (try! (settle-escrow-first update))
     (reclaim-core)
   )
 )
@@ -784,29 +783,18 @@
   )
 )
 
-(define-private (settle-escrow-first (update (optional (buff 8192))))
-  (let ((escrowed (default-to u0
-      (get amount (contract-call? JING_MARKET get-token-x-pending-deposit current-contract))
-    )))
-    (if (> escrowed u0)
-      (begin
-        (try! (contract-call? JING_MARKET settle-token-x-deposit current-contract
-          (unwrap! update ERR_UPDATE_REQUIRED) SBTC_TOKEN ASSET_SBTC
-        ))
-        (ok true)
-      )
-      (ok true)
-    )
-  )
-)
-
 (define-private (reclaim-core)
   (let (
       (cycle (contract-call? JING_MARKET get-current-cycle))
       (resting (contract-call? JING_MARKET get-token-x-deposit cycle current-contract))
       (parked (contract-call? JING_MARKET get-token-x-parked current-contract))
+      (escrowed (default-to u0
+        (get amount (contract-call? JING_MARKET get-token-x-pending-deposit current-contract))
+      ))
     )
-    (if (or (> resting u0) (> parked u0))
+    ;; Cancel returns pending escrow + resting + parked in one call, with no
+    ;; oracle and no pause check, so a reclaim never waits on a settle.
+    (if (or (> escrowed u0) (> resting u0) (> parked u0))
       (let ((refunded (try! (as-contract? ()
           (try! (contract-call? JING_MARKET cancel-token-x-deposit SBTC_TOKEN ASSET_SBTC))
         ))))
