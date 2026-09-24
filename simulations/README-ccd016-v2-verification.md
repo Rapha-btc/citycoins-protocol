@@ -1,5 +1,7 @@
 # CityCoins MIA vault v2: current-source verification
 
+> Current 2026-09-23 v6-3 recovery and regression results: [cancel-only recovery verification](README-v6-3-recovery.md). The notes below describe the earlier verification; linked JSON artifacts now contain the current reruns.
+
 Verified on **2026-09-18**, after the zero-block window and emergency AMM-only
 changes: **423/423 Stxer checks passed** across six forks. The local runtime
 suite passed **259 assertions** and reached **97/97 instrumented branch outcomes**

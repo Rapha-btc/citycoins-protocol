@@ -1,3 +1,6 @@
+// Updated for exact core-v6 / ladder-v1 / market-v6-3 / router-v5-3.
+// Real signed update, unchanged freshness; synthetic burn blocks use one-second intervals.
+import {freshProofAfter} from './_jing-v6-3.mjs';
 // stxer-ccd016-v2-clock-keyless.js
 // SELF-VERIFYING stxer mainnet-fork harness for the CLOCK of
 // ccd016-swap-vault-mia-v2 (bounty mu0oy1vzf432efb13c31, Patient Reed /
@@ -27,7 +30,7 @@ import {
 } from "@stacks/transactions";
 import { SimulationBuilder, getSimulationResult } from "stxer";
 const NODE = process.env.STACKS_API_URL || "http://77.42.3.101/stacks-api";
-const JING_SRC = process.env.JING_SRC || `${process.env.HOME}/projects/jingswap/contracts/jing-contracts-v3/contracts`;
+const JING_SRC = process.env.JING_SRC || `${process.env.HOME}/projects/jing-contracts-v3/contracts`;
 const DEPLOYER = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22"; // chavita: the jing deployer, the rungs, and the vault + book here
 const SBTC_WHALE = "SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2";
 const STRANGER = "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM";
@@ -36,7 +39,7 @@ const BASE_DAO = `${DAO}.base-dao`;
 const REWARDS_TREASURY = `${DAO}.ccd002-treasury-mia-rewards-v3`;
 const SBTC = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
 const WSTX = "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2";
-const CORE = "sim-city-core-v5", LADDER = "sim-city-ladder", MKT = "sim-city-market-v6", ROUTER = "sim-city-router-v5";
+const CORE = "jing-core-v6", LADDER = "jing-ladder-v1", MKT = "markets-sbtc-stx-jing-v6-3", ROUTER = "swap-router-sbtc-stx-jing-v5-3";
 const RUNG_SRC_FILE = "jing-buy-stx-core-spread";
 const SPREADS = [0, 10, 20, 30];
 const RUNG = (bps) => `jing-buy-stx-spread-${bps}`;
@@ -51,8 +54,8 @@ const Q = FUND / 4n;
 const NO_UPDATE = bufferCV(Buffer.from("00", "hex"));
 // comment-only lines stripped: the jing v6 market is over the 100,000-byte
 // deploy limit with its comments (the deploy form is stripped too)
-// Fresh simulated aliases avoid duplicate contracts now that Jing v6 is deployed.
-const ALIASES = {"jing-core-v5": "sim-city-core-v5", "jing-ladder": "sim-city-ladder", "markets-sbtc-stx-jing-v6": "sim-city-market-v6", "swap-router-sbtc-stx-jing-v5": "sim-city-router-v5"};
+// Canonical v6-3 dependency names are deployed fresh on the fork.
+const ALIASES = {}; // Exact canonical dependency names; no source rebinding.
 const src = f => {
  let original=f; for(const [a,b] of Object.entries(ALIASES)) original=original.replace(b,a);
  let text=fs.readFileSync(original,"utf8").split("\n").filter(l=>!/^\s*;;/.test(l)).join("\n");
@@ -73,7 +76,7 @@ const PROXY_SRC = `
 (define-public (take (amount uint) (update (buff 8192))) (contract-call? '${VAULT_ID} jing-take amount update))
 (define-public (set-window (blocks uint)) (contract-call? '${VAULT_ID} set-window-blocks blocks))
 (define-public (recall) (contract-call? '${VAULT_ID} dao-recall-sbtc))
-(define-public (reclaim) (contract-call? '${VAULT_ID} dao-reclaim))
+(define-public (reclaim) (contract-call? '${VAULT_ID} dao-reclaim none))
 (use-trait proposal-trait '${DAO}.proposal-trait.proposal-trait)
 (define-public (run (p <proposal-trait>)) (contract-call? '${BASE_DAO} execute p tx-sender))
 `;
@@ -114,12 +117,12 @@ async function main() {
 
   // ---- builder with a plan ----
   const plan = [];
-  let b = SimulationBuilder.new({ stacksNodeAPI: NODE });
+  let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(tip.height);
   const deploy = (name, code, cv = ClarityVersion.Clarity6) => { b = b.withSender(DEPLOYER).addContractDeploy({ contract_name: name, source_code: code, clarity_version: cv }); plan.push({ kind: "deploy", label: `deploy ${name}` }); };
   const patch = (cid, code, label, cv) => { b = b.addSetContractCode({ contract_id: cid, source_code: code, clarity_version: cv }); plan.push({ kind: "patch", label }); };
-  const tx = (label, sender, cid, fn, args, want) => { b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); plan.push({ kind: "tx", label, want }); };
+  const tx = (label, sender, cid, fn, args, want) => { if (fn === "jing-reclaim" && args.length === 0) args = [noneCV()]; if (/^deposit-token-[xy]$/.test(fn) && args.length === 6) args = args.filter((_, i) => i !== 3); if (/^readmit-token-[xy]$/.test(fn)) args = args.slice(0, 1); b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); plan.push({ kind: "tx", label, want }); };
   const ev = (label, cid, code, want) => { b = b.addEvalCode(cid, code); const slot = { kind: "eval", label, want }; plan.push(slot); return slot; };
-  const advance = (btc) => { b = b.addAdvanceBlocks({ bitcoin_blocks: btc, stacks_blocks_per_bitcoin: 1 }); plan.push({ kind: "advance", label: `advance ${btc} bitcoin blocks` }); };
+  const advance = (btc) => { b = b.addAdvanceBlocks({ bitcoin_blocks: btc, stacks_blocks_per_bitcoin: 1, bitcoin_interval_secs: 1 }); plan.push({ kind: "advance", label: `advance ${btc} bitcoin blocks` }); };
   const ok = (v) => String(v).startsWith("(ok");
   const err = (v) => String(v).startsWith("(err");
   const status = (label, want) => ev(label, VAULT_ID, "(get-status)", want);
@@ -129,6 +132,7 @@ async function main() {
   deploy(CORE, coreSrc); deploy(LADDER, ladderSrc); deploy(MKT, mktSrc);
   tx("core-v5 verifies market v6", DEPLOYER, CORE_ID, "set-verified-contract", [contractPrincipalCV(DEPLOYER, MKT)], "(ok true)");
   tx("market v6 initialize", DEPLOYER, MKT_ID, "initialize", [contractPrincipalCV(DEPLOYER, MKT), sbtcT, wstxT, uintCV(1000), uintCV(1_000_000), uintCV(1), uintCV(45)], "(ok true)");
+  tx("sync current ladder seat reservation", DEPLOYER, MKT_ID, "sync-seat-count", [], "(ok u10)");
   deploy(ROUTER, routerSrc);
   deploy(BOOK, bookSrc);
   deploy(VAULT, vaultSrc);
@@ -162,7 +166,7 @@ async function main() {
   ev("S3 still elapsed: the sat joined the liquidation phase", VAULT_ID, "(window-elapsed)", "true");
   status("S3 1,000,101 home", (v) => field(v, "sbtc-balance") === `u${FUND + 101n}`);
   tx("S3 close-batch while not empty -> u16043", STRANGER, VAULT_ID, "close-batch", [], "(err u16043)");
-  tx("S3 jing-reclaim with nothing on the book -> the market's refusal (nothing to cancel)", STRANGER, VAULT_ID, "jing-reclaim", [], (v) => String(v).startsWith("(err"));
+  tx("S3 jing-reclaim with nothing on the book -> amount zero", STRANGER, VAULT_ID, "jing-reclaim", [], (v) => String(v).startsWith("(ok") && String(v).includes("(amount u0)"));
 
   // ---- S4 recall empties the vault and clears the clock ----
   const trBefore = ev("S4 treasury sats before recall", VAULT_ID, sbtcBal(REWARDS_TREASURY), () => true);
