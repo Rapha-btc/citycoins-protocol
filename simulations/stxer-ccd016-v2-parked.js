@@ -225,7 +225,7 @@ async function main() {
   tx("P5 stranger jing-reclaim: the PARKED amount comes home", STRANGER, VAULT_ID, "jing-reclaim", [], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   status("P5 1,000 home, nothing parked, nothing resting, not empty", (v) => field(v, "sbtc-balance") === `u${FUND}` && field(v, "jing-parked") === "u0" && field(v, "jing-resting") === "u0" && field(v, "empty") === "false");
   tx("P5 jing-reclaim again -> nothing remains, amount zero", STRANGER, VAULT_ID, "jing-reclaim", [], (v) => String(v).startsWith("(ok") && String(v).includes("(amount u0)"));
-  tx("P5 stranger router-swap the 1,000 sats at the floor -> unsold 0, empty, clock cleared", STRANGER, VAULT_ID, "router-swap", [uintCV(FUND), UPD], (v) => ok(v) && v.includes("(unsold u0)"));
+  tx("P5 stranger router-swap the 1,000 sats at the floor -> unsold 0, empty, clock cleared", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND})`) && v.includes("(unsold u0)"));
   status("P5 empty", (v) => field(v, "empty") === "true");
   clock("P5 clock cleared", (v) => field(v, "batch-start") === "none");
 

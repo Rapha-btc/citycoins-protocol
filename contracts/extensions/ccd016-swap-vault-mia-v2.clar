@@ -176,7 +176,7 @@
 (define-data-var slippage-bps uint u100)
 ;; largest single router-swap, in sats (0.05 sBTC): keeps one liquidation
 ;; tx under the size where a sandwich could clear its own fees
-(define-data-var max-chunk-sats uint u5000000)
+(define-data-var max-chunk-sats uint u1000000)
 ;; Pyth mid must sit within this of the DIA rate; 0 = DIA check off
 (define-data-var dia-band-bps uint u1000)
 ;; burn blocks between two router sales (router-swap and router-swap-split
@@ -457,19 +457,17 @@
 ;; leg clears inside `limit`, and returns what nothing could take inside it
 ;; as `unsold`. The allowance is `amount` plus the market's minimum deposit:
 ;; as-contract? counts gross transfers and the router re-sells refunded dust.
-(define-public (router-swap
-    (requested uint)
-    (update (buff 8192))
-  )
+(define-public (router-swap (update (buff 8192)))
   (let (
-      (amount (sweep-amount requested))
+      ;; permissionless: always the whole balance or one full chunk, never a
+      ;; caller-chosen sliver that burns the shared cooldown
+      (amount (chunk-amount))
       (mid (try! (current-mid update)))
       (limit (floor-of mid))
       (min-out (floor-out amount limit))
       (mins (contract-call? JING_MARKET get-min-deposits))
     )
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
-    (asserts! (<= amount (var-get max-chunk-sats)) ERR_CHUNK_TOO_BIG)
     (try! (check-amount amount))
     (try! (cooldown-tick))
     (let ((result (try! (as-contract?
@@ -708,6 +706,20 @@
     (if (<= balance (var-get max-chunk-sats))
       balance
       amount
+    )
+  )
+)
+
+;; what a permissionless router-swap sells: the whole balance, or one full
+;; chunk when the balance is bigger
+(define-private (chunk-amount)
+  (let (
+      (balance (sbtc-balance))
+      (chunk (var-get max-chunk-sats))
+    )
+    (if (<= balance chunk)
+      balance
+      chunk
     )
   )
 )

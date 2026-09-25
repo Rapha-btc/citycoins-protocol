@@ -182,7 +182,7 @@ async function main() {
   // ---- S3 gates while the window is open ----
   tx("S3 stranger jing-take -> u16000 (DAO only)", STRANGER, VAULT_ID, "jing-take", [uintCV(1000), UPD], "(err u16000)");
   tx("S3 proxy jing-take while open -> u16031", DEPLOYER, PROXY_ID, "take", [uintCV(1000), UPD], "(err u16031)");
-  tx("S3 stranger router-swap while open -> u16031", STRANGER, VAULT_ID, "router-swap", [uintCV(1000), UPD], "(err u16031)");
+  tx("S3 stranger router-swap while open -> u16031", STRANGER, VAULT_ID, "router-swap", [UPD], "(err u16031)");
   tx("S3 stranger jing-reclaim while open -> u16031", STRANGER, VAULT_ID, "jing-reclaim", [], "(err u16031)");
   tx("S3 stranger jing-refloor -> u16000 (DAO only)", STRANGER, VAULT_ID, "jing-refloor", [UPD], "(err u16000)");
   tx("S3 proxy jing-refloor -> ok (floor re-read from the mid)", DEPLOYER, PROXY_ID, "refloor", [UPD], (v) => ok(v) && v.includes(`(floor u${FLOOR})`));
@@ -195,7 +195,7 @@ async function main() {
   tx("S3 proxy set-slippage-bps 100 -> ok (unchanged)", DEPLOYER, PROXY_ID, "set-slippage", [uintCV(100)], "(ok true)");
   tx("S3 proxy set-max-chunk-sats 0 -> u16033", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(0)], "(err u16033)");
   tx("S3 proxy set-max-chunk-sats 1 BTC + 1 -> u16033 (cap 1 BTC)", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(100_000_001)], "(err u16033)");
-  tx("S3 proxy set-max-chunk-sats 0.05 BTC -> ok (unchanged)", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(5_000_000)], "(ok true)");
+  tx("S3 proxy set-max-chunk-sats 0.01 BTC -> ok (unchanged default)", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(1_000_000)], "(ok true)");
   tx("S3 proxy set-dia-band-bps 5001 -> u16033 (cap 5000)", DEPLOYER, PROXY_ID, "set-dia", [uintCV(5001)], "(err u16033)");
   tx("S3 proxy set-router-cooldown 1 -> ok (unchanged)", DEPLOYER, PROXY_ID, "set-cooldown", [uintCV(1)], "(ok true)");
   tx("S3 stranger set-leeway-bps -> u16000", STRANGER, VAULT_ID, "set-leeway-bps", [uintCV(500)], "(err u16000)");
@@ -226,16 +226,20 @@ async function main() {
   tx(`S7 stranger jing-reclaim -> ${FUND - XC} sats home`, STRANGER, VAULT_ID, "jing-reclaim", [], (v) => ok(v) && v.includes(`(amount u${FUND - XC})`));
   ev("S7 status: nothing resting, sats home", VAULT_ID, "(get-status)", (v) => field(v, "jing-resting") === "u0" && field(v, "sbtc-balance") === `u${FUND - XC}`);
   tx("S7 set 300k cap to preserve partial-swap coverage", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(300000)], "(ok true)");
-  tx("S7 router-swap over the chunk cap -> u16039", STRANGER, VAULT_ID, "router-swap", [uintCV(5_000_001), UPD], "(err u16039)");
-  tx("S7 stranger router-swap 300k sats at the floor (book empty: pools)", STRANGER, VAULT_ID, "router-swap", [uintCV(300_000), UPD], (v) => ok(v) && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
+  // router-swap takes no size (bounty muerdzoc805a745ecc99, finding 2): with more than the cap
+  // at home a stranger sells exactly one full 300k chunk, never a sliver that burns the cooldown
+  tx("S7 stranger router-swap: balance > cap -> sells exactly the 300k cap at the floor (book empty: pools)", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u300000)") && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
+  ev(`S7 exactly 300k left the vault: ${FUND - XC - 300_000n} sats home`, VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND - XC - 300_000n}`);
   ev("S7 vault got STX from the pools", VAULT_ID, "(get-status)", (v) => bare(field(v, "stx-balance")) > 0n);
   // the cooldown: one router sale per burn block (default), so chunks cannot be chained in one block
-  tx("S7 router-swap again in the same burn block -> u16044 (cooldown)", STRANGER, VAULT_ID, "router-swap", [uintCV(1000), UPD], "(err u16044)");
+  tx("S7 router-swap again in the same burn block -> u16044 (cooldown)", STRANGER, VAULT_ID, "router-swap", [UPD], "(err u16044)");
+  ev("S7 the refused call moved nothing", VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND - XC - 300_000n}`);
   ev("S7 config: cooldown 1 block, last sale stamped at this height", VAULT_ID, "(get-config)", (v) => field(v, "router-cooldown-blocks") === "u1" && bare(field(v, "last-router-swap")) > 0n);
   tx("S7 stranger set-router-cooldown -> u16000", STRANGER, VAULT_ID, "set-router-cooldown", [uintCV(0)], "(err u16000)");
   tx("S7 proxy set-router-cooldown 200 -> u16033 (cap 144)", DEPLOYER, PROXY_ID, "set-cooldown", [uintCV(200)], "(err u16033)");
+  tx("S7 proxy set-max-chunk-sats 1000 (a small chunk; router-swap sells the cap)", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(1000)], "(ok true)");
   advance(1);
-  tx("S7 next burn block: router-swap 1000 sats -> ok", STRANGER, VAULT_ID, "router-swap", [uintCV(1000), UPD], (v) => ok(v));
+  tx("S7 next burn block: router-swap sells one 1000-sat chunk -> ok", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u1000)"));
   tx("S7 stranger fuel-fair-book again", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
 
   // ---- S7b the router's BOOK leg: a bid rests at the mid, router-swap fills it there first ----
@@ -243,8 +247,9 @@ async function main() {
   const whaleSats0 = ev("S7b the bidder's sats before", VAULT_ID, sbtcBal(STX_WHALE), () => true);
   tx("S7b STX whale rests a 200 STX bid at the mid", STX_WHALE, MKT_ID, "deposit-token-y", [uintCV(200_000_000), uintCV(HUGE), noneCV(), UPD, wstxT, stringAsciiCV("wstx")], "(ok u200000000)");
   const stxBefore7b = ev("S7b vault STX before", VAULT_ID, "(stx-get-balance '" + VAULT_ID + ")", () => true);
+  tx("S7b proxy set-max-chunk-sats 100k", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(100_000)], "(ok true)");
   advance(1);
-  tx("S7b stranger router-swap 100k sats: the book leg takes the bid at the mid, the rest goes to the pools, unsold 0", STRANGER, VAULT_ID, "router-swap", [uintCV(100_000), UPD], (v) => ok(v) && v.includes("(unsold u0)"));
+  tx("S7b stranger router-swap 100k sats: the book leg takes the bid at the mid, the rest goes to the pools, unsold 0", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u100000)") && v.includes("(unsold u0)"));
   const cyc1 = ev("S7b market cycle after: the book settled", MKT_ID, "(get-current-cycle)", () => true);
   const whaleSats1 = ev("S7b the bidder's sats after: it bought the vault's sBTC", VAULT_ID, sbtcBal(STX_WHALE), () => true);
   const stxAfter7b = ev("S7b vault STX after", VAULT_ID, "(stx-get-balance '" + VAULT_ID + ")", () => true);

@@ -27,7 +27,7 @@ err(vault('is-dao-or-extension'),16000);
 ok(call('mock-base-dao','set-extension',[Cl.principal(admin),Cl.bool(true)],admin));
 eq(ok(gov('is-dao-or-extension')).type,'true');
 ok(vault('callback',[Cl.principal(alice),update]));
-for(const [f,max,value,positive] of [['set-window-blocks',1008,288,false],['set-leeway-bps',1000,500,false],['set-slippage-bps',1000,100,false],['set-dia-band-bps',5000,1000,false],['set-max-chunk-sats',100000000,5000000,true],['set-router-cooldown',144,1,false],['set-no-pyth-slippage-bps',5000,1000,false]]){
+for(const [f,max,value,positive] of [['set-window-blocks',1008,288,false],['set-leeway-bps',1000,500,false],['set-slippage-bps',1000,100,false],['set-dia-band-bps',5000,1000,false],['set-max-chunk-sats',100000000,1000000,true],['set-router-cooldown',144,1,false],['set-no-pyth-slippage-bps',5000,1000,false]]){
  err(vault(f,[u(value)]),16000);err(gov(f,[u(max+1)]),16033);
  if(positive)err(gov(f,[u(0)]),16033);else ok(gov(f,[u(0)]));
  ok(gov(f,[u(max)]));ok(gov(f,[u(value)]));
@@ -43,22 +43,21 @@ resetWorld();ok(sim.transferSTX(100000000000n,p('mock-router'),admin));
 ok(call('mock-ft','mint',[u(1000),cp(V)]));eq(clock()['batch-start'].type,'none');fund(100000);
 eq(clock()['window-open'].type,'true');eq(clock()['window-ends'].type,'some');const initialStart=clock()['batch-start'].value.value;
 fund(1000);eq(clock()['batch-start'].value.value,initialStart);
-err(vault('close-batch'),16043);err(vault('router-swap',[u(1),update]),16031);err(gov('router-swap-split',[u(1),u(0),u(1),u(0),u(0),update]),16031);err(gov('router-swap-split-dia',[u(1),u(1),u(0),u(0)]),16031);
+err(vault('close-batch'),16043);err(vault('router-swap',[update]),16031);err(gov('router-swap-split',[u(1),u(0),u(1),u(0),u(0),update]),16031);err(gov('router-swap-split-dia',[u(1),u(1),u(0),u(0)]),16031);
 ok(vault('jing-place',[update]));err(vault('jing-place',[update]),16006);
 err(vault('jing-reclaim'),16031);ok(gov('jing-refloor',[update]));
 const order=read('v6-market','get-token-x-order',[cp(V)]).value;eq(order['spread-bps'].value.value,0n);
 // DAO can change the window during a batch: zero immediately elapses it.
 ok(gov('set-window-blocks',[u(0)]));eq(clock()['window-elapsed'].type,'true');ok(gov('jing-refloor',[update]));
 ok(vault('jing-reclaim'));err(vault('jing-reclaim'),1005);err(gov('dao-reclaim'),1005);
-err(vault('router-swap',[u(5000001),update]),16039);err(vault('router-swap',[u(0),update]),16006);err(vault('router-swap',[u(102001),update]),16006);
 err(gov('router-swap-split',[u(2),u(0),u(1),u(0),u(0),update]),16040);
-err(gov('router-swap-split',[u(5000001),u(0),u(5000001),u(0),u(0),update]),16039);
+err(gov('router-swap-split',[u(1000001),u(0),u(1000001),u(0),u(0),update]),16039);
 err(gov('router-swap-split',[u(0),u(0),u(0),u(0),u(0),update]),16006);
 // DIA cross-check accepts endpoints, rejects divergence and stale feeds.
-for(const [skew,want] of [[13000,16037],[8000,16037]]){ok(call('mock-dia','set-skew',[u(skew)]));err(vault('router-swap',[u(1000),update]),want);}
-ok(call('mock-dia','set-skew',[u(10000)]));ok(call('mock-dia','set-stale',[Cl.bool(true)]));err(vault('router-swap',[u(1000),update]),16036);
-ok(gov('set-dia-band-bps',[u(0)]));ok(vault('router-swap',[u(1000),update]));ok(gov('set-dia-band-bps',[u(1000)]));resetWorld();
-ok(call('v6-market','test-zero-price',[Cl.bool(true)]));err(vault('router-swap',[u(1000),update]),16013);ok(call('v6-market','test-zero-price',[Cl.bool(false)]));
+for(const [skew,want] of [[13000,16037],[8000,16037]]){ok(call('mock-dia','set-skew',[u(skew)]));err(vault('router-swap',[update]),want);}
+ok(call('mock-dia','set-skew',[u(10000)]));ok(call('mock-dia','set-stale',[Cl.bool(true)]));err(vault('router-swap',[update]),16036);
+ok(gov('set-dia-band-bps',[u(0)]));ok(vault('router-swap',[update]));ok(gov('set-dia-band-bps',[u(1000)]));resetWorld();
+ok(call('v6-market','test-zero-price',[Cl.bool(true)]));err(vault('router-swap',[update]),16013);ok(call('v6-market','test-zero-price',[Cl.bool(false)]));
 // Cooldown is shared between required-Pyth and emergency paths in one burn block.
 sim.mineEmptyBurnBlock();
 const batch=sim.mineBlock([tx.callPublicFn(V,'router-swap-split',[u(1000),u(0),u(400),u(300),u(300),update],admin),tx.callPublicFn(V,'router-swap-split-dia',[u(1000),u(1000),u(0),u(0)],admin)]);
@@ -78,7 +77,7 @@ resetWorld();
 // A valid but tiny cross ratio, then a nonzero mid whose tolerance floor rounds to zero.
 ok(call('mock-lazer-oracle','set-mid',[u(1)]));ok(call('mock-dia','set-stx-usd',[u(100000000000000000n)]));err({result:read(V,'get-dia-price')},16013);
 ok(call('mock-dia','set-stx-usd',[u(100000000)]));err({result:quote()},16013);resetWorld();
-for(const [a,c] of [[[u(2),u(1),u(0),u(0)],16040],[[u(5000001),u(5000001),u(0),u(0)],16039],[[u(0),u(0),u(0),u(0)],16006],[[u(999999),u(999999),u(0),u(0)],16006]])err(gov('router-swap-split-dia',a),c);
+for(const [a,c] of [[[u(2),u(1),u(0),u(0)],16040],[[u(1000001),u(1000001),u(0),u(0)],16039],[[u(0),u(0),u(0),u(0)],16006],[[u(999999),u(999999),u(0),u(0)],16006]])err(gov('router-swap-split-dia',a),c);
 // Price, min-out and transfer failures revert balances, clock and cooldown atomically.
 before=ft(p(V));beforeSTX=stx(p(V));const beforeConfig=config(),beforeClock=cvToString(read(V,'get-clock'));
 ok(call('mock-dia','set-skew',[u(13000)]));err(gov('router-swap-split-dia',[u(1000),u(1000),u(0),u(0)]),3002);

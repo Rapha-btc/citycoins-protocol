@@ -190,7 +190,7 @@ async function main() {
   clock("B2 window elapsed: nobody took", (v) => field(v, "window-elapsed") === "true");
   tx("B2 stranger jing-reclaim: the batch comes home", STRANGER, VAULT_ID, "jing-reclaim", [], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   status("B2 100,001 home, nothing resting, not empty", (v) => field(v, "sbtc-balance") === `u${FUND + 1n}` && field(v, "jing-resting") === "u0" && field(v, "empty") === "false");
-  tx("B2 stranger router-swap the whole 100,001 sats at the floor -> unsold 0", STRANGER, VAULT_ID, "router-swap", [uintCV(FUND + 1n), UPD], (v) => ok(v) && v.includes("(unsold u0)") && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
+  tx("B2 stranger router-swap the whole 100,001 sats at the floor -> unsold 0", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND + 1n})`) && v.includes("(unsold u0)") && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
   status("B2 sold: no sats anywhere, STX home, EMPTY", (v) => field(v, "sbtc-balance") === "u0" && field(v, "jing-resting") === "u0" && field(v, "jing-parked") === "u0" && field(v, "empty") === "true");
   clock("B2 the exit cleared the clock", (v) => field(v, "batch-start") === "none" && field(v, "window-elapsed") === "false");
   tx("B2 stranger fuel-fair-book", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);

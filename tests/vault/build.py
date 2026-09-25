@@ -5,6 +5,9 @@ import sys,shutil,json,hashlib
 here=Path(__file__).resolve().parent;root=here.parents[1];rv='--rv' in sys.argv
 out=here/('.build-rv' if rv else '.build');(out/'contracts').mkdir(parents=True,exist_ok=True);(out/'settings').mkdir(exist_ok=True)
 replacements={
+# the -v6-3 / -v5-3 ids first: the bare -v6 / -v5 prefixes below would otherwise leave a stray "-3"
+"'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3":'.v6-market',
+"'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-3":'.mock-router',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6":'.v6-market',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5":'.mock-router',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.rfq-sbtc-stx-jing-v2-3":'.mock-native',

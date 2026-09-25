@@ -65,7 +65,7 @@ call('DAO can restore patience during this batch',POOL,'set-vault-window-blocks'
 call('emergency sale blocked during patience',POOL,'router-swap-split-dia',[Cl.uint(1000),Cl.uint(1000),Cl.uint(0),Cl.uint(0)]);
 call('DAO can release patience during this batch',POOL,'set-vault-window-blocks',[Cl.uint(0)]);
 call('emergency split mismatch rejected',POOL,'router-swap-split-dia',[Cl.uint(1001),Cl.uint(1000),Cl.uint(0),Cl.uint(0)]);
-call('emergency chunk above cap rejected',POOL,'router-swap-split-dia',[Cl.uint(5000001),Cl.uint(5000001),Cl.uint(0),Cl.uint(0)]);
+call('emergency chunk above cap rejected',POOL,'router-swap-split-dia',[Cl.uint(1000001),Cl.uint(1000001),Cl.uint(0),Cl.uint(0)]);
 call('emergency zero amount rejected',POOL,'router-swap-split-dia',[Cl.uint(0),Cl.uint(0),Cl.uint(0),Cl.uint(0)]);
 call('emergency amount above balance rejected',POOL,'router-swap-split-dia',[Cl.uint(100001),Cl.uint(100001),Cl.uint(0),Cl.uint(0)]);
 
