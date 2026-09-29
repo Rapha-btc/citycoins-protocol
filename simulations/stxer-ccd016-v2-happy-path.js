@@ -138,7 +138,7 @@ async function main() {
   let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(tip.height);
   const deploy = (name, code, cv = ClarityVersion.Clarity6) => { b = b.withSender(DEPLOYER).addContractDeploy({ contract_name: name, source_code: code, clarity_version: cv }); plan.push({ kind: "deploy", label: `deploy ${name}` }); };
   const patch = (cid, code, label, cv) => { b = b.addSetContractCode({ contract_id: cid, source_code: code, clarity_version: cv }); plan.push({ kind: "patch", label }); };
-  const tx = (label, sender, cid, fn, args, want) => { if (fn === "jing-reclaim" && args.length === 0) args = [noneCV()]; if (/^deposit-token-[xy]$/.test(fn) && args.length === 6) args = args.filter((_, i) => i !== 3); if (/^readmit-token-[xy]$/.test(fn)) args = args.slice(0, 1); b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); plan.push({ kind: "tx", label, want }); };
+  const tx = (label, sender, cid, fn, args, want) => { if (fn === "jing-reclaim" && args.length === 0) args = [noneCV()]; if (/^deposit-token-[xy]$/.test(fn) && args.length === 6) args = args.filter((_, i) => i !== 3); if (/^readmit-token-[xy]$/.test(fn)) args = args.slice(0, 1); b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); const slot = { kind: "tx", label, want }; plan.push(slot); return slot; };
   const ev = (label, cid, code, want) => { b = b.addEvalCode(cid, code); const slot = { kind: "eval", label, want }; plan.push(slot); return slot; };
   const advance = (btc) => { b = b.addAdvanceBlocks({ bitcoin_blocks: btc, stacks_blocks_per_bitcoin: 1, bitcoin_interval_secs: 1 }); plan.push({ kind: "advance", label: `advance ${btc} bitcoin blocks` }); };
   const ok = (v) => String(v).startsWith("(ok");
@@ -190,17 +190,25 @@ async function main() {
   clock("B2 window elapsed: nobody took", (v) => field(v, "window-elapsed") === "true");
   tx("B2 stranger jing-reclaim: the batch comes home", STRANGER, VAULT_ID, "jing-reclaim", [], (v) => ok(v) && v.includes(`(amount u${FUND})`));
   status("B2 100,001 home, nothing resting, not empty", (v) => field(v, "sbtc-balance") === `u${FUND + 1n}` && field(v, "jing-resting") === "u0" && field(v, "empty") === "false");
-  tx("B2 stranger router-swap the whole 100,001 sats at the floor -> unsold 0", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND + 1n})`) && v.includes("(unsold u0)") && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
-  status("B2 sold: no sats anywhere, STX home, EMPTY", (v) => field(v, "sbtc-balance") === "u0" && field(v, "jing-resting") === "u0" && field(v, "jing-parked") === "u0" && field(v, "empty") === "true");
+  // Nested Quinn L-1: the pools take what fits inside the 1% floor, the rest stays
+  // home (before the fix a partial fill reverted u3002). A bid then rests on the
+  // book and the next call sells the rest through the router's book leg.
+  const b2a = tx("B2 stranger router-swap the whole 100,001 sats at the floor: sells what the pools take inside it", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes(`(amount u${FUND + 1n})`) && FUND + 1n - num(v, "unsold") > 8n && num(v, "out") >= ((FUND + 1n - num(v, "unsold") - 8n) * num(v, "limit-price")) / PPDF);
+  status("B2 exactly the unsold rest stays home", (v) => bare(field(v, "sbtc-balance")) === num(b2a.raw, "unsold"));
+  tx("B2 STX whale rests a 300 STX bid at the mid (book depth for the rest)", STX_WHALE, MKT_ID, "deposit-token-y", [uintCV(300_000_000), uintCV(HUGE), noneCV(), UPD, wstxT, stringAsciiCV("wstx")], "(ok u300000000)");
+  advance(1);
+  tx("B2 next burn block: router-swap sells the rest through the book leg (or, if the first call sold everything, the batch is closed: u16031)", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => num(b2a.raw, "unsold") > 0n ? ok(v) && v.includes(`(amount u${num(b2a.raw, "unsold")})`) && num(v, "unsold") <= 2n : v === "(err u16031)");
+  status("B2 sold: at most 2 dust sats home, nothing on the market, EMPTY", (v) => bare(field(v, "sbtc-balance")) <= 2n && field(v, "jing-resting") === "u0" && field(v, "jing-parked") === "u0" && field(v, "empty") === "true");
   clock("B2 the exit cleared the clock", (v) => field(v, "batch-start") === "none" && field(v, "window-elapsed") === "false");
   tx("B2 stranger fuel-fair-book", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
+  tx("B2 the bidder cancels what is left of its bid (so B3's place rests, not escrows)", STX_WHALE, MKT_ID, "cancel-token-y-deposit", [wstxT, stringAsciiCV("wstx")], ok);
 
   // ---- B3: a third window opens on the empty vault ----
   tx("B3 whale sends 100k sats to the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(FUND), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
   tx("B3 fund-from-treasury: empty vault -> a THIRD window opens", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(opened true)"));
   const b3 = clock("B3 clock open", (v) => field(v, "window-open") === "true");
   tx("B3 stranger jing-place", STRANGER, VAULT_ID, "jing-place", [UPD], ok);
-  status("B3 resting", (v) => field(v, "jing-resting") === `u${FUND}`);
+  status("B3 resting: the batch plus B2's dust (at most 2 sats)", (v) => bare(field(v, "jing-resting")) >= FUND && bare(field(v, "jing-resting")) <= FUND + 2n && field(v, "jing-escrowed") === "u0");
 
   // ---- run ----
   const sid = await b.run();
@@ -223,8 +231,9 @@ async function main() {
   check("B2 batch-start moved on from B1", bare(field(b2.raw, "batch-start")), (v) => v > bare(field(b1.raw, "batch-start")));
   check("B3 batch-start moved on from B2", bare(field(b3.raw, "batch-start")), (v) => v > bare(field(b2.raw, "batch-start")));
   console.log(`\n${checks - failures}/${checks} checks green`);
-  fs.mkdirSync("simulations/results/ccd016-v2",{recursive:true});
-  fs.writeFileSync("simulations/results/ccd016-v2/happy-path.json", JSON.stringify({simulationId:sid, checks, failures, simulationRewrites:{dependencyAliases:ALIASES,commentsStripped:true,marketStalenessWidened:false}, sourceHash:createHash("sha256").update(fs.readFileSync("contracts/extensions/ccd016-swap-vault-mia-v2.clar")).digest("hex"), plan:plan.map(({want,...p})=>p), result:res},null,2)+"\n");
+  const RESULTS_DIR = process.env.SIM_RESULTS_DIR || "simulations/results/ccd016-v2";
+  fs.mkdirSync(RESULTS_DIR,{recursive:true});
+  fs.writeFileSync(`${RESULTS_DIR}/happy-path.json`, JSON.stringify({simulationId:sid, checks, failures, simulationRewrites:{dependencyAliases:ALIASES,commentsStripped:true,marketStalenessWidened:false}, sourceHash:createHash("sha256").update(fs.readFileSync("contracts/extensions/ccd016-swap-vault-mia-v2.clar")).digest("hex"), plan:plan.map(({want,...p})=>p), result:res},null,2)+"\n");
   if (failures > 0) process.exit(1);
 }
 main().catch((e) => { console.error(e); process.exit(1); });

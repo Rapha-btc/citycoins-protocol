@@ -28,7 +28,7 @@ import {createHash} from "node:crypto";
 import {fetchLazerUpdateAny} from "./_vault-lazer.mjs";
 import {
   ClarityVersion, uintCV, boolCV, noneCV, listCV, tupleCV, stringAsciiCV, bufferCV, trueCV, falseCV,
-  contractPrincipalCV, standardPrincipalCV, deserializeCV, cvToString,
+  contractPrincipalCV, standardPrincipalCV, deserializeCV, cvToString, someCV,
 } from "@stacks/transactions";
 import { SimulationBuilder, getSimulationResult } from "stxer";
 
@@ -139,7 +139,7 @@ async function main() {
   let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(tip.height);
   const deploy = (name, code, cv = ClarityVersion.Clarity6) => { b = b.withSender(DEPLOYER).addContractDeploy({ contract_name: name, source_code: code, clarity_version: cv }); plan.push({ kind: "deploy", label: `deploy ${name}` }); };
   const patch = (cid, code, label, cv) => { b = b.addSetContractCode({ contract_id: cid, source_code: code, clarity_version: cv }); plan.push({ kind: "patch", label }); };
-  const tx = (label, sender, cid, fn, args, want) => { if (fn === "jing-reclaim" && args.length === 0) args = [noneCV()]; if (/^deposit-token-[xy]$/.test(fn) && args.length === 6) args = args.filter((_, i) => i !== 3); if (/^readmit-token-[xy]$/.test(fn)) args = args.slice(0, 1); b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); plan.push({ kind: "tx", label, want }); };
+  const tx = (label, sender, cid, fn, args, want) => { if (fn === "jing-reclaim" && args.length === 0) args = [noneCV()]; if (/^deposit-token-[xy]$/.test(fn) && args.length === 6) args = args.filter((_, i) => i !== 3); if (/^readmit-token-[xy]$/.test(fn)) args = args.slice(0, 1); b = b.withSender(sender).addContractCall({ contract_id: cid, function_name: fn, function_args: args }); const slot = { kind: "tx", label, want }; plan.push(slot); return slot; };
   const ev = (label, cid, code, want) => { b = b.addEvalCode(cid, code); const slot = { kind: "eval", label, want }; plan.push(slot); return slot; };
   const advance = (btc) => { b = b.addAdvanceBlocks({ bitcoin_blocks: btc, stacks_blocks_per_bitcoin: 1, bitcoin_interval_secs: 1 }); plan.push({ kind: "advance", label: `advance ${btc} bitcoin blocks` }); };
   const ok = (v) => String(v).startsWith("(ok");
@@ -228,18 +228,28 @@ async function main() {
   tx("S7 set 300k cap to preserve partial-swap coverage", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(300000)], "(ok true)");
   // router-swap takes no size (bounty muerdzoc805a745ecc99, finding 2): with more than the cap
   // at home a stranger sells exactly one full 300k chunk, never a sliver that burns the cooldown
-  tx("S7 stranger router-swap: balance > cap -> sells exactly the 300k cap at the floor (book empty: pools)", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u300000)") && bare((String(v).match(/\(out (u\d+)\)/) || [])[1]) > 0n);
-  ev(`S7 exactly 300k left the vault: ${FUND - XC - 300_000n} sats home`, VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND - XC - 300_000n}`);
+  // Nested Quinn L-1: router-swap sells what the pools take inside the floor
+  // and keeps the rest (sold = amount - unsold, sold > 8, out >= floor-out(sold - 8));
+  // before the fix a partial fill reverted u3002
+  const s7 = tx("S7 stranger router-swap: balance > cap -> the 300k cap is the amount; sells what fits inside the floor (book empty: pools)", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u300000)") && 300_000n - num(v, "unsold") > 8n && num(v, "out") >= ((300_000n - num(v, "unsold") - 8n) * num(v, "limit-price")) / PPDF);
+  const s7sold = () => 300_000n - num(s7.raw, "unsold");
+  ev(`S7 exactly the sold sats left the vault; the unsold rest stays home`, VAULT_ID, "(get-status)", (v) => bare(field(v, "sbtc-balance")) === FUND - XC - s7sold());
   ev("S7 vault got STX from the pools", VAULT_ID, "(get-status)", (v) => bare(field(v, "stx-balance")) > 0n);
   // the cooldown: one router sale per burn block (default), so chunks cannot be chained in one block
   tx("S7 router-swap again in the same burn block -> u16044 (cooldown)", STRANGER, VAULT_ID, "router-swap", [UPD], "(err u16044)");
-  ev("S7 the refused call moved nothing", VAULT_ID, "(get-status)", (v) => field(v, "sbtc-balance") === `u${FUND - XC - 300_000n}`);
+  ev("S7 the refused call moved nothing", VAULT_ID, "(get-status)", (v) => bare(field(v, "sbtc-balance")) === FUND - XC - s7sold());
   ev("S7 config: cooldown 1 block, last sale stamped at this height", VAULT_ID, "(get-config)", (v) => field(v, "router-cooldown-blocks") === "u1" && bare(field(v, "last-router-swap")) > 0n);
   tx("S7 stranger set-router-cooldown -> u16000", STRANGER, VAULT_ID, "set-router-cooldown", [uintCV(0)], "(err u16000)");
   tx("S7 proxy set-router-cooldown 200 -> u16033 (cap 144)", DEPLOYER, PROXY_ID, "set-cooldown", [uintCV(200)], "(err u16033)");
   tx("S7 proxy set-max-chunk-sats 1000 (a small chunk; router-swap sells the cap)", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(1000)], "(ok true)");
   advance(1);
-  tx("S7 next burn block: router-swap sells one 1000-sat chunk -> ok", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u1000)"));
+  // L-1: when the first sale left a rest, the pools sit at the floor and this
+  // chunk sells 8 sats or less -> u16047 (no cooldown burned); with deeper pools it sells
+  const s7c = tx("S7 next burn block: router-swap one 1000-sat chunk (checked against the probe below)", STRANGER, VAULT_ID, "router-swap", [UPD], () => true);
+  // the same sale straight through the router from the same pool state (a failed vault call
+  // moves nothing): what fits inside the vault's floor now, with min-out 0
+  const LIMIT = (MID * (BPS - SLIPPAGE)) / BPS;
+  const probe = tx("S7 probe: an sBTC holder routes 1000 sats at the vault's floor, min-out 0", SBTC_WHALE, `${DEPLOYER}.${ROUTER}`, "smart-swap-sbtc-for-stx", [uintCV(1000), uintCV(LIMIT), someCV(UPD), uintCV(MID), uintCV(0)], () => true);
   tx("S7 stranger fuel-fair-book again", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
 
   // ---- S7b the router's BOOK leg: a bid rests at the mid, router-swap fills it there first ----
@@ -249,7 +259,8 @@ async function main() {
   const stxBefore7b = ev("S7b vault STX before", VAULT_ID, "(stx-get-balance '" + VAULT_ID + ")", () => true);
   tx("S7b proxy set-max-chunk-sats 100k", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(100_000)], "(ok true)");
   advance(1);
-  tx("S7b stranger router-swap 100k sats: the book leg takes the bid at the mid, the rest goes to the pools, unsold 0", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u100000)") && v.includes("(unsold u0)"));
+  // L-1: the book leg takes the bid at the mid, the pools what fits inside the floor; any rest stays
+  const s7b = tx("S7b stranger router-swap 100k sats: the book leg takes the bid at the mid, the pools take what fits inside the floor, the rest stays", STRANGER, VAULT_ID, "router-swap", [UPD], (v) => ok(v) && v.includes("(amount u100000)") && 100_000n - num(v, "unsold") > 8n && num(v, "out") >= ((100_000n - num(v, "unsold") - 8n) * num(v, "limit-price")) / PPDF);
   const cyc1 = ev("S7b market cycle after: the book settled", MKT_ID, "(get-current-cycle)", () => true);
   const whaleSats1 = ev("S7b the bidder's sats after: it bought the vault's sBTC", VAULT_ID, sbtcBal(STX_WHALE), () => true);
   const stxAfter7b = ev("S7b vault STX after", VAULT_ID, "(stx-get-balance '" + VAULT_ID + ")", () => true);
@@ -265,9 +276,13 @@ async function main() {
   // ---- S8b the DAO's explicit split (router-swap-split): mismatch refused, a DLMM-only split sells ----
   tx("S8b stranger router-swap-split -> u16000", STRANGER, VAULT_ID, "router-swap-split", [uintCV(2000), uintCV(0), uintCV(2000), uintCV(0), uintCV(0), UPD], "(err u16000)");
   tx("S8b proxy split 2000 = 0 + 1000 + 0 + 0 -> u16040 (mismatch)", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(1000), uintCV(0), uintCV(0), UPD], "(err u16040)");
+  // the L-1 partial sales above can leave the DLMM at the 1% floor (a DLMM short fill is u2003):
+  // the DAO lever set-slippage-bps widens the split's floor to 5% for this leg, then back
+  tx("S8b proxy set-slippage-bps 500 (the DLMM may sit at the 1% floor after S7)", DEPLOYER, PROXY_ID, "set-slippage", [uintCV(500)], "(ok true)");
   advance(1);
   tx("S8b proxy split 2000 sats, all to the DLMM -> ok, unsold 0", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(2000), uintCV(0), uintCV(0), UPD], (v) => ok(v) && v.includes("(unsold u0)"));
   tx("S8b proxy split again in the same burn block -> u16044 (the cooldown is shared)", DEPLOYER, PROXY_ID, "split", [uintCV(1000), uintCV(0), uintCV(1000), uintCV(0), uintCV(0), UPD], "(err u16044)");
+  tx("S8b proxy set-slippage-bps back to 100", DEPLOYER, PROXY_ID, "set-slippage", [uintCV(100)], "(ok true)");
 
   // ---- S9 recall: sBTC only ever goes back to the treasury ----
   ev("S9 treasury sats before recall", VAULT_ID, sbtcBal(REWARDS_TREASURY), () => true);
@@ -300,12 +315,18 @@ async function main() {
   }
   check(`S5 the book received exactly ${STX_TO_VAULT} uSTX`, bare(bookAfter.raw) - bare(bookBefore.raw), (d) => d === STX_TO_VAULT);
   check("S9 the treasury received the recalled sats", bare(trAfter.raw) - bare(trBefore.raw), (d) => d > 0n);
+  { // L-1: u16047 exactly when 8 sats or less fit inside the floor; never a sale under it
+    const pSold = 1000n - num(probe.raw, "unsold"), pOut = num(probe.raw, "out");
+    check("S7 the probe routed inside the floor (out >= floor-out(sold - 8))", `sold ${pSold}, out ${pOut}`, () => ok(probe.raw) && pOut >= ((pSold > 8n ? pSold - 8n : 0n) * LIMIT) / PPDF);
+    check("S7 1000-sat chunk: u16047 iff 8 sats or less fit inside the floor, else it sells", `${s7c.raw} / probe sold ${pSold}`, () => s7c.raw === "(err u16047)" ? pSold <= 8n : ok(s7c.raw) && s7c.raw.includes("(amount u1000)") && 1000n - num(s7c.raw, "unsold") > 8n);
+  }
   check("S7b the market settled one cycle through the router's book leg", bare(cyc1.raw) - bare(cyc0.raw), (d) => d === 1n);
   check("S7b the bidder received sBTC from the book leg", bare(whaleSats1.raw) - bare(whaleSats0.raw), (d) => d > 0n);
-  check("S7b the vault received STX for the chunk", bare(stxAfter7b.raw) - bare(stxBefore7b.raw), (d) => d > 0n);
+  check("S7b the vault received exactly the router-swap out in STX", bare(stxAfter7b.raw) - bare(stxBefore7b.raw), (d) => d > 0n && d === num(s7b.raw, "out"));
   console.log(`\n${checks - failures}/${checks} checks green`);
-  fs.mkdirSync("simulations/results/ccd016-v2",{recursive:true});
-  fs.writeFileSync("simulations/results/ccd016-v2/coverage.json", JSON.stringify({simulationId:sid, checks, failures, simulationRewrites:{dependencyAliases:ALIASES,commentsStripped:true,marketStalenessWidened:false}, sourceHash:createHash("sha256").update(fs.readFileSync("contracts/extensions/ccd016-swap-vault-mia-v2.clar")).digest("hex"), plan:plan.map(({want,...p})=>p), result:res},null,2)+"\n");
+  const RESULTS_DIR = process.env.SIM_RESULTS_DIR || "simulations/results/ccd016-v2";
+  fs.mkdirSync(RESULTS_DIR,{recursive:true});
+  fs.writeFileSync(`${RESULTS_DIR}/coverage.json`, JSON.stringify({simulationId:sid, checks, failures, simulationRewrites:{dependencyAliases:ALIASES,commentsStripped:true,marketStalenessWidened:false}, sourceHash:createHash("sha256").update(fs.readFileSync("contracts/extensions/ccd016-swap-vault-mia-v2.clar")).digest("hex"), plan:plan.map(({want,...p})=>p), result:res},null,2)+"\n");
   if (failures > 0) process.exit(1);
 }
 main().catch((e) => { console.error(e); process.exit(1); });

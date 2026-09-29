@@ -119,3 +119,45 @@ coverage artifacts, RV seeds, invariants and limitations. The old
 [2026-09-15 trace report](TRACE-COVERAGE-ccd016-swap-vault-mia-v2.md) describes the
 pre-emergency source; its 35 branch nodes are a different metric from today's
 97 SDK-instrumented outcomes. Do not apply that old report to the current source.
+
+## Rerun on the current sources, and the vault fixes (L-1, #7)
+
+ccd016 v2 vault `858b098a` (`6c6075f`), Jing market `d1e3bbad`, router
+`dfc8165b`, core `67242f19`.
+
+| sim | stxer | checks |
+|---|---|---|
+| coverage | [fb0fb8c0](https://stxer.xyz/simulations/mainnet/fb0fb8c0b019750dbb5a8a2e9cb458eb) | 104/104 |
+| happy-path | [2c94c13c](https://stxer.xyz/simulations/mainnet/2c94c13c6ec0ef1201a3cd6de166d11d) | 58/58 |
+| parked | [b35bb5b4](https://stxer.xyz/simulations/mainnet/b35bb5b487e0fef026a1568d87abe7e4) | 136/136 |
+| clock-keyless | [57b32d84](https://stxer.xyz/simulations/mainnet/57b32d84db6754299df121619ce05f96) | 68/68 |
+| emergency-dia | [9e3835e3](https://stxer.xyz/simulations/mainnet/9e3835e33e2c7e959b14ffc2406a36d1) | 45/45 |
+| emergency-native | [f33ef902](https://stxer.xyz/simulations/mainnet/f33ef902798adec97fcc101440062594) | 48/48 |
+| recovery matrix (10 forks) | see `results/v6-3-recovery/citycoins.json` | 1128/1128 |
+| **vault fixes** (`stxer-ccd016-v2-fixes.js`) | [48558d46](https://stxer.xyz/simulations/mainnet/48558d46415c733aafe5e4d944495600) | 92/92 |
+
+Expectations changed, all from the L-1 fix (a partial `router-swap` used to
+revert u3002, it now sells what fits inside the floor):
+- `stxer-ccd016-v2-coverage.js` S7: the 300k-cap sale asserts `sold > 8` and
+  `out >= floor-out(sold - 8)` instead of the whole 300,000; the balance checks
+  use `sold`; the 1,000-sat chunk is checked against a direct router probe
+  from the same pool state (u16047 exactly when 8 sats or less fit); S7b
+  asserts the floor on what sold and the vault's STX gain = `out`. S8b raises
+  `set-slippage-bps` to 500 for the DAO split and restores 100 (S7's partial
+  sale leaves the DLMM at the floor).
+- `stxer-ccd016-v2-happy-path.js` B2: a partial sale is allowed; a 300 STX bid
+  then rests and the next call sells the rest through the book; residual
+  wallet sBTC at most 2 dust sats; the bidder cancels what is left.
+
+The vault-fixes sim: #7 (a 1-sat pending escrow after an exact sell-out:
+`close-batch` moves 1 sat home and closes with the window still open; 3 sats
+still refused u16043); L-1 (3- and 8-sat sales revert u16047 without burning
+the cooldown; with the pools pushed to mid - 0.5%, 2,367,338 sold and
+7,632,665 kept, the next call reverts u16047, and after a bid rests 114,866
+more sell). L-2 and #6 do not apply to ccd016 (its window cap stays 1008; 1009
+refused u16033). #8 cannot be built since the market's M-1 fix.
+
+The regenerated `results/ccd016-v2/coverage.json` and `happy-path.json` for
+these runs are not committed here (those two files hold other uncommitted
+work in this checkout).
+
