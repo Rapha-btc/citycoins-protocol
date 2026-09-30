@@ -161,3 +161,57 @@ The regenerated `results/ccd016-v2/coverage.json` and `happy-path.json` for
 these runs are not committed here (those two files hold other uncommitted
 work in this checkout).
 
+
+## Rerun on the exact-rebate market (2026-09-30)
+
+What changed:
+- **Market** (jing-contracts-v3 `34bbe18`): `swap` sizes the rebate on the net,
+  `net = floor(amount*10000/(10000+bps))`, `rebate = amount - net`. The unused rebate
+  refunded is now only rounding. `gross-cap = net-cap==0 ? 0 : floor(((net-cap+1)*10020-1)/10000)`.
+- **Router** (`6a84e02`): `jing-size` estimates `net = size*BPS/(BPS+20)`.
+- **Vault** (`1cc6f23`): the `router-swap` allowance is `amount + min-x + JING_REBATE_DUST_SATS` (u51).
+
+Fork setup:
+- `ccd016-swap-vault-mia-v2` and `ccd015-redemption-book-mia-stx` are not on mainnet, so they keep their names.
+- The sims already forked at the tip. `FORK_BLOCK` now pins the whole set to one height: **9093167**.
+
+Model updates, all derived from the formulas above:
+- coverage, happy-path and parked: the taker's `NET = TAKE*BPS/(BPS+20)`, `REB = TAKE - NET` (was `REB = TAKE*20/BPS`).
+- fixes:
+  - `takeFor` sizes the taker with the same net;
+  - the source guard looks for `JING_REBATE_DUST_SATS u51`;
+  - #8 checks the gross outflow against `amount + min-x + 51`.
+
+No other expectation changed.
+
+| sim | stxer | checks |
+|---|---|---|
+| coverage | [a3e5effa4d7b4691b14e4f2161234fc8](https://stxer.xyz/simulations/mainnet/a3e5effa4d7b4691b14e4f2161234fc8) | 104/104 |
+| happy-path | [c24238efa0e539e007d5d4f114d5da4e](https://stxer.xyz/simulations/mainnet/c24238efa0e539e007d5d4f114d5da4e) | 58/58 |
+| parked | [42b73c75ef30f192972ac63d08b7ac55](https://stxer.xyz/simulations/mainnet/42b73c75ef30f192972ac63d08b7ac55) | 136/136 |
+| clock-keyless | [36dc5d5c2032ab7c31ba6613c8b90635](https://stxer.xyz/simulations/mainnet/36dc5d5c2032ab7c31ba6613c8b90635) | 68/68 |
+| emergency-dia | [086ea6296ca766eaa856a3e3a6e2a4d2](https://stxer.xyz/simulations/mainnet/086ea6296ca766eaa856a3e3a6e2a4d2) | 45/45 |
+| emergency-native | [56cc1338510431115d818655691eabb4](https://stxer.xyz/simulations/mainnet/56cc1338510431115d818655691eabb4) | 48/48 |
+| vault fixes | [bc40377f4a84e3355434c8c67f0d7900](https://stxer.xyz/simulations/mainnet/bc40377f4a84e3355434c8c67f0d7900) | 92/92 |
+| recovery matrix: pending, public / dao | [4738be2f10184c5aa1bf03e5f17e15a7](https://stxer.xyz/simulations/mainnet/4738be2f10184c5aa1bf03e5f17e15a7) / [f588c624c26329015b49cd5fc9d5033d](https://stxer.xyz/simulations/mainnet/f588c624c26329015b49cd5fc9d5033d) | 1128/1128 in total |
+| recovery matrix: resting, public / dao | [0aaae19418b1d7ab2c2a4c5a0dafebb4](https://stxer.xyz/simulations/mainnet/0aaae19418b1d7ab2c2a4c5a0dafebb4) / [1fcfdd0c0e067c85e338f5fcb3535dd3](https://stxer.xyz/simulations/mainnet/1fcfdd0c0e067c85e338f5fcb3535dd3) | |
+| recovery matrix: parked, public / dao | [1345f43845e204eb9a4a0640fd3cbf76](https://stxer.xyz/simulations/mainnet/1345f43845e204eb9a4a0640fd3cbf76) / [702440f3ed5e8dd9e70ef7983951ecf8](https://stxer.xyz/simulations/mainnet/702440f3ed5e8dd9e70ef7983951ecf8) | |
+| recovery matrix: pending+resting, public / dao | [ced56d645b4aaabdafb361322640f839](https://stxer.xyz/simulations/mainnet/ced56d645b4aaabdafb361322640f839) / [b7897fe64a252185c5c607345ce22b78](https://stxer.xyz/simulations/mainnet/b7897fe64a252185c5c607345ce22b78) | |
+| recovery matrix: none, public / dao | [0eb2cafda3c8b7d7be4e11318999ac7a](https://stxer.xyz/simulations/mainnet/0eb2cafda3c8b7d7be4e11318999ac7a) / [6dd02ced090a2a55ed49aaaa715a75fe](https://stxer.xyz/simulations/mainnet/6dd02ced090a2a55ed49aaaa715a75fe) | |
+
+Vault-fixes numbers at this fork:
+- L-1: 2,594,512 sold and 7,405,491 kept. The next call sold 115,078 more through the book.
+- #8: that book-leg sale moved 115,078 sats gross with 0 refunded, against an allowance of 7,406,542.
+
+As before, the regenerated `coverage.json` and `happy-path.json` are not committed,
+because those files hold other uncommitted work in this checkout.
+
+SHA-256 of the deployed sources:
+- `ccd016-swap-vault-mia-v2`: `5b5d99c0c16f11e6f08e26dd42d591a5ad81b2920c56912986b52d251c70813e`
+- `ccd015-redemption-book-mia-stx`: `b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f`
+- `markets-sbtc-stx-jing-v6-3`: `5c08412fc5990a8bf0db3a0cbbec3fa4c859d4185d0caf1cd16ae0c78f851bfb`
+- `swap-router-sbtc-stx-jing-v5-3`: `882374f40bfdf8270b3ea18ba2d7e68fce4431ee17c60f70b00bb2670240fe58`
+- `jing-core-v6`: `88a689affb23f13030953e891336af42a3f5cb275f13b3c54c79d8cd4de50697`
+- `jing-ladder-v1`: `0f1e08b023272ed96a2653f727292626d4b0325dcf4e42963104d977860ec786`
+
+Run the set on one fork with `FORK_BLOCK=<height>`. The recovery matrix is `stxer-ccd016-v2-emergency.cjs --recovery`.

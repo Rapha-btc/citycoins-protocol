@@ -99,7 +99,8 @@ function check(label, actual, want) {
 }
 async function main() {
   console.log("=== ccd016-swap-vault-mia-v2 CLOCK on the next Jing stack, mainnet fork, keyless ===");
-  const tip = (await fetchJson(`/extended/v1/block?limit=1`)).results[0];
+  // FORK_BLOCK pins a whole rerun set to one height (default: the node tip)
+  const tip = process.env.FORK_BLOCK ? await fetchJson(`/extended/v1/block/by_height/${process.env.FORK_BLOCK}`) : (await fetchJson(`/extended/v1/block?limit=1`)).results[0];
   console.log(`tip ${tip.height}`);
 
   // sources

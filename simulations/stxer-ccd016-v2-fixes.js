@@ -49,7 +49,7 @@ const CORE_ID = `${DEPLOYER}.${CORE}`, MKT_ID = `${DEPLOYER}.${MKT}`, ROUTER_ID 
 const [sbtcAddr, sbtcName] = SBTC.split("."), [wstxAddr, wstxName] = WSTX.split("."), [trAddr, trName] = REWARDS_TREASURY.split(".");
 const sbtcT = contractPrincipalCV(sbtcAddr, sbtcName), wstxT = contractPrincipalCV(wstxAddr, wstxName);
 const PP = 100_000_000n, PPDF = PP * 100n, BPS = 10_000n, HUGE = 999_999_999_999_999n;
-const MIN_X = 1000n, SLACK = 8n, REBATE_MAX = 70n;
+const MIN_X = 1000n, SLACK = 8n, REBATE_DUST = 51n; // JING_REBATE_DUST_SATS
 const FUND_A = 100_000n, FUND_B = 100_000n, FUND_C = 10_000_000n; // C: 0.1 BTC, more than the pools hold between mid - 0.5% and the 1% floor
 const DUMP = 20_000_000n; // a whale's router sale down to mid - 0.5% before C
 const LOW_BID_STX = 10_000_000n; // a resting bid at mid - 10%: puts the vault's places into pending escrow, never fills at the mid
@@ -99,9 +99,9 @@ function check(label, actual, want) {
 
 // the uSTX a Y taker must send so the vault's X ask keeps exactly `rest` sats
 function takeFor(mid, target) {
-  const guess = (target * mid * BPS) / PPDF / (BPS - 20n); // gross: the 20 bps fresh-print rebate comes off
+  const guess = (target * mid * (BPS + 20n)) / PPDF / BPS; // gross: net = floor(t * BPS / (BPS + 20)) at a fresh print
   for (let t = guess - 5000n; t < guess + 5000n; t++) {
-    const net = t - (t * 20n) / BPS;
+    const net = (t * BPS) / (BPS + 20n);
     if ((net * PPDF) / mid === target) return t;
   }
   throw new Error(`no taker size buys exactly ${target} sats at ${mid}`);
@@ -109,7 +109,8 @@ function takeFor(mid, target) {
 
 async function main() {
   console.log("=== ccd016-swap-vault-mia-v2 FIXES: L-1 partial router-swap / u16047, #7 market dust, #8 allowance (mainnet fork, Lazer) ===");
-  const tip = (await fetchJson(`/extended/v1/block?limit=1`)).results[0];
+  // FORK_BLOCK pins a whole rerun set to one height (default: the node tip)
+  const tip = process.env.FORK_BLOCK ? await fetchJson(`/extended/v1/block/by_height/${process.env.FORK_BLOCK}`) : (await fetchJson(`/extended/v1/block?limit=1`)).results[0];
   const lz = await freshProofAfter(Number(tip.block_time) + 12);
   const UPD = bufferCV(Buffer.from(lz.hex, "hex"));
   const MID = (lz.px * PP) / lz.py;
@@ -119,7 +120,7 @@ async function main() {
   const coreSrc = src(`${JING_SRC}/${CORE}.clar`), ladderSrc = src(`${JING_SRC}/${LADDER}.clar`);
   const mktSrc = src(`${JING_SRC}/${MKT}.clar`), routerSrc = src(`${JING_SRC}/${ROUTER}.clar`);
   const bookSrc = src(`./contracts/extensions/${BOOK}.clar`), vaultSrc = src(`./contracts/extensions/${VAULT}.clar`);
-  for (const needle of ["ROUTER_SLACK_SATS u8", "JING_REBATE_MAX_BPS u70", "(define-private (market-total)", "MAX_WINDOW_BLOCKS u1008"])
+  for (const needle of ["ROUTER_SLACK_SATS u8", "JING_REBATE_DUST_SATS u51", "(define-private (market-total)", "MAX_WINDOW_BLOCKS u1008"])
     if (!vaultSrc.includes(needle)) throw new Error(`vault source lacks ${needle}`);
   const sourceHashes = Object.fromEntries([[CORE, `${JING_SRC}/${CORE}.clar`], [LADDER, `${JING_SRC}/${LADDER}.clar`], [MKT, `${JING_SRC}/${MKT}.clar`], [ROUTER, `${JING_SRC}/${ROUTER}.clar`], [BOOK, `contracts/extensions/${BOOK}.clar`], [VAULT, `contracts/extensions/${VAULT}.clar`]]
     .map(([n, p]) => [n, createHash("sha256").update(fs.readFileSync(p)).digest("hex")]));
@@ -315,8 +316,8 @@ async function main() {
   const gross3 = sum(p3Sbtc.filter(m => m.from === VAULT_ID)), back3 = sum(p3Sbtc.filter(m => m.to === VAULT_ID));
   check("L-1 next call: net sBTC out of the vault in events = sold", gross3 - back3, (d) => d === sold3);
   // #8: the allowance on a book-leg sale
-  const allowNew = amount3 + MIN_X + (amount3 * REBATE_MAX) / BPS, allowOld = amount3 + MIN_X;
-  check(`#8 book-leg sale: gross sBTC outflow within the allowance amount + min-x + 70 bps (measured; old allowance ${allowOld})`, `gross ${gross3}, refunded ${back3}, allowance ${allowNew}`, () => gross3 <= allowNew);
+  const allowNew = amount3 + MIN_X + REBATE_DUST, allowOld = amount3 + MIN_X;
+  check(`#8 book-leg sale: gross sBTC outflow within the allowance amount + min-x + 51 (measured; old allowance ${allowOld})`, `gross ${gross3}, refunded ${back3}, allowance ${allowNew}`, () => gross3 <= allowNew);
   console.log(`  ..   #8 gross ${gross3} vs old allowance ${allowOld}: ${gross3 > allowOld ? "ABOVE the old allowance (the band)" : "under the old allowance (band not reached)"}`);
 
   console.log(`\n${checks - failures}/${checks} checks green`);

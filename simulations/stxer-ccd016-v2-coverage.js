@@ -107,7 +107,8 @@ function check(label, actual, want) {
 
 async function main() {
   console.log("=== ccd016-swap-vault-mia-v2 on the next Jing stack (core-v5, market v6, router v5), mainnet fork ===");
-  const tip = (await fetchJson(`/extended/v1/block?limit=1`)).results[0];
+  // FORK_BLOCK pins a whole rerun set to one height (default: the node tip)
+  const tip = process.env.FORK_BLOCK ? await fetchJson(`/extended/v1/block/by_height/${process.env.FORK_BLOCK}`) : (await fetchJson(`/extended/v1/block?limit=1`)).results[0];
   const lz = await freshProofAfter(Number(tip.block_time) + 12);
   const UPD = bufferCV(Buffer.from(lz.hex, "hex"));
   const MID = (lz.px * PP) / lz.py;
@@ -129,7 +130,8 @@ async function main() {
   // ---- expected numbers ----
   const LEEWAY = 500n, SLIPPAGE = 100n;
   const FLOOR = (MID * (BPS - LEEWAY)) / BPS;
-  const REB = (TAKE_STX * 20n) / BPS, NET = TAKE_STX - REB;
+  // market swap: net = floor(amount * BPS / (BPS + 20)) at a fresh print, rebate = amount - net
+  const NET = (TAKE_STX * BPS) / (BPS + 20n), REB = TAKE_STX - NET;
   const XC = (NET * PPDF) / MID; // sats the taker buys at mid (y binding: the vault's 1M sats is far bigger)
   const STX_TO_VAULT = NET - NET / 1000n + REB; // net - 10 bps fee + the whole rebate rides (single x maker)
   if (XC >= FUND) throw new Error("sizing: 100 STX must be worth under 1M sats");

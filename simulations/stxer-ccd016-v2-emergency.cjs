@@ -16,7 +16,7 @@ const nativeMode=process.argv.includes('--native');
 if(process.argv.includes('--recovery')) return (await import('./_vault-recovery-v6-3.mjs')).runRecoveryMatrix('citycoins');
 const tipResp=await fetch(NODE+'/extended/v1/block?limit=1',{signal:AbortSignal.timeout(20000)});
 if(!tipResp.ok)throw Error('tip '+tipResp.status);
-const tip=(await tipResp.json()).results[0];
+const tip=process.env.FORK_BLOCK?await (await fetch(NODE+'/extended/v1/block/by_height/'+process.env.FORK_BLOCK,{signal:AbortSignal.timeout(20000)})).json():(await tipResp.json()).results[0]; // FORK_BLOCK pins a rerun set to one height
 const b=SimulationBuilder.new({stacksNodeAPI:NODE,apiEndpoint:API,skipTracing:false}).useBlockHeight(tip.height).withSender(DEP);
 const plan=[],sourceHashes={};
 (await import('./_jing-v6-3.mjs')).appendJingStack(b,plan,sourceHashes);
