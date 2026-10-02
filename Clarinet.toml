@@ -689,7 +689,7 @@ parser_version = 2
 # callee_filter = true
 
 [contracts.ccd015-redemption-book-mia]
-path = "contracts/extensions/ccd015-redemption-book-mia.clar"
+path = "contracts/drafts/ccd015-redemption-book-mia.clar"
 clarity_version = 5
 epoch = 3.4
 
@@ -699,7 +699,7 @@ clarity_version = 5
 epoch = 3.4
 
 [contracts.ccd016-swap-vault-mia]
-path = "contracts/extensions/ccd016-swap-vault-mia.clar"
+path = "contracts/drafts/ccd016-swap-vault-mia.clar"
 clarity_version = 5
 epoch = 3.4
 
@@ -725,5 +725,10 @@ epoch = 3.4
 
 [contracts.ccip027-ccd016-dia-band-off]
 path = "contracts/proposals/ccip027-ccd016-dia-band-off.clar"
+clarity_version = 5
+epoch = 4.0
+
+[contracts.ccd016-swap-vault-mia-v3]
+path = "contracts/drafts/ccd016-swap-vault-mia-v3.clar"
 clarity_version = 5
 epoch = 4.0
