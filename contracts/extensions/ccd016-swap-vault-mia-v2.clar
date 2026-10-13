@@ -131,6 +131,12 @@
 ;; Router v5-3 sizes the book leg at the market's gross-cap, so the leg
 ;; trades in full and only this rounding comes back.
 (define-constant JING_REBATE_DUST_SATS u51)
+;; highest taker rebate the market pays (bps). The market refunds the untraded
+;; rebate share of a sub-min rest rem < min-x too, and the router re-sells it:
+;; rest + left < min-x * (1 + bps / 1e4) + 51.007 (the bid list caps fills at
+;; 50), so in integers router-swap allows ceil(min-x * MAX_TAKER_REBATE_BPS /
+;; BPS_PRECISION) on top of min-x + 51 (audit F1, Celestial Shark)
+(define-constant MAX_TAKER_REBATE_BPS u70)
 
 (define-constant SBTC_TOKEN 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token)
 (define-constant ASSET_SBTC "sbtc-token")
@@ -412,20 +418,28 @@
 
 ;; --- exits (destinations hard-wired) ---------------------------------------
 
-;; Flush the vault's entire STX balance to the ccd015 book.
+;; Flush the vault's STX balance to the ccd015 book, less pyth-fee-budget
+;; uSTX kept back so a caller cannot sweep the Lazer fee float before a sale.
 ;; Permissionless: no pricing, no amount, no destination.
 (define-public (fuel-fair-book)
-  (let ((balance (stx-get-balance current-contract)))
-    (asserts! (> balance u0) ERR_NO_FUNDS)
-    (try! (as-contract? ((with-stx balance))
-      (try! (stx-transfer? balance current-contract STX_FAIR_BOOK))
+  (let (
+      (balance (stx-get-balance current-contract))
+      (reserve (var-get pyth-fee-budget))
+      (amount (if (> balance reserve)
+        (- balance reserve)
+        u0
+      ))
+    )
+    (asserts! (> amount u0) ERR_NO_FUNDS)
+    (try! (as-contract? ((with-stx amount))
+      (try! (stx-transfer? amount current-contract STX_FAIR_BOOK))
     ))
     ;; a batch the book sold out has no exit call here: its proceeds do
     (close-if-empty)
     (ok (print {
       notification: "fuel-fair-book",
       payload: {
-        amount: balance,
+        amount: amount,
         book: STX_FAIR_BOOK,
       },
     }))
@@ -572,10 +586,15 @@
     (try! (check-amount amount))
     (try! (cooldown-tick))
     (let ((result (try! (as-contract?
-        ;; the market refunds the unfilled rest (under min-x) and the unused
-        ;; rebate dust, and the router re-sells both: allow that on top of `amount`
+        ;; the market refunds the unfilled rest (under min-x), the rebate share
+        ;; on it (at most ceil(min-x * 70 bps)) and the unused rebate dust, and the
+        ;; router re-sells all three: allow that on top of `amount`
         ((with-ft SBTC_TOKEN ASSET_SBTC
-          (+ amount (get min-token-x mins) JING_REBATE_DUST_SATS))
+          (+ amount (get min-token-x mins) JING_REBATE_DUST_SATS
+            (/ (+ (* (get min-token-x mins) MAX_TAKER_REBATE_BPS) (- BPS_PRECISION u1))
+              BPS_PRECISION
+            )
+          ))
           (with-stx (var-get pyth-fee-budget))
         )
         (try! (contract-call? JING_ROUTER smart-swap-sbtc-for-stx amount limit
