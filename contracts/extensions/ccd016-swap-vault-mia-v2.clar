@@ -177,6 +177,15 @@
 ;; Emergency DIA tolerance: 10% by default, bounded at 50%.
 (define-data-var no-pyth-slippage-bps uint u1000)
 
+;; Pyth Lazer charges its update fee in STX from tx-sender, which is this
+;; vault inside as-contract?. uSTX allowed per Lazer-verifying call (jing-take,
+;; router-swap, router-swap-split); u0 while the oracle fee is u0. The market's
+;; swap verifies the update twice (swap + settle-with-refresh): set it to at
+;; least 2 x the oracle fee. Paid from the vault's own STX balance. Bounded at
+;; 10 STX.
+(define-constant MAX_PYTH_FEE_BUDGET u10000000)
+(define-data-var pyth-fee-budget uint u0)
+
 ;; burn blocks the patience phase lasts, from the batch's first funding
 (define-data-var window-blocks uint u288)
 ;; resting ask under the oracle mid while the window is open (5%)
@@ -236,6 +245,19 @@
     (print {
       notification: "set-no-pyth-slippage-bps",
       payload: { value: bps },
+    })
+    (ok true)
+  )
+)
+
+(define-public (set-pyth-fee-budget (ustx uint))
+  (begin
+    (try! (is-dao-or-extension))
+    (asserts! (<= ustx MAX_PYTH_FEE_BUDGET) ERR_OUT_OF_RANGE)
+    (var-set pyth-fee-budget ustx)
+    (print {
+      notification: "set-pyth-fee-budget",
+      payload: { value: ustx },
     })
     (ok true)
   )
@@ -498,7 +520,9 @@
     (try! (is-dao-or-extension))
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (try! (check-amount amount))
-    (let ((result (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount))
+    (let ((result (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount)
+          (with-stx (var-get pyth-fee-budget))
+        )
         (try! (contract-call? JING_MARKET swap amount limit update SBTC_TOKEN
           ASSET_SBTC WSTX_TOKEN ASSET_WSTX true
         ))
@@ -551,7 +575,9 @@
         ;; the market refunds the unfilled rest (under min-x) and the unused
         ;; rebate dust, and the router re-sells both: allow that on top of `amount`
         ((with-ft SBTC_TOKEN ASSET_SBTC
-          (+ amount (get min-token-x mins) JING_REBATE_DUST_SATS)))
+          (+ amount (get min-token-x mins) JING_REBATE_DUST_SATS))
+          (with-stx (var-get pyth-fee-budget))
+        )
         (try! (contract-call? JING_ROUTER smart-swap-sbtc-for-stx amount limit
           (some update) mid u0
         ))
@@ -614,7 +640,9 @@
     (try! (check-amount amount))
     (try! (cooldown-tick))
     (let ((result (try! (as-contract?
-        ((with-ft SBTC_TOKEN ASSET_SBTC (+ amount (get min-token-x market-mins))))
+        ((with-ft SBTC_TOKEN ASSET_SBTC (+ amount (get min-token-x market-mins)))
+          (with-stx (var-get pyth-fee-budget))
+        )
         (try! (contract-call? JING_ROUTER swap-sbtc-for-stx amount jing limit
           (some update) none {
           dlmm: dlmm,
@@ -708,6 +736,7 @@
     leeway-bps: (var-get leeway-bps),
     slippage-bps: (var-get slippage-bps),
     no-pyth-slippage-bps: (var-get no-pyth-slippage-bps),
+    pyth-fee-budget: (var-get pyth-fee-budget),
     dia-band-bps: (var-get dia-band-bps),
     max-chunk-sats: (var-get max-chunk-sats),
     router-cooldown-blocks: (var-get router-cooldown-blocks),

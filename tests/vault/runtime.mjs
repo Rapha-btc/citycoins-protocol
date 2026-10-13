@@ -27,7 +27,7 @@ err(vault('is-dao-or-extension'),16000);
 ok(call('mock-base-dao','set-extension',[Cl.principal(admin),Cl.bool(true)],admin));
 eq(ok(gov('is-dao-or-extension')).type,'true');
 ok(vault('callback',[Cl.principal(alice),update]));
-for(const [f,max,value,positive] of [['set-window-blocks',1008,288,false],['set-leeway-bps',1000,500,false],['set-slippage-bps',1000,100,false],['set-dia-band-bps',5000,1000,false],['set-max-chunk-sats',100000000,1000000,true],['set-router-cooldown',144,1,false],['set-no-pyth-slippage-bps',5000,1000,false]]){
+for(const [f,max,value,positive] of [['set-window-blocks',1008,288,false],['set-leeway-bps',1000,500,false],['set-slippage-bps',1000,100,false],['set-dia-band-bps',5000,1000,false],['set-max-chunk-sats',100000000,1000000,true],['set-router-cooldown',144,1,false],['set-no-pyth-slippage-bps',5000,1000,false],['set-pyth-fee-budget',10000000,0,false]]){
  err(vault(f,[u(value)]),16000);err(gov(f,[u(max+1)]),16033);
  if(positive)err(gov(f,[u(0)]),16033);else ok(gov(f,[u(0)]));
  ok(gov(f,[u(max)]));ok(gov(f,[u(value)]));
