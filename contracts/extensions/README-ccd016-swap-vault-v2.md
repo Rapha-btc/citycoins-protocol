@@ -193,3 +193,62 @@ See the [verification README](../../simulations/README-ccd016-v2-verification.md
 invariant checks** with zero runtime exceptions and 72 completed emergency batches.
 It includes zero-block patience, DAO-only AMM swaps without Pyth/Jing, DIA/native
 fallback, failure rollback, exact source hashes, numerical examples and replay commands.
+
+## Elapsed window on funding: bounties mv7dfb and mu0oy1
+
+Two findings pull on the same line in `fund-from-treasury`.
+
+Bounty mu0oy1 (Patient Reed, paid, fixed in `32f4a63`). Funding must not
+re-arm an elapsed window on a real leftover. Else anyone sends 1 sat to the
+treasury and calls `fund-from-treasury` after each elapse. The vault stays in
+the patience phase, and `router-swap`, `jing-take` and `jing-reclaim` stay
+u16031 (ERR_WINDOW_OPEN) forever.
+
+Bounty mv7dfb (Calm Forge). Dust of 3-8 sats can stay in the vault after a
+batch. The book refunds a remainder under its minimum, or a griefer donates
+sats after the sell-out. The dust is above DUST_SATS (2), so `is-empty` is
+false and the old batch stays alive with an elapsed window. New rewards then
+joined that batch (`opened false`). Anyone could `router-swap` them at once
+at the floor. They did not rest at the mid first.
+
+Rule. Read before the pull, a batch opens when:
+
+- the vault is empty, or
+- nothing is on the clock, or
+- the window elapsed AND wallet + market (live + parked + pending escrow) is
+  at most ROUTER_SLACK_SATS (8). That much cannot be sold: `router-swap`
+  needs more than 8 sats (u16047).
+
+```clarity
+(empty (or
+  (is-empty)
+  (is-none (var-get batch-start))
+  (and (window-elapsed) (<= (+ (sbtc-balance) (market-total)) ROUTER_SLACK_SATS))
+))
+```
+
+Unsellable dust no longer pins new rewards to an elapsed batch (mv7dfb). A
+sellable leftover keeps its elapsed window, so 1 sat cannot re-arm it
+(mu0oy1 stays fixed).
+
+Tests. `simulations/stxer-ccd016-v2-clock-keyless.js` (no Pyth key; S8 uses
+one public Lazer update for `router-swap`). Run 101/101:
+https://stxer.xyz/simulations/mainnet/39fca44556c0537340ebe27f35e989ed
+
+- S3 (mu0oy1): window elapsed on 1,000,100 sats, 1 sat funded: `opened
+  false`, still elapsed.
+- S8a: empty vault, 3 sats funded: `opened true`.
+- S8b: window open, 5 sats funded: `opened false`. 8 sats of dust home.
+- S8c (mv7dfb): window elapsed on the 8-sat dust, 1M sats funded: `opened
+  true`, batch-start moves to the current height. `router-swap` and
+  `jing-reclaim` return u16031.
+- S8d (mu0oy1 again): window elapsed on 1,000,008 sats, 1 sat funded:
+  `opened false`, batch-start unchanged, still elapsed.
+
+Regression runs on the same source:
+
+- coverage 104/104: https://stxer.xyz/simulations/mainnet/fd6d485d235cbd9af0a614326ee8d8bc
+- happy-path 58/58: https://stxer.xyz/simulations/mainnet/8151a5a2ecba1286e13eedefb405a3a7
+- parked 136/136: https://stxer.xyz/simulations/mainnet/79d46185f0d60bb515129dc28f914ad0
+- pyth-fee 66/66: https://stxer.xyz/simulations/mainnet/de1bf43a3df69a4020d0bcdbd287b2dd
+- emergency 45/45: https://stxer.xyz/simulations/mainnet/caf729594137614ef38c7057b2ef41f5

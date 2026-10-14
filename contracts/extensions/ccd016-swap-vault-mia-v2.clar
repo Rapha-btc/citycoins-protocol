@@ -357,10 +357,18 @@
       (amount (unwrap! (contract-call? SBTC_TOKEN get-balance REWARDS_TREASURY)
         ERR_NO_BUDGET
       ))
-      ;; read BEFORE the pull: a batch opens only when the vault was empty,
-      ;; or when nothing is on the clock at all (sats that landed by plain
-      ;; transfer have no window of their own; they join this batch)
-      (empty (or (is-empty) (is-none (var-get batch-start))))
+      ;; read BEFORE the pull: a batch opens when the vault was empty, when
+      ;; nothing is on the clock at all (sats that landed by plain transfer
+      ;; have no window of their own; they join this batch), or when the old
+      ;; window elapsed and what is left (wallet + market) is unsellable dust
+      ;; (at most ROUTER_SLACK_SATS, under router-swap's u16047 limit). A
+      ;; larger leftover keeps the elapsed window, so a 1-sat fund cannot
+      ;; re-arm the clock and block the exits forever
+      (empty (or
+        (is-empty)
+        (is-none (var-get batch-start))
+        (and (window-elapsed) (<= (+ (sbtc-balance) (market-total)) ROUTER_SLACK_SATS))
+      ))
     )
     (asserts! (> amount u0) ERR_NO_BUDGET)
     (try! (contract-call? REWARDS_TREASURY withdraw-ft

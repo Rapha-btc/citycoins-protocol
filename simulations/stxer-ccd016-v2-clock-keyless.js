@@ -77,6 +77,8 @@ const PROXY_SRC = `
 (define-public (set-window (blocks uint)) (contract-call? '${VAULT_ID} set-window-blocks blocks))
 (define-public (recall) (contract-call? '${VAULT_ID} dao-recall-sbtc))
 (define-public (reclaim) (contract-call? '${VAULT_ID} dao-reclaim none))
+(define-public (drain (amount uint)) (contract-call? '${REWARDS_TREASURY} withdraw-ft '${SBTC} amount tx-sender))
+(define-public (set-band (bps uint)) (contract-call? '${VAULT_ID} set-dia-band-bps bps))
 (use-trait proposal-trait '${DAO}.proposal-trait.proposal-trait)
 (define-public (run (p <proposal-trait>)) (contract-call? '${BASE_DAO} execute p tx-sender))
 `;
@@ -102,6 +104,10 @@ async function main() {
   // FORK_BLOCK pins a whole rerun set to one height (default: the node tip)
   const tip = process.env.FORK_BLOCK ? await fetchJson(`/extended/v1/block/by_height/${process.env.FORK_BLOCK}`) : (await fetchJson(`/extended/v1/block?limit=1`)).results[0];
   console.log(`tip ${tip.height}`);
+  // S8 only: one public Lazer update (no PYTH_API_KEY) so router-swap gets past
+  // current-mid and reaches the window gate
+  const lz = await freshProofAfter(Number(tip.block_time) + 12);
+  const UPD = bufferCV(Buffer.from(lz.hex, "hex"));
 
   // sources
   const coreSrc = src(`${JING_SRC}/${CORE}.clar`), ladderSrc = src(`${JING_SRC}/${LADDER}.clar`);
@@ -211,6 +217,46 @@ async function main() {
   tx("S7 the restore proposal through base-dao -> ok", DEPLOYER, PROXY_ID, "run", [contractPrincipalCV(DEPLOYER, RESTORE)], "(ok true)");
   ev("S7 dia band back to 1000", VAULT_ID, "(get dia-band-bps (get-config))", "u1000");
 
+  // ---- S8 bounty mv7dfb (Calm Forge): dust left after an elapsed window ----
+  // 3-8 sats (above DUST_SATS 2) kept the old elapsed batch alive, so new
+  // rewards joined it (opened false) and router-swap could sell them at once
+  // at the floor. Now funding after the window elapsed opens a fresh window.
+  tx("S8 proxy set-window-blocks 3", DEPLOYER, PROXY_ID, "set-window", [uintCV(3)], "(ok true)");
+  tx("S8 proxy dia band 0 (router-swap prices on Lazer alone, no DIA push on the fork)", DEPLOYER, PROXY_ID, "set-band", [uintCV(0)], "(ok true)");
+  tx("S8 proxy drains the treasury (S6's recalled sats) so each funding pulls a known amount", DEPLOYER, PROXY_ID, "drain", [uintCV(FUND + 1301n)], "(ok true)");
+  ev("S8 treasury holds 0 sats", VAULT_ID, sbtcBal(REWARDS_TREASURY), "(ok u0)");
+  ev("S8 start: empty, no clock", VAULT_ID, "(get-clock)", (v) => field(v, "batch-start") === "none");
+  tx("S8a 3 sats land in the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(3), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
+  tx("S8a empty vault: fund-from-treasury opens as before (opened true)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(amount u3)") && v.includes("(opened true)"));
+  const s8a = ev("S8a batch-start = this burn height", VAULT_ID, "(var-get batch-start)", (v) => /^\(some u\d+\)$/.test(v));
+  ev("S8a batch-start is the current burn height", VAULT_ID, "(is-eq (var-get batch-start) (some burn-block-height))", "true");
+  tx("S8b 5 sats land in the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(5), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
+  advance(1);
+  ev("S8b window still open one block later", VAULT_ID, "(window-open)", "true");
+  tx("S8b window open: funding joins the batch (opened false)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(amount u5)") && v.includes("(opened false)"));
+  const s8b = ev("S8b batch-start unchanged", VAULT_ID, "(var-get batch-start)", () => true);
+  ev("S8b batch-start is now behind the burn height", VAULT_ID, "(is-eq (var-get batch-start) (some burn-block-height))", "false");
+  status("S8b 8 sats of dust home, not empty (DUST_SATS is 2)", (v) => field(v, "sbtc-balance") === "u8" && field(v, "empty") === "false");
+  advance(3);
+  ev("S8c window elapsed on the 8-sat dust", VAULT_ID, "(window-elapsed)", "true");
+  tx("S8c new rewards: 1M sats land in the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(FUND), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
+  tx("S8c elapsed + dust: funding opens a fresh window (opened true)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND})`) && v.includes("(opened true)"));
+  const s8c = ev("S8c batch-start moved", VAULT_ID, "(var-get batch-start)", () => true);
+  ev("S8c batch-start is the current burn height", VAULT_ID, "(is-eq (var-get batch-start) (some burn-block-height))", "true");
+  ev("S8c window open again", VAULT_ID, "(get-clock)", (v) => field(v, "window-open") === "true" && field(v, "window-elapsed") === "false");
+  tx("S8c router-swap on the new rewards -> u16031 (they rest at the mid first)", STRANGER, VAULT_ID, "router-swap", [UPD], "(err u16031)");
+  tx("S8c jing-reclaim -> u16031", STRANGER, VAULT_ID, "jing-reclaim", [], "(err u16031)");
+  // S8d the re-arm guard still holds: an elapsed window with MORE than
+  // ROUTER_SLACK_SATS (8) left is sellable, so 1 sat of funding joins it
+  advance(3);
+  ev("S8d window elapsed on 1,000,008 sats (sellable, not dust)", VAULT_ID, "(window-elapsed)", "true");
+  tx("S8d 1 sat lands in the treasury", SBTC_WHALE, SBTC, "transfer", [uintCV(1), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
+  tx("S8d elapsed + more than 8 sats: funding joins (opened false)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(amount u1)") && v.includes("(opened false)"));
+  const s8d = ev("S8d batch-start unchanged", VAULT_ID, "(var-get batch-start)", () => true);
+  ev("S8d still elapsed: no re-arm", VAULT_ID, "(window-elapsed)", "true");
+  tx("S8 proxy recall -> ok, clock clears", DEPLOYER, PROXY_ID, "recall", [], (v) => ok(v) && v.includes(`(amount u${FUND + 9n})`));
+  tx("S8 proxy dia band back to 1000", DEPLOYER, PROXY_ID, "set-band", [uintCV(1000)], "(ok true)");
+
   // ---- run ----
   const sid = await b.run();
   console.log(`View: https://stxer.xyz/simulations/mainnet/${sid}\n`);
@@ -229,6 +275,9 @@ async function main() {
     if (typeof p.want === "function" && p.want.length === 0) { console.log(`  ..   ${p.label}: ${String(raw).slice(0, 120)}`); continue; }
     check(p.label, raw, p.want);
   }
+  check("S8b funding while open kept batch-start", `${s8a.raw} -> ${s8b.raw}`, () => s8a.raw === s8b.raw);
+  check("S8c funding after elapse moved batch-start forward", `${s8b.raw} -> ${s8c.raw}`, () => bare(s8c.raw) > bare(s8b.raw));
+  check("S8d 1-sat funding after elapse kept batch-start", `${s8c.raw} -> ${s8d.raw}`, () => s8c.raw === s8d.raw);
   check(`S4 the treasury received exactly ${FUND + 101n} sats`, bare(trAfter.raw) - bare(trBefore.raw), (d) => d === FUND + 101n);
   console.log(`\n${checks - failures}/${checks} checks green`);
   fs.mkdirSync("simulations/results/ccd016-v2",{recursive:true});
