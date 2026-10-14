@@ -186,9 +186,9 @@
 ;; Pyth Lazer charges its update fee in STX from tx-sender, which is this
 ;; vault inside as-contract?. uSTX allowed per Lazer-verifying call (jing-take,
 ;; router-swap, router-swap-split); u0 while the oracle fee is u0. The market's
-;; swap verifies the update twice (swap + settle-with-refresh): set it to at
-;; least 2 x the oracle fee. Paid from the vault's own STX balance. Bounded at
-;; 10 STX.
+;; swap verifies the update once and reuses the feeds for its settle: set it to
+;; at least 1 x the oracle fee. Paid from the vault's own STX balance. Bounded
+;; at 10 STX.
 (define-constant MAX_PYTH_FEE_BUDGET u10000000)
 (define-data-var pyth-fee-budget uint u0)
 

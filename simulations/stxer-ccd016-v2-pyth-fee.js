@@ -13,12 +13,12 @@
 //     match swallows the failed fee transfer) and sells nothing inside the
 //     floor -> u16047; jing-take aborts (the market error propagates)
 //   budget 0 + an STX float: both abort on the as-contract? STX allowance
-//   budget 10 = fee and 19 = 2 x fee - 1: both abort on the allowance (the
-//     v6-3 market's swap verifies the update twice: swap + settle-with-refresh)
-//   budget 20 = 2 x fee + float: router-swap fills through the book leg and
-//     jing-take fills; each pays exactly 2 x 10 uSTX from the vault
-//   fuel-fair-book keeps the budget: with budget 20 a stranger's sweep
-//     leaves exactly 20 uSTX (u16006 when nothing is above it), and both
+//   budget 9 = fee - 1: both abort on the allowance
+//   budget 10 = 1 x fee + float: router-swap fills through the book leg and
+//     jing-take fills; each pays exactly one 10 uSTX fee from the vault (the
+//     v6-3 market's swap verifies the update once and reuses the feeds)
+//   fuel-fair-book keeps the budget: with budget 10 a stranger's sweep
+//     leaves exactly 10 uSTX (u16006 when nothing is above it), and both
 //     sales above run right after such a sweep
 //
 // Same stack and DAO simulation as stxer-ccd016-v2-fixes.js: the current
@@ -60,7 +60,7 @@ const CORE_ID = `${DEPLOYER}.${CORE}`, MKT_ID = `${DEPLOYER}.${MKT}`, ROUTER_ID 
 const [sbtcAddr, sbtcName] = SBTC.split("."), [wstxAddr, wstxName] = WSTX.split("."), [trAddr, trName] = REWARDS_TREASURY.split(".");
 const sbtcT = contractPrincipalCV(sbtcAddr, sbtcName), wstxT = contractPrincipalCV(wstxAddr, wstxName);
 const PP = 100_000_000n, HUGE = 999_999_999_999_999n;
-const FEE = 10n, MAX_BUDGET = 10_000_000n; // MAX_PYTH_FEE_BUDGET = 10 STX
+const FEE = 10n, PER_FILL = FEE, MAX_BUDGET = 10_000_000n; // MAX_PYTH_FEE_BUDGET = 10 STX
 const FUND = 100_000n;
 const DUMP = 20_000_000n; // a whale's router sale down to mid - 1%: the AMMs take nothing inside the vault's floor
 const SLIPPAGE = 50n; // vault floor mid - 0.5%: only the book leg can fill
@@ -187,29 +187,27 @@ async function main() {
   stxTo(`DAO float: ${FLOAT} uSTX into the vault`, STX_WHALE, VAULT_ID, FLOAT);
   const r1 = routerSwap("B1 budget 0, float: router-swap aborts on the as-contract? STX allowance", (v) => isErr(v) && v !== "(err u16047)");
   const t1 = jingTake("B2 budget 0, float: jing-take aborts on the as-contract? STX allowance", isErr);
-  budget(FEE);
-  const t2 = jingTake("B3 budget 10 = one fee: jing-take aborts (the market verifies twice)", isErr);
-  const r2 = routerSwap("B3b budget 10 = one fee: router-swap aborts", isErr);
-  budget(2n * FEE - 1n);
-  const t3 = jingTake("B3c budget 19 = 2 x fee - 1: jing-take aborts on the allowance", isErr);
+  budget(FEE - 1n);
+  const t2 = jingTake("B3 budget 9 = fee - 1: jing-take aborts on the allowance", isErr);
+  const r2 = routerSwap("B3b budget 9 = fee - 1: router-swap aborts on the allowance", isErr);
   status(`B4 vault still holds ${FUND} sats`, (v) => field(v, "sbtc-balance") === `u${FUND}`);
   stxBal(`B5 vault STX still ${FLOAT}`, VAULT_ID, `u${FLOAT}`);
 
   // ---- budget >= fee: both paths work and pay exactly the fee ----
-  budget(2n * FEE);
-  const fuel1 = tx("D1 budget 20, float 1 STX: stranger fuel-fair-book sweeps all but the budget", STRANGER, VAULT_ID, "fuel-fair-book", [], (v) => ok(v) && v.includes(`(amount u${FLOAT - 2n * FEE})`));
-  stxBal("D2 vault keeps exactly the 20 uSTX budget", VAULT_ID, `u${2n * FEE}`);
+  budget(PER_FILL);
+  const fuel1 = tx("D1 budget 10, float 1 STX: stranger fuel-fair-book sweeps all but the budget", STRANGER, VAULT_ID, "fuel-fair-book", [], (v) => ok(v) && v.includes(`(amount u${FLOAT - PER_FILL})`));
+  stxBal("D2 vault keeps exactly the 10 uSTX budget", VAULT_ID, `u${PER_FILL}`);
   tx("D3 balance = budget: fuel-fair-book -> u16006 (nothing above the reserve)", STRANGER, VAULT_ID, "fuel-fair-book", [], "(err u16006)");
   const sA = stxBal("C0 vault STX before router-swap", VAULT_ID);
-  const rA = routerSwap("C1 budget 20: router-swap fills through the book leg", (v) => ok(v) && v.includes(`(amount u${FUND})`));
+  const rA = routerSwap("C1 budget 10 = 1 x fee: router-swap fills through the book leg", (v) => ok(v) && v.includes(`(amount u${FUND})`));
   const sB = stxBal("C2 vault STX after router-swap", VAULT_ID);
   status("C3 vault empty after the sale", (v) => field(v, "sbtc-balance") === "u0" && field(v, "empty") === "true");
   toTreasury(`whale sends ${FUND} more sats to the treasury`, FUND);
   tx("fund-from-treasury opens the next batch", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(opened true)"));
   tx("D4 stranger fuel-fair-book sweeps the router-swap proceeds, keeps the budget", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
-  stxBal("D5 vault keeps exactly the 20 uSTX budget", VAULT_ID, `u${2n * FEE}`);
+  stxBal("D5 vault keeps exactly the 10 uSTX budget", VAULT_ID, `u${PER_FILL}`);
   const sC = stxBal("C4 vault STX before jing-take", VAULT_ID);
-  const tA = jingTake("C5 budget 20: jing-take fills the bid", (v) => ok(v) && v.includes(`(amount u${FUND})`));
+  const tA = jingTake("C5 budget 10 = 1 x fee: jing-take fills the bid", (v) => ok(v) && v.includes(`(amount u${FUND})`));
   const sD = stxBal("C6 vault STX after jing-take", VAULT_ID);
   status("C7 vault sBTC 0 after the take", (v) => field(v, "sbtc-balance") === "u0");
 
@@ -245,23 +243,23 @@ async function main() {
   // A1: the failure is the book leg, not the allowance
   // (err u1) is the as-contract? violation index of the with-stx slot; A2's
   // (err u1) is stx-transfer?'s insufficient-balance code from the oracle
-  console.log(`  ..   A2 jing-take ${t0.raw}; B1 router-swap ${r1.raw}; B2 jing-take ${t1.raw}; B3 ${t2.raw}; B3b ${r2.raw}; B3c ${t3.raw}`);
-  check("B1..B3c abort with the with-stx allowance index (err u1)", [r1, t1, t2, r2, t3].map(x => x.raw).join(" "), () => [r1, t1, t2, r2, t3].every(x => x.raw === "(err u1)"));
+  console.log(`  ..   A2 jing-take ${t0.raw}; B1 router-swap ${r1.raw}; B2 jing-take ${t1.raw}; B3 ${t2.raw}; B3b ${r2.raw}`);
+  check("B1..B3b abort with the with-stx allowance index (err u1)", [r1, t1, t2, r2].map(x => x.raw).join(" "), () => [r1, t1, t2, r2].every(x => x.raw === "(err u1)"));
   // C: each success pays exactly FEE from the vault to the oracle's recipient
   for (const [lbl, step] of [["C1 router-swap", rA], ["C5 jing-take", tA]]) {
     const fees = stxMoves(eventsOf(step.step)).filter(m => m.from === VAULT_ID);
-    check(`${lbl}: the vault's only STX outflows are two ${FEE} uSTX fees to the oracle fee recipient`, JSON.stringify(fees.map(m => ({ ...m, amount: String(m.amount) }))), () => fees.length === 2 && fees.every(m => m.amount === FEE && m.to === R));
+    check(`${lbl}: the vault's only STX outflow is one ${FEE} uSTX fee to the oracle fee recipient`, JSON.stringify(fees.map(m => ({ ...m, amount: String(m.amount) }))), () => fees.length === 1 && fees.every(m => m.amount === FEE && m.to === R));
   }
   const rPrint = printsOf(eventsOf(rA.step), ROUTER_ID).find(x => x.includes("smart-swap-sbtc-for-stx")) || "";
   check("C1 the router's book leg filled (jing-ok true, jing-in > 0)", rPrint.slice(0, 300), () => rPrint.includes("(jing-ok true)") && num(rPrint, "jing-in") > 0n);
   // the router measures `out` as the caller's STX delta, so it is already net of the fees
-  check("C1 router out = jing-out - 2 x fee (the fees come out of the measured delta)", `out ${num(rPrint, "out")}, jing-out ${num(rPrint, "jing-out")}`, () => num(rPrint, "out") === num(rPrint, "jing-out") - 2n * FEE);
+  check("C1 router out = jing-out - 1 x fee (the fees come out of the measured delta)", `out ${num(rPrint, "out")}, jing-out ${num(rPrint, "jing-out")}`, () => num(rPrint, "out") === num(rPrint, "jing-out") - PER_FILL);
   check("C1 vault STX rose by exactly the router's (net) out", `${bare(sA.raw)} -> ${bare(sB.raw)}, out ${num(rA.raw, "out")}`, () => bare(sB.raw) - bare(sA.raw) === num(rA.raw, "out"));
-  check("C5 vault STX rose by out - 2 x fee", `${bare(sC.raw)} -> ${bare(sD.raw)}, out ${num(tA.raw, "out")}`, () => bare(sD.raw) - bare(sC.raw) === num(tA.raw, "out") - 2n * FEE);
+  check("C5 vault STX rose by out - 1 x fee", `${bare(sC.raw)} -> ${bare(sD.raw)}, out ${num(tA.raw, "out")}`, () => bare(sD.raw) - bare(sC.raw) === num(tA.raw, "out") - PER_FILL);
   const fuelMoves = stxMoves(eventsOf(fuel1.step));
-  check("D1 the sweep moved exactly balance - budget to the book", JSON.stringify(fuelMoves.map(m => ({ ...m, amount: String(m.amount) }))), () => fuelMoves.length === 1 && fuelMoves[0].amount === FLOAT - 2n * FEE && fuelMoves[0].to === `${DEPLOYER}.${BOOK}`);
-  check("C0 router-swap started from exactly the 20 uSTX reserve", sA.raw, `u${2n * FEE}`);
-  check("C4 jing-take started from exactly the 20 uSTX reserve", sC.raw, `u${2n * FEE}`);
+  check("D1 the sweep moved exactly balance - budget to the book", JSON.stringify(fuelMoves.map(m => ({ ...m, amount: String(m.amount) }))), () => fuelMoves.length === 1 && fuelMoves[0].amount === FLOAT - PER_FILL && fuelMoves[0].to === `${DEPLOYER}.${BOOK}`);
+  check("C0 router-swap started from exactly the 10 uSTX reserve", sA.raw, `u${PER_FILL}`);
+  check("C4 jing-take started from exactly the 10 uSTX reserve", sC.raw, `u${PER_FILL}`);
   check("A1 router-swap moved no STX from the vault", stxMoves(eventsOf(r0.step)).filter(m => m.from === VAULT_ID).length, (n) => n === 0);
 
   console.log(`\n${checks - failures}/${checks} checks green`);
