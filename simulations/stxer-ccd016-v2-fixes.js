@@ -219,7 +219,14 @@ async function main() {
   tx("L-1 router-swap of the 3-sat wallet -> u16047 (sold <= 8)", STRANGER, VAULT_ID, "router-swap", [UPD], "(err u16047)");
   status("L-1 the 3 sats stay", (v) => field(v, "sbtc-balance") === "u3");
   toTreasury(`L-1 whale sends ${FUND_C} sats to the treasury`, FUND_C);
-  tx("L-1 fund-from-treasury: not empty -> joins the elapsed batch", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND_C})`) && v.includes("(opened false)"));
+  // 8adfa68 (bounty mv7dfb, Calm Forge): the 3 sats left are unsellable dust (wallet + market
+  // <= ROUTER_SLACK_SATS 8) on an elapsed window, so the new rewards open a FRESH window and
+  // rest first; they no longer join the elapsed batch and get router-swapped at the floor at once
+  tx("L-1 fund-from-treasury: elapsed window on 3 dust sats -> a fresh window opens (8adfa68)", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes(`(amount u${FUND_C})`) && v.includes("(opened true)"));
+  clock("L-1 the fresh window is open", (v) => field(v, "window-open") === "true");
+  tx("L-1 router-swap inside the fresh window -> u16031 (the rewards rest first)", STRANGER, VAULT_ID, "router-swap", [UPD], "(err u16031)");
+  advance(2);
+  clock("L-1 after 2 burn blocks the 1-block window elapsed", (v) => field(v, "window-open") === "false");
   tx("L-1 proxy set-max-chunk-sats 8", DEPLOYER, PROXY_ID, "set-chunk", [uintCV(8)], "(ok true)");
   tx("L-1 router-swap of one 8-sat chunk -> u16047 (8 sats sold at most)", STRANGER, VAULT_ID, "router-swap", [UPD], "(err u16047)");
   const cfg1 = config("L-1 config after both refusals: last-router-swap unchanged");
