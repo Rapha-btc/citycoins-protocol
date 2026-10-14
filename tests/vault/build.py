@@ -28,6 +28,19 @@ for n in ['ccd016-swap-vault-mia-v2','ccd015-redemption-book-mia-stx']:
 for n,s in files.items():
  for a,b in replacements.items():s=s.replace(a,b)
  if n=='v6-market':
+  # ccd016 v2 uses the v6-3 pending-escrow getter from read-only paths.
+  # Keep this local fixture compatible without changing the checked-in .clar fixture.
+  if '(define-read-only (get-token-x-pending-deposit' not in s:
+   s+='\n(define-map token-x-pending-deposits principal {amount: uint, limit: uint, spread-bps: (optional uint), submitted-at: uint})\n(define-read-only (get-token-x-pending-deposit (depositor principal)) (map-get? token-x-pending-deposits depositor))\n'
+  # The checked-in market fixture models the prior update-bearing entrypoints.
+  # ccd016 calls the deployed v6-3 signatures, which omit that update argument.
+  for fn,sig,args in [('deposit-token-x','(amount uint) (limit-price uint) (spread-bps (optional uint)) (t <ft-trait>) (asset-name (string-ascii 128))','amount limit-price spread-bps 0x t asset-name'),
+                      ('set-token-x-limit','(limit-price uint) (spread-bps (optional uint))','limit-price spread-bps 0x')]:
+   assert s.count(f'(define-public ({fn}\n')==1,fn
+   s=s.replace(f'(define-public ({fn}\n',f'(define-public ({fn}-fixture-v6\n')
+   assert s.count(f'  ({fn} ')==1,fn
+   s=s.replace(f'  ({fn} ',f'  ({fn}-fixture-v6 ')
+   s+=f'(define-public ({fn} {sig}) ({fn}-fixture-v6 {args}))\n'
   s+='\n(define-public (test-park (who principal)) (park-token-x (var-get current-cycle) (contract-call? .mock-lazer-oracle get-mid) who (get-token-x-depositors (var-get current-cycle))))\n'
   start=s.index('(define-public (refresh-mid');depth=0
   for i in range(start,len(s)):

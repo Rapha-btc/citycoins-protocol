@@ -1,18 +1,86 @@
 {
   "sourceHashes": {
-    "ccd016-swap-vault-mia-v2": "e2c05bf3238290a0644685654cda3d040382afe7d7e858530ddd04bcfd8b3573",
+    "ccd016-swap-vault-mia-v2": "e3437fcfe248b46e11ffee8b37e88d227211387afca099db1502c8b231133720",
     "ccd015-redemption-book-mia-stx": "b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f"
   },
-  "checks": 259,
+  "checks": 270,
   "status": "passed",
-  "branchTotal": 97,
-  "branchHits": 97,
-  "uncoveredBranches": [],
-  "lineTotal": 295,
-  "lineHits": 293,
+  "branchTotal": 119,
+  "branchHits": 112,
+  "uncoveredBranches": [
+    {
+      "line": 374,
+      "block": 1,
+      "arm": 1,
+      "hits": "0"
+    },
+    {
+      "line": 418,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    },
+    {
+      "line": 419,
+      "block": 0,
+      "arm": 2,
+      "hits": "0"
+    },
+    {
+      "line": 619,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    },
+    {
+      "line": 622,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    },
+    {
+      "line": 962,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    },
+    {
+      "line": 976,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    }
+  ],
+  "lineTotal": 473,
+  "lineHits": 446,
   "zeroHitLines": [
-    486,
-    614
+    385,
+    418,
+    419,
+    453,
+    492,
+    524,
+    559,
+    622,
+    628,
+    660,
+    690,
+    724,
+    743,
+    801,
+    802,
+    808,
+    812,
+    818,
+    834,
+    835,
+    841,
+    848,
+    854,
+    878,
+    879,
+    962,
+    976
   ],
   "scope": "Current full vault/book source; dependency addresses and asset names rebound to declared fixtures. DAO equality and extension gates retained."
 }

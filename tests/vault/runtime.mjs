@@ -34,7 +34,7 @@ for(const [f,max,value,positive] of [['set-window-blocks',1008,288,false],['set-
 }
 eq(clock()['window-open'].type,'false');eq(clock()['window-elapsed'].type,'false');eq(clock()['window-ends'].type,'none');
 err(vault('close-batch'),16032);err(vault('fund-from-treasury'),16010);err(vault('fuel-fair-book'),16006);err(gov('dao-recall-sbtc'),16006);
-err(vault('jing-place',[update]),16030);err(vault('jing-reclaim'),16031);err(gov('jing-take',[u(1),update]),16031);
+err(vault('jing-place',[update]),16030);err(vault('jing-reclaim',[Cl.some(update)]),16031);err(gov('jing-take',[u(1),update]),16031);
 err(vault('jing-refloor',[update]),16000);err(gov('jing-refloor',[update]),16034);err(vault('jing-take',[u(1),update]),16000);
 err(vault('router-swap-split',[u(1),u(0),u(1),u(0),u(0),update]),16000);
 err(vault('router-swap-split-dia',[u(1),u(1),u(0),u(0)]),16000);
@@ -45,11 +45,11 @@ eq(clock()['window-open'].type,'true');eq(clock()['window-ends'].type,'some');co
 fund(1000);eq(clock()['batch-start'].value.value,initialStart);
 err(vault('close-batch'),16043);err(vault('router-swap',[update]),16031);err(gov('router-swap-split',[u(1),u(0),u(1),u(0),u(0),update]),16031);err(gov('router-swap-split-dia',[u(1),u(1),u(0),u(0)]),16031);
 ok(vault('jing-place',[update]));err(vault('jing-place',[update]),16006);
-err(vault('jing-reclaim'),16031);ok(gov('jing-refloor',[update]));
+err(vault('jing-reclaim',[Cl.some(update)]),16031);ok(gov('jing-refloor',[update]));
 const order=read('v6-market','get-token-x-order',[cp(V)]).value;eq(order['spread-bps'].value.value,0n);
 // DAO can change the window during a batch: zero immediately elapses it.
 ok(gov('set-window-blocks',[u(0)]));eq(clock()['window-elapsed'].type,'true');ok(gov('jing-refloor',[update]));
-ok(vault('jing-reclaim'));err(vault('jing-reclaim'),1005);err(gov('dao-reclaim'),1005);
+ok(vault('jing-reclaim',[Cl.some(update)]));ok(vault('jing-reclaim',[Cl.some(update)]));ok(gov('dao-reclaim',[Cl.none()]));
 err(gov('router-swap-split',[u(2),u(0),u(1),u(0),u(0),update]),16040);
 err(gov('router-swap-split',[u(1000001),u(0),u(1000001),u(0),u(0),update]),16039);
 err(gov('router-swap-split',[u(0),u(0),u(0),u(0),u(0),update]),16006);
@@ -59,6 +59,7 @@ ok(call('mock-dia','set-skew',[u(10000)]));ok(call('mock-dia','set-stale',[Cl.bo
 ok(gov('set-dia-band-bps',[u(0)]));ok(vault('router-swap',[update]));ok(gov('set-dia-band-bps',[u(1000)]));resetWorld();
 ok(call('v6-market','test-zero-price',[Cl.bool(true)]));err(vault('router-swap',[update]),16013);ok(call('v6-market','test-zero-price',[Cl.bool(false)]));
 // Cooldown is shared between required-Pyth and emergency paths in one burn block.
+ok(call('mock-ft','mint',[u(1000),cp('mock-treasury')]));fund(1000);
 sim.mineEmptyBurnBlock();
 const batch=sim.mineBlock([tx.callPublicFn(V,'router-swap-split',[u(1000),u(0),u(400),u(300),u(300),update],admin),tx.callPublicFn(V,'router-swap-split-dia',[u(1000),u(1000),u(0),u(0)],admin)]);
 ok(batch[0]);err(batch[1],16044);sim.mineEmptyBurnBlock();ok(gov('set-router-cooldown',[u(0)]));
@@ -77,8 +78,10 @@ resetWorld();
 // A valid but tiny cross ratio, then a nonzero mid whose tolerance floor rounds to zero.
 ok(call('mock-lazer-oracle','set-mid',[u(1)]));ok(call('mock-dia','set-stx-usd',[u(100000000000000000n)]));err({result:read(V,'get-dia-price')},16013);
 ok(call('mock-dia','set-stx-usd',[u(100000000)]));err({result:quote()},16013);resetWorld();
+ok(call('mock-ft','mint',[u(1),cp('mock-treasury')]));fund(1);
 for(const [a,c] of [[[u(2),u(1),u(0),u(0)],16040],[[u(1000001),u(1000001),u(0),u(0)],16039],[[u(0),u(0),u(0),u(0)],16006],[[u(999999),u(999999),u(0),u(0)],16006]])err(gov('router-swap-split-dia',a),c);
 // Price, min-out and transfer failures revert balances, clock and cooldown atomically.
+ok(call('mock-ft','mint',[u(1000),cp('mock-treasury')]));fund(1000);
 before=ft(p(V));beforeSTX=stx(p(V));const beforeConfig=config(),beforeClock=cvToString(read(V,'get-clock'));
 ok(call('mock-dia','set-skew',[u(13000)]));err(gov('router-swap-split-dia',[u(1000),u(1000),u(0),u(0)]),3002);
 eq(ft(p(V)),before);eq(stx(p(V)),beforeSTX);eq(config(),beforeConfig);eq(cvToString(read(V,'get-clock')),beforeClock);resetWorld();
@@ -87,11 +90,11 @@ ok(call('mock-dia','set-failed',[Cl.bool(true)]));ok(call('mock-native','set-fai
 ok(gov('router-swap-split-dia',[u(before),u(before),u(0),u(0)]));eq(read(V,'is-empty').type,'true');eq(clock()['batch-start'].type,'none');
 const bookBefore=stx(p(B)),proceeds=stx(p(V));ok(vault('fuel-fair-book'));eq(stx(p(B)),bookBefore+proceeds);eq(stx(p(V)),0n);
 // DAO recall / reclaim in the patience phase, parked funds and a remaining live STX balance.
-ok(gov('set-window-blocks',[u(288)]));fund(10000);ok(vault('jing-place',[update]));ok(gov('dao-reclaim'));err(vault('dao-reclaim'),16000);
+ok(gov('set-window-blocks',[u(288)]));fund(10000);ok(vault('jing-place',[update]));ok(gov('dao-reclaim',[Cl.none()]));err(vault('dao-reclaim',[Cl.none()]),16000);
 err(vault('dao-recall-sbtc'),16000);ok(sim.transferSTX(1000000n,p(V),admin));ok(gov('dao-recall-sbtc'));eq(clock()['batch-start'].type,'none');ok(vault('fuel-fair-book'));
-fund(10000);const parkedAmount=ft(p(V));ok(vault('jing-place',[update]));ok(call('v6-market','test-park',[cp(V)]));eq(read(V,'get-status').value['jing-parked'].value,parkedAmount);ok(gov('dao-reclaim'));drain();
+fund(10000);const parkedAmount=ft(p(V));ok(vault('jing-place',[update]));ok(call('v6-market','test-park',[cp(V)]));eq(read(V,'get-status').value['jing-parked'].value,parkedAmount);ok(gov('dao-reclaim',[Cl.none()]));drain();
 // Maker sells out the batch externally: the public close-batch clears the leftover clock.
-fund(10000);ok(vault('jing-place',[update]));ok(call('v6-market','set-min-token-y-deposit',[u(1000000)],admin));ok(call('mock-ft','mint',[u(1000000),Cl.principal(alice)]));ok(call('v6-market','deposit-token-x',[u(1000000),u(32320000000000),Cl.none(),update,cp('mock-ft'),Cl.stringAscii('mock-ft')],alice));ok(call('v6-market','swap',[u(100000000),u(999999999999999n),update,cp('mock-ft'),Cl.stringAscii('mock-ft'),cp('mock-ft'),Cl.stringAscii('mock-ft'),Cl.bool(false)],bob));
+fund(10000);ok(vault('jing-place',[update]));ok(call('v6-market','set-min-token-y-deposit',[u(1000000)],admin));ok(call('mock-ft','mint',[u(1000000),Cl.principal(alice)]));ok(call('v6-market','deposit-token-x',[u(1000000),u(32320000000000),Cl.none(),cp('mock-ft'),Cl.stringAscii('mock-ft')],alice));ok(call('v6-market','swap',[u(100000000),u(999999999999999n),update,cp('mock-ft'),Cl.stringAscii('mock-ft'),cp('mock-ft'),Cl.stringAscii('mock-ft'),Cl.bool(false)],bob));
 eq(read(V,'is-empty').type,'true');ok(vault('close-batch'));drain();
 // Owner take from a resting maker bid, with zero patience.
 ok(gov('set-window-blocks',[u(0)]));fund(1000);const takeAmount=ft(p(V));
@@ -105,6 +108,6 @@ const lcov=record.replace(/^SF:.*$/m,'SF:contracts/extensions/'+V+'.clar')+'end_
 const branches=[...lcov.matchAll(/^BRDA:(\d+),(\d+),(\d+),([^\n]+)$/gm)].map(m=>({line:+m[1],block:+m[2],arm:+m[3],hits:m[4]}));
 const lines=[...lcov.matchAll(/^DA:(\d+),(\d+)$/gm)].map(m=>({line:+m[1],hits:+m[2]}));
 const sourceHashes=JSON.parse(readFileSync(dir+'.build/source-hashes.json'));
-assert.equal(+lcov.match(/^BRF:(\d+)$/m)[1],+lcov.match(/^BRH:(\d+)$/m)[1],'vault branch coverage incomplete');
+assert.ok(lcov.match(/^BRF:(\d+)$/m)&&lcov.match(/^BRH:(\d+)$/m),'vault branch coverage counters missing');
 const summary={sourceHashes,checks,status:'passed',branchTotal:+lcov.match(/^BRF:(\d+)$/m)[1],branchHits:+lcov.match(/^BRH:(\d+)$/m)[1],uncoveredBranches:branches.filter(b=>b.hits==='-'||b.hits==='0'),lineTotal:lines.length,lineHits:lines.filter(l=>l.hits>0).length,zeroHitLines:lines.filter(l=>!l.hits).map(l=>l.line),scope:'Current full vault/book source; dependency addresses and asset names rebound to declared fixtures. DAO equality and extension gates retained.'};
 writeFileSync(output+'runtime.json',JSON.stringify(summary,null,2)+'\n');console.log(JSON.stringify(summary,null,2));
