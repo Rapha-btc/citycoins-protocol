@@ -7,18 +7,23 @@
 // as-contract? tx-sender is the vault. Fork-only fixture: an Eval inside the
 // oracle sets its fee var to u10 (governance's set-fee would do the same).
 //
+// Bounty mv7dfb (Super Orb): the vault pays both verifies. current-mid (the
+// market's refresh-mid) runs through vault-mid in the vault's own as-contract?
+// scope, and the market's swap verifies once more in the swap's scope. So
+// router-swap and jing-take cost the vault 2 fees. Each scope's with-stx caps
+// one verify, so the budget aborts below 1 x fee (in vault-mid, err u0).
+// The caller pays nothing: a fresh 0-STX account runs router-swap.
+//
 // Covers:
 //   setter: stranger u16000, max + 1 u16033, max ok, 0 ok, print, get-config
-//   budget 0 + no vault STX: router-swap skips the book leg (the router's
-//     match swallows the failed fee transfer) and sells nothing inside the
-//     floor -> u16047; jing-take aborts (the market error propagates)
-//   budget 0 + an STX float: both abort on the as-contract? STX allowance
-//   budget 9 = fee - 1: both abort on the allowance
-//   budget 10 = 1 x fee + float: router-swap fills through the book leg and
-//     jing-take fills; each pays exactly one 10 uSTX fee from the vault (the
-//     v6-3 market's swap verifies the update once and reuses the feeds)
-//   fuel-fair-book keeps the budget: with budget 10 a stranger's sweep
-//     leaves exactly 10 uSTX (u16006 when nothing is above it), and both
+//   budget 0 + no vault STX: router-swap and jing-take abort with (err u1):
+//     the vault cannot pay its refresh-mid fee
+//   budget 0 + an STX float: both abort on vault-mid's STX allowance (err u0)
+//   budget 9 = fee - 1: both abort on that allowance (err u0)
+//   budget 20 = 2 x fee + float: router-swap fills through the book leg and
+//     jing-take fills; each pays exactly two 10 uSTX fees from the vault
+//   fuel-fair-book keeps the budget: with budget 20 a stranger's sweep
+//     leaves exactly 20 uSTX (u16006 when nothing is above it), and both
 //     sales above run right after such a sweep
 //
 // Same stack and DAO simulation as stxer-ccd016-v2-fixes.js: the current
@@ -33,7 +38,7 @@ import fs from "node:fs";
 import {createHash} from "node:crypto";
 import {
   ClarityVersion, uintCV, listCV, tupleCV, stringAsciiCV, bufferCV, falseCV, noneCV,
-  contractPrincipalCV, standardPrincipalCV, deserializeCV, cvToString, someCV,
+  contractPrincipalCV, standardPrincipalCV, deserializeCV, cvToString, someCV, getAddressFromPrivateKey,
 } from "@stacks/transactions";
 import { SimulationBuilder, getSimulationResult } from "stxer";
 
@@ -45,6 +50,8 @@ const DEPLOYER = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22";
 const SBTC_WHALE = "SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2";
 const STX_WHALE = "SP9BP4PN74CNR5XT7CMAMBPA0GWC9HMB69HVVV51";
 const STRANGER = "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM";
+// a fresh account that holds 0 STX (stxer charges no tx fee): it runs router-swap
+const EMPTY = getAddressFromPrivateKey("5".repeat(64) + "01", "mainnet");
 const DIA_UPDATER = "SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0";
 const DAO = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH";
 const BASE_DAO = `${DAO}.base-dao`;
@@ -60,7 +67,7 @@ const CORE_ID = `${DEPLOYER}.${CORE}`, MKT_ID = `${DEPLOYER}.${MKT}`, ROUTER_ID 
 const [sbtcAddr, sbtcName] = SBTC.split("."), [wstxAddr, wstxName] = WSTX.split("."), [trAddr, trName] = REWARDS_TREASURY.split(".");
 const sbtcT = contractPrincipalCV(sbtcAddr, sbtcName), wstxT = contractPrincipalCV(wstxAddr, wstxName);
 const PP = 100_000_000n, HUGE = 999_999_999_999_999n;
-const FEE = 10n, PER_FILL = FEE, MAX_BUDGET = 10_000_000n; // MAX_PYTH_FEE_BUDGET = 10 STX
+const FEE = 10n, PER_FILL = 2n * FEE, MAX_BUDGET = 10_000_000n; // MAX_PYTH_FEE_BUDGET = 10 STX
 const FUND = 100_000n;
 const DUMP = 20_000_000n; // a whale's router sale down to mid - 1%: the AMMs take nothing inside the vault's floor
 const SLIPPAGE = 50n; // vault floor mid - 0.5%: only the book leg can fill
@@ -140,7 +147,7 @@ async function main() {
   const stxBal = (label, who, want = any) => ev(label, VAULT_ID, `(stx-get-balance '${who})`, want);
   const toTreasury = (label, amount) => tx(label, SBTC_WHALE, SBTC, "transfer", [uintCV(amount), standardPrincipalCV(SBTC_WHALE), contractPrincipalCV(trAddr, trName), noneCV()], "(ok true)");
   const budget = (ustx, want = "(ok true)") => tx(`proxy set-pyth-fee-budget ${ustx}`, DEPLOYER, PROXY_ID, "set-budget", [uintCV(ustx)], want);
-  const routerSwap = (label, want) => tx(label, STRANGER, VAULT_ID, "router-swap", [UPD], want);
+  const routerSwap = (label, want, sender = STRANGER) => tx(label, sender, VAULT_ID, "router-swap", [UPD], want);
   const jingTake = (label, want) => tx(label, DEPLOYER, PROXY_ID, "take", [uintCV(FUND), UPD], want);
   const isErr = (v) => /^\(err u\d+\)$/.test(String(v));
 
@@ -179,7 +186,7 @@ async function main() {
   stxBal("vault STX = 0", VAULT_ID, "u0");
 
   // ---- budget 0, no STX in the vault ----
-  const r0 = routerSwap("A1 budget 0, vault STX 0: router-swap -> u16047 (book leg skipped: the fee transfer fails, AMMs below the floor)", "(err u16047)");
+  const r0 = routerSwap("A1 budget 0, vault STX 0: router-swap -> (err u1) (the vault cannot pay its refresh-mid fee)", "(err u1)");
   const t0 = jingTake("A2 budget 0, vault STX 0: jing-take aborts", isErr);
   status(`A3 vault still holds ${FUND} sats`, (v) => field(v, "sbtc-balance") === `u${FUND}`);
 
@@ -188,26 +195,28 @@ async function main() {
   const r1 = routerSwap("B1 budget 0, float: router-swap aborts on the as-contract? STX allowance", (v) => isErr(v) && v !== "(err u16047)");
   const t1 = jingTake("B2 budget 0, float: jing-take aborts on the as-contract? STX allowance", isErr);
   budget(FEE - 1n);
-  const t2 = jingTake("B3 budget 9 = fee - 1: jing-take aborts on the allowance", isErr);
-  const r2 = routerSwap("B3b budget 9 = fee - 1: router-swap aborts on the allowance", isErr);
+  const t2 = jingTake(`B3 budget ${FEE - 1n} = fee - 1: jing-take aborts on vault-mid's allowance`, isErr);
+  const r2 = routerSwap(`B3b budget ${FEE - 1n} = fee - 1: router-swap aborts on vault-mid's allowance`, isErr);
   status(`B4 vault still holds ${FUND} sats`, (v) => field(v, "sbtc-balance") === `u${FUND}`);
   stxBal(`B5 vault STX still ${FLOAT}`, VAULT_ID, `u${FLOAT}`);
 
   // ---- budget >= fee: both paths work and pay exactly the fee ----
   budget(PER_FILL);
-  const fuel1 = tx("D1 budget 10, float 1 STX: stranger fuel-fair-book sweeps all but the budget", STRANGER, VAULT_ID, "fuel-fair-book", [], (v) => ok(v) && v.includes(`(amount u${FLOAT - PER_FILL})`));
-  stxBal("D2 vault keeps exactly the 10 uSTX budget", VAULT_ID, `u${PER_FILL}`);
+  const fuel1 = tx(`D1 budget ${PER_FILL}, float 1 STX: stranger fuel-fair-book sweeps all but the budget`, STRANGER, VAULT_ID, "fuel-fair-book", [], (v) => ok(v) && v.includes(`(amount u${FLOAT - PER_FILL})`));
+  stxBal(`D2 vault keeps exactly the ${PER_FILL} uSTX budget`, VAULT_ID, `u${PER_FILL}`);
   tx("D3 balance = budget: fuel-fair-book -> u16006 (nothing above the reserve)", STRANGER, VAULT_ID, "fuel-fair-book", [], "(err u16006)");
   const sA = stxBal("C0 vault STX before router-swap", VAULT_ID);
-  const rA = routerSwap("C1 budget 10 = 1 x fee: router-swap fills through the book leg", (v) => ok(v) && v.includes(`(amount u${FUND})`));
+  const eA = stxBal("E0 the fresh caller holds 0 STX", EMPTY, "u0");
+  const rA = routerSwap(`C1 budget ${PER_FILL} = 2 x fee: a 0-STX caller runs router-swap, it fills through the book leg`, (v) => ok(v) && v.includes(`(amount u${FUND})`), EMPTY);
   const sB = stxBal("C2 vault STX after router-swap", VAULT_ID);
+  stxBal("E1 the caller still holds 0 STX: the vault paid both verifies", EMPTY, "u0");
   status("C3 vault empty after the sale", (v) => field(v, "sbtc-balance") === "u0" && field(v, "empty") === "true");
   toTreasury(`whale sends ${FUND} more sats to the treasury`, FUND);
   tx("fund-from-treasury opens the next batch", STRANGER, VAULT_ID, "fund-from-treasury", [], (v) => ok(v) && v.includes("(opened true)"));
   tx("D4 stranger fuel-fair-book sweeps the router-swap proceeds, keeps the budget", STRANGER, VAULT_ID, "fuel-fair-book", [], ok);
-  stxBal("D5 vault keeps exactly the 10 uSTX budget", VAULT_ID, `u${PER_FILL}`);
+  stxBal(`D5 vault keeps exactly the ${PER_FILL} uSTX budget`, VAULT_ID, `u${PER_FILL}`);
   const sC = stxBal("C4 vault STX before jing-take", VAULT_ID);
-  const tA = jingTake("C5 budget 10 = 1 x fee: jing-take fills the bid", (v) => ok(v) && v.includes(`(amount u${FUND})`));
+  const tA = jingTake(`C5 budget ${PER_FILL} = 2 x fee: jing-take fills the bid`, (v) => ok(v) && v.includes(`(amount u${FUND})`));
   const sD = stxBal("C6 vault STX after jing-take", VAULT_ID);
   status("C7 vault sBTC 0 after the take", (v) => field(v, "sbtc-balance") === "u0");
 
@@ -240,26 +249,30 @@ async function main() {
   console.log(`  ..   live fee before the fixture: ${fee0.raw}; recipient ${R}`);
   const setPrints = printsOf(eventsOf(setMax.step), VAULT_ID);
   check("S2 set-pyth-fee-budget printed its notification and value", setPrints.join(" | "), () => setPrints.some(x => x.includes('"set-pyth-fee-budget"') && x.includes(`(value u${MAX_BUDGET})`)));
-  // A1: the failure is the book leg, not the allowance
-  // (err u1) is the as-contract? violation index of the with-stx slot; A2's
-  // (err u1) is stx-transfer?'s insufficient-balance code from the oracle
+  // A1 and A2: (err u1) is stx-transfer?'s insufficient-balance code from the
+  // oracle (the vault's refresh-mid fee); B: (err u0) is vault-mid's
+  // as-contract? violation index of its only slot, with-stx
   console.log(`  ..   A2 jing-take ${t0.raw}; B1 router-swap ${r1.raw}; B2 jing-take ${t1.raw}; B3 ${t2.raw}; B3b ${r2.raw}`);
-  check("B1..B3b abort with the with-stx allowance index (err u1)", [r1, t1, t2, r2].map(x => x.raw).join(" "), () => [r1, t1, t2, r2].every(x => x.raw === "(err u1)"));
-  // C: each success pays exactly FEE from the vault to the oracle's recipient
-  for (const [lbl, step] of [["C1 router-swap", rA], ["C5 jing-take", tA]]) {
-    const fees = stxMoves(eventsOf(step.step)).filter(m => m.from === VAULT_ID);
-    check(`${lbl}: the vault's only STX outflow is one ${FEE} uSTX fee to the oracle fee recipient`, JSON.stringify(fees.map(m => ({ ...m, amount: String(m.amount) }))), () => fees.length === 1 && fees.every(m => m.amount === FEE && m.to === R));
+  check("B1..B3b abort with vault-mid's with-stx allowance index (err u0)", [r1, t1, t2, r2].map(x => x.raw).join(" "), () => [r1, t1, t2, r2].every(x => x.raw === "(err u0)"));
+  // C: each success pays exactly two FEEs from the vault to the oracle's
+  // recipient (refresh-mid, then the market swap), and the caller pays none
+  for (const [lbl, step, caller] of [["C1 router-swap", rA, EMPTY], ["C5 jing-take", tA, DEPLOYER]]) {
+    const moves = stxMoves(eventsOf(step.step));
+    const fees = moves.filter(m => m.from === VAULT_ID);
+    check(`${lbl}: the vault's only STX outflows are two ${FEE} uSTX fees to the oracle fee recipient`, JSON.stringify(fees.map(m => ({ ...m, amount: String(m.amount) }))), () => fees.length === 2 && fees.every(m => m.amount === FEE && m.to === R));
+    check(`${lbl}: the caller sent no STX`, moves.filter(m => m.from === caller).length, (n) => n === 0);
   }
   const rPrint = printsOf(eventsOf(rA.step), ROUTER_ID).find(x => x.includes("smart-swap-sbtc-for-stx")) || "";
   check("C1 the router's book leg filled (jing-ok true, jing-in > 0)", rPrint.slice(0, 300), () => rPrint.includes("(jing-ok true)") && num(rPrint, "jing-in") > 0n);
-  // the router measures `out` as the caller's STX delta, so it is already net of the fees
-  check("C1 router out = jing-out - 1 x fee (the fees come out of the measured delta)", `out ${num(rPrint, "out")}, jing-out ${num(rPrint, "jing-out")}`, () => num(rPrint, "out") === num(rPrint, "jing-out") - PER_FILL);
-  check("C1 vault STX rose by exactly the router's (net) out", `${bare(sA.raw)} -> ${bare(sB.raw)}, out ${num(rA.raw, "out")}`, () => bare(sB.raw) - bare(sA.raw) === num(rA.raw, "out"));
-  check("C5 vault STX rose by out - 1 x fee", `${bare(sC.raw)} -> ${bare(sD.raw)}, out ${num(tA.raw, "out")}`, () => bare(sD.raw) - bare(sC.raw) === num(tA.raw, "out") - PER_FILL);
+  // the router measures `out` as the vault's STX delta over its own call: net of
+  // the market's verify inside it, not of current-mid's refresh-mid before it
+  check("C1 router out = jing-out - 1 x fee (the market verify inside the router)", `out ${num(rPrint, "out")}, jing-out ${num(rPrint, "jing-out")}`, () => num(rPrint, "out") === num(rPrint, "jing-out") - FEE);
+  check("C1 vault STX rose by out - 1 x fee (refresh-mid, outside the router)", `${bare(sA.raw)} -> ${bare(sB.raw)}, out ${num(rA.raw, "out")}`, () => bare(sB.raw) - bare(sA.raw) === num(rA.raw, "out") - FEE);
+  check("C5 vault STX rose by out - 2 x fee", `${bare(sC.raw)} -> ${bare(sD.raw)}, out ${num(tA.raw, "out")}`, () => bare(sD.raw) - bare(sC.raw) === num(tA.raw, "out") - PER_FILL);
   const fuelMoves = stxMoves(eventsOf(fuel1.step));
   check("D1 the sweep moved exactly balance - budget to the book", JSON.stringify(fuelMoves.map(m => ({ ...m, amount: String(m.amount) }))), () => fuelMoves.length === 1 && fuelMoves[0].amount === FLOAT - PER_FILL && fuelMoves[0].to === `${DEPLOYER}.${BOOK}`);
-  check("C0 router-swap started from exactly the 10 uSTX reserve", sA.raw, `u${PER_FILL}`);
-  check("C4 jing-take started from exactly the 10 uSTX reserve", sC.raw, `u${PER_FILL}`);
+  check(`C0 router-swap started from exactly the ${PER_FILL} uSTX reserve`, sA.raw, `u${PER_FILL}`);
+  check(`C4 jing-take started from exactly the ${PER_FILL} uSTX reserve`, sC.raw, `u${PER_FILL}`);
   check("A1 router-swap moved no STX from the vault", stxMoves(eventsOf(r0.step)).filter(m => m.from === VAULT_ID).length, (n) => n === 0);
 
   console.log(`\n${checks - failures}/${checks} checks green`);

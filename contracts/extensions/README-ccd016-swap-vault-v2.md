@@ -252,3 +252,90 @@ Regression runs on the same source:
 - parked 136/136: https://stxer.xyz/simulations/mainnet/79d46185f0d60bb515129dc28f914ad0
 - pyth-fee 66/66: https://stxer.xyz/simulations/mainnet/de1bf43a3df69a4020d0bcdbd287b2dd
 - emergency 45/45: https://stxer.xyz/simulations/mainnet/caf729594137614ef38c7057b2ef41f5
+
+## Bounty mv7dfb: Super Orb, vault pays both Pyth verifies
+
+Finding. Every entry that takes a Lazer `update` first ran `current-mid`.
+That calls the market's `refresh-mid`, which verifies the update. The oracle
+charges its fee to tx-sender. This ran before the vault's `as-contract?`, so
+the caller paid it. Only the second verify (in the market's `swap`) was paid
+by the vault. `jing-place` and `jing-refloor` had no `with-stx` at all.
+
+Fix. New private `vault-mid` runs `current-mid` in its own `as-contract?`
+scope with `(with-stx (var-get pyth-fee-budget))`. Every entry that verifies
+(`jing-place`, `jing-refloor`, `jing-take`, `router-swap`,
+`router-swap-split`) calls `vault-mid` where it called `current-mid`; nothing
+else in them changed, and the swap scopes keep their own `with-stx` for the
+market's verify. The vault pays every Pyth fee. The caller pays only its tx
+fee. The floor and limit math is unchanged.
+
+Fee budget. `jing-take`, `router-swap` and `router-swap-split` verify twice,
+once per scope. Each scope's `with-stx` caps one verify (budget = fee passes),
+but both fees come from the vault's own STX: set `pyth-fee-budget` to at least
+**2 x fee**. `jing-place` and
+`jing-refloor` verify once. The 10 STX cap still allows a fee up to 5 STX
+per verify. The live fee is u0 today.
+
+STX on hand. With a fee above 0, the vault now also pays for `jing-place`
+and `jing-refloor`, so it needs STX for those too. `fuel-fair-book` keeps
+`pyth-fee-budget` back, which covers one entry. With no STX in the vault,
+every Lazer entry aborts with `(err u1)` (the oracle's fee transfer). With a
+budget below the fee, it aborts in `vault-mid` with `(err u0)`. Before, `router-swap`
+could still sell on the AMMs when the vault had no STX; now it aborts.
+
+Check order and error codes. As at HEAD: the mid is read first, in the
+outer `let`, then auth, window, amount and cooldown. Codes are unchanged
+except over budget: `(err u0)` from `vault-mid` in every entry (HEAD: `(err
+u1)` from the swap scope's `with-stx`; jing-place and jing-refloor had none).
+
+Tests. `simulations/stxer-ccd016-v2-pyth-fee.js` 70/70:
+https://stxer.xyz/simulations/mainnet/990fd61bf4b3f09efea55fa756d7457f
+
+- Budget 0, vault STX 0: `router-swap` and `jing-take` return `(err u1)`.
+- Budget 0 with a float, and budget 9 (fee - 1): both abort in `vault-mid`
+  with `(err u0)`.
+- Budget 20: a fresh account with 0 STX runs `router-swap`. It sends no STX
+  and still holds 0 STX. The vault pays exactly two 10 uSTX fees.
+  `jing-take` also pays exactly two fees from the vault.
+- `fuel-fair-book` keeps exactly the 20 uSTX budget.
+
+Regression runs on the same source (no Pyth key):
+
+- clock-keyless 101/101: https://stxer.xyz/simulations/mainnet/fb461e0f8e0cf60ef6b30a343bd0ee92
+- coverage 104/104: https://stxer.xyz/simulations/mainnet/be64614667fc2ffa2c7c92c5daf0be92
+- happy-path 58/58: https://stxer.xyz/simulations/mainnet/d9719d945b5e61bf4001a50a4137817e
+- parked 136/136: https://stxer.xyz/simulations/mainnet/b7f64867b34506b6ff1ebf469128859e
+- emergency 45/45: https://stxer.xyz/simulations/mainnet/4470fb1a029b816d91a6b373ee384cf8
+- fixes 76/92 (https://stxer.xyz/simulations/mainnet/dbc260d4d0c54537be8e6b51114698b3).
+  The same 16 L-1 checks fail on HEAD 8adfa68 without this change
+  (https://stxer.xyz/simulations/mainnet/c8653524b8ace456c37e02aa324a52d4).
+  The harness predates the Calm Forge funding rule (dust in an elapsed
+  window now opens a fresh batch), so its L-1 setup is stale.
+
+## Bounty mv7dfb: not taken (Calm Forge option, Violet Reed)
+
+Lines below are at `8adfa68`.
+
+**Calm Forge, optional hardening: not needed after `8adfa68`.** The
+suggestion: let `close-batch` (L410) send at most ROUTER_SLACK_SATS of dust
+to REWARDS_TREASURY when nothing is on the market, so the clock can close
+without a proposal.
+
+The only harm of the stuck clock was in `fund-from-treasury`: new rewards
+joined the elapsed batch and anyone could `router-swap` them at the floor.
+Since `8adfa68`, `fund-from-treasury` (L355) opens a fresh window when the
+old one elapsed and wallet + market is at most ROUTER_SLACK_SATS (L370). The
+dust then rides along into the new patience phase and rests at the mid with
+the rewards. Until new rewards arrive, the stale clock blocks nothing that
+has funds to move: 3-8 sats cannot be sold (`router-swap` needs more than 8,
+L615), and no other function waits for `batch-start` to be none. Sending the
+dust to the treasury would only move it one hop early. No change.
+
+**Violet Reed, `router-swap-split` and a bid in the net band: by design.**
+`router-swap-split` (L644) signs a gross min-out (L680). The router's manual
+book leg pays net of the rebate and the 10 bps fee, so a best bid in
+`[limit, book-limit(limit))` makes the split revert u3002. The vault never
+sells under its floor and the tx rolls back. The split is DAO-only; size the
+`jing` slice with the market's `get-taker-capacity` at `book-limit` and the
+walk stops above it. Full reasoning: juicestx
+`contracts/pox-5/README-bounty-mv7dfb.md` section 9.
