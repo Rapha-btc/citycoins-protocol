@@ -1,9 +1,11 @@
 # CityCoins vault v2 runtime coverage and Rendezvous fuzzing
 
-Current full source, 2026-09-18: **259 runtime assertions passed**, **97/97
-instrumented branch outcomes**, **293/295 line counters**. Eight RV invariants,
-two seeds: **2,000/2,000 checks passed**, **zero falsified invariants**, **zero runtime
-exceptions**, **72 completed emergency batches**. These complement
+Latest Clarinet runs (2026-10-14): the vault suite passes **313 assertions**;
+the new standalone redemption-book suite passes **21/21 public functions**,
+**29/29 instrumented functions**, and **72/72 branches**. Eight prior RV
+invariants, two seeds: **2,000/2,000 checks passed**, **zero falsified
+invariants**, **zero runtime exceptions**, **72 completed emergency batches**.
+These complement
 [423 real mainnet-fork checks](../../simulations/README-ccd016-v2-verification.md).
 No contract bug was found; finite testing is not a proof of universal correctness.
 
@@ -12,6 +14,7 @@ No contract bug was found; finite testing is not a proof of universal correctnes
 ```bash
 npm ci
 npm run test:vault
+npm run test:book
 npm run rv:vault:build
 npm run rv:vault -- --seed=20260918 --bail
 npm run rv:vault -- --seed=20260919 --bail
@@ -26,7 +29,7 @@ that test-tool API. All production source remains untouched.
 ## Source and dependencies
 
 `build.py` reads both entire current production contracts and records SHA-256:
-vault `e2c05bf3238290a0644685654cda3d040382afe7d7e858530ddd04bcfd8b3573`,
+vault `e3437fcfe248b46e11ffee8b37e88d227211387afca099db1502c8b231133720`,
 fair book `b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f`.
 It rewrites mainnet dependency addresses and allowance asset names to fixtures.
 The actual vault gates, price arithmetic, routing arguments, clocks and
@@ -68,14 +71,39 @@ zero/over-balance/chunk/split guards, stale/divergent/disabled DIA band, forced 
 market mid, DIA 7,200/7,201-second boundary, response-error/zero-price fallback,
 native error/zero/one values, price/floor rounding to zero, minOut rejection,
 recipient-transfer rejection, atomic balance/clock/cooldown rollback and full drain.
-The SDK branch count is enforced as a gate at the end of the runtime script.
+The SDK coverage gate for this source is **118/119 branches**, **450/473
+lines**, and **46/46 functions**. Its only missed branch is the below-floor
+router outcome at vault line 622, which the mock router rejects before the
+vault receives a result. Zero-hit line counters are recorded in
+[`runtime.json`](results/runtime.json); they are not additional uncovered
+branches.
+
+## Redemption-book Clarinet coverage
+
+Run the book-specific Clarinet SDK suite with:
+
+```sh
+npm run test:book
+```
+
+It source-pins `ccd015-redemption-book-mia-stx` at commit `a9a6bd6` and SHA-256
+`b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f`. The
+suite passes **21/21 public/read-only functions**, **29/29 instrumented
+functions**, and **72/72 branches**; line coverage is **211/213 (99.06%)**.
+The two unhit line counters are the literal token contract principals at source
+lines 373 and 375 inside `get-mia-total-supply`; the function and both token
+calls execute, but Clarinet does not attribute line hits to those static
+operands. The suite exercises authorization, offers, sorting, cancellation,
+pause/funding, eviction, partial and full fills, and rounding guards. Detailed
+machine-readable results are in [`ccd015-book-runtime.json`](results/ccd015-book-runtime.json)
+and [`ccd015-book-runtime.lcov`](results/ccd015-book-runtime.lcov).
 
 [Runtime results](results/runtime.json) and [target-only LCOV](results/runtime.lcov)
-contain the source hashes and measurements. Two zero-hit counters (source lines
-486 and 614) are the allocation-minimum binding and native contract literal.
-Both paths execute and their outcomes are asserted, but those literal/binding
-lines receive no SDK line hit. This is measured **97/97 branch outcomes**, not
-an assertion that every possible error-propagation path or uint128 input was covered.
+contain the vault source hashes and measurements. The report lists 23 source
+line counters without hits, including the single uncovered branch at line 622;
+these line counts are distinct from the measured **118/119 branch outcomes**.
+No claim is made that every possible error-propagation path or uint128 input
+was covered.
 
 ## Fuzz actors, actions and invariants
 

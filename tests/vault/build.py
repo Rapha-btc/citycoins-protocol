@@ -4,6 +4,7 @@ from pathlib import Path
 import sys,shutil,json,hashlib
 here=Path(__file__).resolve().parent;root=here.parents[1];rv='--rv' in sys.argv
 out=here/('.build-rv' if rv else '.build');(out/'contracts').mkdir(parents=True,exist_ok=True);(out/'settings').mkdir(exist_ok=True)
+EXPECTED_BOOK_SHA256='b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f'
 replacements={
 # the -v6-3 / -v5-3 ids first: the bare -v6 / -v5 prefixes below would otherwise leave a stray "-3"
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3":'.v6-market',
@@ -23,8 +24,29 @@ replacements={
 "'SPN4Y5QPGQA8882ZXW90ADC2DHYXMSTN8VAR8C3X.ccd014-pox5-staking-mia":"'STNHKEPYEPJ8ET55ZZ0M5A34J0R3N5FM2CMMMAZ6",
 '"sbtc-token"':'"mock-ft"'}
 files={p.stem:p.read_text() for p in (here/'fixtures').glob('*.clar')};hashes={}
+files['mock-book-extension']=''';; Test-only extension that forwards admin calls through contract-caller.
+(define-public (set-paused (paused bool))
+  (contract-call? .ccd015-redemption-book-mia-stx set-paused paused)
+)
+(define-public (set-min-deposit (amount uint))
+  (contract-call? .ccd015-redemption-book-mia-stx set-min-deposit amount)
+)
+(define-public (update-par)
+  (contract-call? .ccd015-redemption-book-mia-stx update-par)
+)
+'''
+for index in range(51):
+ name=f'mock-book-seller-{index}'
+ files[name]=f'''(define-public (place (amount uint) (ask uint))
+  (as-contract? ((with-ft .mock-mia "miamicoin" amount))
+    (try! (contract-call? .ccd015-redemption-book-mia-stx place-offer amount ask))))
+(define-public (cancel)
+  (as-contract? () (try! (contract-call? .ccd015-redemption-book-mia-stx cancel-offer))))
+'''
 for n in ['ccd016-swap-vault-mia-v2','ccd015-redemption-book-mia-stx']:
  s=(root/f'contracts/extensions/{n}.clar').read_text();hashes[n]=hashlib.sha256(s.encode()).hexdigest();files[n]=s
+if hashes['ccd015-redemption-book-mia-stx'] != EXPECTED_BOOK_SHA256:
+ raise SystemExit(f"Unexpected ccd015-redemption-book-mia-stx source bytes: {hashes['ccd015-redemption-book-mia-stx']}; expected {EXPECTED_BOOK_SHA256}")
 for n,s in files.items():
  for a,b in replacements.items():s=s.replace(a,b)
  if n=='v6-market':
