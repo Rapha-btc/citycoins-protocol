@@ -15,7 +15,10 @@
     "rv:ccd016": "python3 tests/vault/build.py --rv && rv tests/vault/.build-rv ccd016-swap-vault-mia-v2 invariant --runs=1000",
     "test:vault": "python3 tests/vault/build.py && node tests/vault/runtime.mjs",
     "rv:vault:build": "python3 tests/vault/build.py --rv",
-    "rv:vault": "rv tests/vault/.build-rv ccd016-swap-vault-mia-v2 invariant --runs=1000"
+    "rv:vault": "rv tests/vault/.build-rv ccd016-swap-vault-mia-v2 invariant --runs=1000",
+    "rv:final:build": "python3 tests/rv/ccd016-final/build.py",
+    "rv:final:invariant": "bash tests/rv/ccd016-final/run.sh invariant",
+    "rv:final:test": "bash tests/rv/ccd016-final/run.sh test"
   },
   "author": "",
   "license": "ISC",
