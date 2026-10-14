@@ -22,6 +22,7 @@ const gov=(f,a=[])=>vault(f,a,admin);
 const fund=amount=>{ok(call('mock-ft','mint',[u(amount),cp('mock-treasury')]));return ok(vault('fund-from-treasury'))};
 const resetWorld=()=>{for(const f of ['set-stale','set-failed','set-zero-stx'])ok(call('mock-dia',f,[Cl.bool(false)]));ok(call('mock-dia','set-age',[u(0)]));ok(call('mock-dia','set-skew',[u(10000)]));ok(call('mock-dia','set-stx-usd',[u(100000000)]));ok(call('mock-native','set-failed',[Cl.bool(false)]));ok(call('mock-native','set-mid',[u(32000000000000)]));ok(call('mock-lazer-oracle','set-mid',[u(32000000000000)]));};
 const drain=()=>{if(ft(p(V))>0n)ok(gov('dao-recall-sbtc'));if(stx(p(V))>0n)ok(vault('fuel-fair-book'));};
+const flushTreasury=()=>{if(ft(p('mock-treasury'))>0n){ok(vault('fund-from-treasury'));ok(vault('router-swap',[update]));}};
 // Original DAO gate retained: strangers fail, the precise extension principal succeeds.
 err(vault('is-dao-or-extension'),16000);
 ok(call('mock-base-dao','set-extension',[Cl.principal(admin),Cl.bool(true)],admin));
@@ -102,6 +103,24 @@ ok(call('v6-market','deposit-token-y',[u(500000000),u(32000000000000),Cl.none(),
 ok(gov('jing-take',[u(takeAmount),update]));eq(ft(p(V)),0n);eq(clock()['batch-start'].type,'none');drain();
 // Funding an empty vault with a clock reopens it; exact patience boundary is inclusive.
 ok(gov('set-window-blocks',[u(2)]));fund(1000);sim.mineEmptyBurnBlocks(2);eq(clock()['window-elapsed'].type,'true');drain();
+// A sub-dust Jing order is canceled home and lets anyone clear the stale clock.
+ok(call('v6-market','cancel-token-y-deposit',[cp('mock-ft'),Cl.stringAscii('mock-ft')],bob));ok(gov('set-window-blocks',[u(0)]));flushTreasury();
+ok(call('v6-market','set-min-token-x-deposit',[u(1)],admin));ok(gov('set-window-blocks',[u(2)]));fund(1);
+ok(vault('jing-place',[update]));eq(read('v6-market','get-token-x-deposit',[read('v6-market','get-current-cycle'),Cl.principal(p(V))]).value,1n);
+ok(vault('close-batch'));eq(read(V,'is-empty').type,'true');eq(clock()['batch-start'].type,'none');
+// A fresh treasury pull must not restart an elapsed batch with more than router dust resting.
+fund(10);ok(vault('jing-place',[update]));const dustBatchStart=clock()['batch-start'].value.value;
+sim.mineEmptyBurnBlocks(2);eq(clock()['window-elapsed'].type,'true');fund(1);
+eq(clock()['batch-start'].value.value,dustBatchStart);eq(clock()['window-elapsed'].type,'true');
+ok(gov('dao-reclaim',[Cl.none()]));ok(gov('dao-recall-sbtc'));eq(clock()['batch-start'].type,'none');
+// When the vault is above max-chunk, jing-take honors the requested slice.
+ok(gov('set-max-chunk-sats',[u(1000000)]));ok(gov('set-window-blocks',[u(0)]));flushTreasury();fund(1000001);
+ok(call('v6-market','deposit-token-y',[u(500000000),u(32000000000000),Cl.none(),update,cp('mock-ft'),Cl.stringAscii('mock-ft')],bob));
+ok(gov('jing-take',[u(10000),update]));eq(ft(p(V)),990001n);ok(call('v6-market','cancel-token-y-deposit',[cp('mock-ft'),Cl.stringAscii('mock-ft')],bob));ok(gov('dao-recall-sbtc'));flushTreasury();
+// Permissionless routing uses one full chunk; the fixture router deliberately has too little STX
+// to fill this 1-BTC slice, so the vault rejects the unsold result below its floor.
+ok(gov('set-max-chunk-sats',[u(100000000)]));fund(100000001);err(vault('router-swap',[update]),16047);
+ok(gov('dao-recall-sbtc'));ok(gov('set-max-chunk-sats',[u(1000000)]));
 const output=dir+'results/';mkdirSync(output,{recursive:true});const report=sim.collectReport(false,'');
 const record=report.coverage.split('end_of_record').find(r=>r.includes('/'+V+'.clar'));assert.ok(record);
 const lcov=record.replace(/^SF:.*$/m,'SF:contracts/extensions/'+V+'.clar')+'end_of_record\n';writeFileSync(output+'runtime.lcov',lcov);
