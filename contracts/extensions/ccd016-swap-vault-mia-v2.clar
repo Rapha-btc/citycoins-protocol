@@ -126,7 +126,7 @@
 (define-constant PRICE_PRECISION u100000000)
 (define-constant DECIMAL_FACTOR u100)
 (define-constant BPS_PRECISION u10000)
-;; most rebate dust the market (markets-sbtc-stx-jing-v6-3) refunds: under
+;; most rebate dust the market (markets-sbtc-stx-jing-v6-4) refunds: under
 ;; 1 sat per rounding, 1 for net + 1 for the batch share + 49 walk fills.
 ;; Router v5-3 sizes the book leg at the market's gross-cap, so the leg
 ;; trades in full and only this rounding comes back.
@@ -152,8 +152,8 @@
 ;; The Jing market on Pyth Lazer (markets-sbtc-stx-jing-v6-2: pegged orders):
 ;; the maker venue and the price oracle. The smart router splits a taker
 ;; order across the book, Bitflow DLMM, Bitflow XYK and Velar at execution.
-(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3)
-(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-3)
+(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4)
+(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-4)
 (define-constant WSTX_TOKEN 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2)
 (define-constant ASSET_WSTX "wstx")
 
@@ -798,24 +798,24 @@
 ;; dispatch and the function is rejected as writing.
 (define-read-only (get-status)
   (let ((cycle (contract-call?
-      'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+      'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
       get-current-cycle
     )))
     {
       sbtc-balance: (sbtc-balance),
       stx-balance: (stx-get-balance current-contract),
       jing-resting: (contract-call?
-        'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+        'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
         get-token-x-deposit cycle current-contract
       ),
       jing-parked: (contract-call?
-        'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+        'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
         get-token-x-parked current-contract
       ),
       jing-escrowed: (default-to u0
         (get amount
           (contract-call?
-            'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+            'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
             get-token-x-pending-deposit current-contract
           ))
       ),
@@ -831,27 +831,27 @@
 ;; Nothing to sell and nothing resting: the next funding opens a new batch.
 (define-read-only (is-empty)
   (let ((cycle (contract-call?
-      'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+      'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
       get-current-cycle
     )))
     (and
       (<= (sbtc-balance) DUST_SATS)
       (is-eq
         (contract-call?
-          'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+          'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
           get-token-x-deposit cycle current-contract
         )
         u0
       )
       (is-eq
         (contract-call?
-          'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+          'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
           get-token-x-parked current-contract
         )
         u0
       )
       (is-none (contract-call?
-        'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-3
+        'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
         get-token-x-pending-deposit current-contract
       ))
     )
