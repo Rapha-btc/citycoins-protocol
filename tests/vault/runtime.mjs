@@ -28,7 +28,7 @@ err(vault('is-dao-or-extension'),16000);
 ok(call('mock-base-dao','set-extension',[Cl.principal(admin),Cl.bool(true)],admin));
 eq(ok(gov('is-dao-or-extension')).type,'true');
 ok(vault('callback',[Cl.principal(alice),update]));
-for(const [f,max,value,positive] of [['set-window-blocks',1008,288,false],['set-leeway-bps',1000,500,false],['set-slippage-bps',1000,100,false],['set-dia-band-bps',5000,1000,false],['set-max-chunk-sats',100000000,1000000,true],['set-router-cooldown',144,1,false],['set-no-pyth-slippage-bps',5000,1000,false],['set-pyth-fee-budget',10000000,0,false]]){
+for(const [f,max,value,positive] of [['set-window-blocks',1008,288,false],['set-leeway-bps',1000,500,false],['set-slippage-bps',1000,100,false],['set-dia-band-bps',5000,1000,false],['set-max-chunk-sats',100000000,1000000,true],['set-router-cooldown',144,1,false],['set-no-pyth-slippage-bps',5000,1000,false],['set-pyth-fee-budget',10000000,0,false],['set-maker-spread-bps',50,1,false]]){
  err(vault(f,[u(value)]),16000);err(gov(f,[u(max+1)]),16033);
  if(positive)err(gov(f,[u(0)]),16033);else ok(gov(f,[u(0)]));
  ok(gov(f,[u(max)]));ok(gov(f,[u(value)]));
@@ -47,7 +47,11 @@ fund(1000);eq(clock()['batch-start'].value.value,initialStart);
 err(vault('close-batch'),16043);err(vault('router-swap',[update]),16031);err(gov('router-swap-split',[u(1),u(0),u(1),u(0),u(0),update]),16031);err(gov('router-swap-split-dia',[u(1),u(1),u(0),u(0)]),16031);
 ok(vault('jing-place',[update]));err(vault('jing-place',[update]),16006);
 err(vault('jing-reclaim',[Cl.some(update)]),16031);ok(gov('jing-refloor',[update]));
-const order=read('v6-market','get-token-x-order',[cp(V)]).value;eq(order['spread-bps'].value.value,0n);
+const order=read('v6-market','get-token-x-order',[cp(V)]).value;eq(order['spread-bps'].value.value,1n);
+// The ask rests at mid + maker-spread-bps (default 1 bp, never spread 0); refloor applies the current value.
+const spread=()=>read('v6-market','get-token-x-order',[cp(V)]).value['spread-bps'].value.value;
+ok(gov('set-maker-spread-bps',[u(7)]));ok(gov('jing-refloor',[update]));eq(spread(),7n);eq(config().includes('(maker-spread-bps u7)'),true);
+ok(gov('set-maker-spread-bps',[u(1)]));ok(gov('jing-refloor',[update]));eq(spread(),1n);
 // DAO can change the window during a batch: zero immediately elapses it.
 ok(gov('set-window-blocks',[u(0)]));eq(clock()['window-elapsed'].type,'true');ok(gov('jing-refloor',[update]));
 ok(vault('jing-reclaim',[Cl.some(update)]));ok(vault('jing-reclaim',[Cl.some(update)]));ok(gov('dao-reclaim',[Cl.none()]));
