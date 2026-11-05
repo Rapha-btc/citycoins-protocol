@@ -20,14 +20,14 @@
 ;;      the new patience phase. That is the whole clock: one height, moved
 ;;      only by funding, only when no window is open.
 ;;   2. PATIENCE PHASE (window open): maker-first on the Jing market. Anyone
-;;      may rest the vault's sBTC on the book as a ZERO-SPREAD PEG: an ask
-;;      that sits at the settlement mid, whatever the mid is at each
+;;      may rest the vault's sBTC on the book as a PEG: an ask that sits
+;;      maker-spread (1 bp) above the settlement mid, whatever the mid is at each
 ;;      settlement, with a floor of mid * (1 - LEEWAY) taken at placement.
 ;;      Market v6 recomputes the pegged price from its own verified mid
 ;;      every settlement, so nobody reprices it: the keeper loop v1 had, and
 ;;      the reprice call the first v2 cut had, are gone. The floor is a
 ;;      guard, not a price: while the mid is at or above it the ask is at
-;;      the mid; below it the ask is switched off for that settlement (no
+;;      the mid plus the spread; below it the ask is switched off for that settlement (no
 ;;      fill at all, not a fill at the floor) and comes back by itself when
 ;;      the mid returns. LEEWAY = 5% is how far the mid may fall before the
 ;;      guard trips; jing-refloor moves the guard to a fresh mid when it
@@ -57,7 +57,7 @@
 ;;      itself, so its Velar leg gets the 0.6% floor (VELAR_SLIPPAGE_BPS).
 ;;      The smart router takes one limit for every venue, so a slice it
 ;;      routes to Velar carries the 1% floor; that exposure is bounded by
-;;      the chunk cap to at most 0.4% of 0.05 sBTC per call, a few dollars.
+;;      the chunk cap to at most 0.4% of 0.01 sBTC per call, a few dollars.
 ;;      Last measured, a bot needed ~15k USD of sBTC per chunk to clear its
 ;;      costs. A cooldown of N burn blocks between router swaps is the next
 ;;      lever if ever needed. The Jing leg is not sandwichable: it
@@ -211,7 +211,7 @@
 (define-data-var leeway-bps uint u500)
 ;; floor under the oracle mid once the window has elapsed
 (define-data-var slippage-bps uint u100)
-;; largest single router-swap, in sats (0.05 sBTC): keeps one liquidation
+;; largest single router-swap, in sats (0.01 sBTC): keeps one liquidation
 ;; tx under the size where a sandwich could clear its own fees
 (define-data-var max-chunk-sats uint u1000000)
 ;; Pyth mid must sit within this of the DIA rate; 0 = DIA check off
@@ -482,7 +482,7 @@
 
 ;; --- patience phase: Jing maker-first (window open) -------------------------
 
-;; Rest the vault's whole sBTC balance on the Jing book as a zero-spread peg: at the mid every
+;; Rest the vault's whole sBTC balance on the Jing book as a peg: mid + spread every
 ;; settlement, off while the mid is under the floor mid * (1 - leeway) taken
 ;; now. The market rests it at once when the STX side is empty, otherwise it
 ;; escrows the sats until someone settles them with a price update published
