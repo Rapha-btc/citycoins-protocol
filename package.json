@@ -5,6 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test:ccip028": "python3 tests/activation/build.py && vitest run --config tests/activation/vitest.config.ts",
     "test": "vitest run",
     "sim:ccd015": "node simulations/stxer-ccd015-oracle-coverage.js",
     "sim:ccd016": "node simulations/stxer-ccd016-v2-coverage.js",

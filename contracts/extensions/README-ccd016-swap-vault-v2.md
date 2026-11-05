@@ -339,3 +339,12 @@ sells under its floor and the tx rolls back. The split is DAO-only; size the
 `jing` slice with the market's `get-taker-capacity` at `book-limit` and the
 walk stops above it. Full reasoning: juicestx
 `contracts/pox-5/README-bounty-mv7dfb.md` section 9.
+
+**Frosty Narwhal M-4: `router-swap-split` allowance lacks the rebate dust.**
+Does not hold, no change (checked at `8bfbb5f`, same at the pinned
+`8bb69aa`). The split calls the router with `fallback none` (L678). Router
+v5-3 `with-fallback` adds the Jing residual only to a named fallback venue,
+so nothing is re-sold and the vault sends at most `amount`. The refunded
+rest and rebate dust stay in the vault. `amount + min-x` (L674) covers it.
+Full reasoning: juicestx `contracts/pox-5/README-bounty-mv7dfb.md`
+section 13.

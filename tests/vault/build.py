@@ -3,7 +3,8 @@
 from pathlib import Path
 import sys,shutil,json,hashlib
 here=Path(__file__).resolve().parent;root=here.parents[1];rv='--rv' in sys.argv
-out=here/('.build-rv' if rv else '.build');(out/'contracts').mkdir(parents=True,exist_ok=True);(out/'settings').mkdir(exist_ok=True)
+out=Path(sys.argv[sys.argv.index('--output')+1]).resolve() if '--output' in sys.argv else here/('.build-rv' if rv else '.build')
+(out/'contracts').mkdir(parents=True,exist_ok=True);(out/'settings').mkdir(exist_ok=True)
 EXPECTED_BOOK_SHA256='b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f'
 replacements={
 # the -v6-4 / -v5-5 ids first: the bare -v6 / -v5 prefixes below would otherwise leave a stray suffix
