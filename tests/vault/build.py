@@ -7,9 +7,9 @@ out=Path(sys.argv[sys.argv.index('--output')+1]).resolve() if '--output' in sys.
 (out/'contracts').mkdir(parents=True,exist_ok=True);(out/'settings').mkdir(exist_ok=True)
 EXPECTED_BOOK_SHA256='b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f'
 replacements={
-# the -v6-4 / -v5-5 ids first: the bare -v6 / -v5 prefixes below would otherwise leave a stray suffix
-"'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4":'.v6-market',
-"'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-5":'.mock-router',
+# the -v6-5 / -v5-6 ids first: the bare -v6 / -v5 prefixes below would otherwise leave a stray suffix
+"'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5":'.v6-market',
+"'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6":'.mock-router',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6":'.v6-market',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5":'.mock-router',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.rfq-sbtc-stx-jing-v2-3":'.mock-native',
