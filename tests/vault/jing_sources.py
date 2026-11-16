@@ -8,11 +8,11 @@ def checked_sources():
     metadata = json.loads((UPSTREAM / 'sources.json').read_text())
     sources = {}
     for name, item in metadata.items():
-        path = HERE / 'fixtures/v6-market.clar' if name == 'markets-sbtc-stx-jing-v6-4' else UPSTREAM / (name + '.clar')
+        path = HERE / 'fixtures/v6-market.clar' if name == 'markets-sbtc-stx-jing-v6-5' else UPSTREAM / (name + '.clar')
         source = path.read_text()
         assert hashlib.sha256(source.encode()).hexdigest() == item['sha256'], name
         sources[name] = source
-    assert (HERE / 'fixtures/v6-market.clar').read_text() == sources['markets-sbtc-stx-jing-v6-4']
+    assert (HERE / 'fixtures/v6-market.clar').read_text() == sources['markets-sbtc-stx-jing-v6-5']
     return sources, {name: item['sha256'] for name, item in metadata.items()}
 
 def balanced(source, start):

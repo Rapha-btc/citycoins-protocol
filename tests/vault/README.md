@@ -34,13 +34,13 @@ when vendored; their executable tokens also match the sibling Jing checkout.
 
 | Contract | SHA-256 |
 | --- | --- |
-| CCD016 vault | `ac0c305f8bfcfd9f210fb37cba6e1f4d61a26ad40ed7ca4792beca948778502e` |
+| CCD016 vault | `00f06f0c308f84c010c0cf823e09d9a1aa4a088f1d1b20d26244bf8b203bfdc1` |
 | CCD015 book | `b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f` |
 | Jing market v6-4, deployed bytes | `6b3e6943806350daace1498b6b923479cf61b1f555e814f9a01d5db972f436bf` |
 | Jing router v5-5, deployed bytes | `6b65927e564d0bc3df239c5b872b45358f4349e2ec652cf8198e36fd4f3dac7c` |
 
 Market and router live at `SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22` under
-`markets-sbtc-stx-jing-v6-4` and `swap-router-sbtc-stx-jing-v5-5`.
+`markets-sbtc-stx-jing-v6-5` and `swap-router-sbtc-stx-jing-v5-6`.
 `fixtures/upstream/sources.json` records the deployment metadata. The market's
 exact source is `fixtures/v6-market.clar`; the router's is under
 `fixtures/upstream/`. `jing_sources.py` verifies both before any build.

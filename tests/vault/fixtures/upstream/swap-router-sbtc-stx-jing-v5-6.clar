@@ -1,4 +1,4 @@
-(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4)
+(define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5)
 (define-constant SBTC 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token)
 (define-constant WSTX 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2)
 (define-constant ASSET_SBTC "sbtc-token")
@@ -635,10 +635,7 @@
   )
   (match update
     v (let (
-        (bps (get rebate-bps
-          (contract-call? JING_MARKET get-taker-capacity mid limit sell-sbtc
-            tx-sender (some v)
-          )))
+        (bps (contract-call? JING_MARKET get-taker-rebate-bps-for v))
         (blimit (book-limit limit bps sell-sbtc))
         (quote (contract-call? JING_MARKET get-taker-capacity mid blimit sell-sbtc
           tx-sender (some v)
@@ -1336,7 +1333,7 @@
 
 (define-read-only (get-jing-min-deposits)
   (contract-call?
-    'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4
+    'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5
     get-min-deposits
   )
 )

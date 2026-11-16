@@ -1,4 +1,4 @@
-"""Final router integration: full deployed v5-5 router and v6-4 market.
+"""Final router integration: full v5-6 router and v6-5 market.
 
 Only dependency principals/asset names change. AMM and signed-feed fixtures
 remain local and funded explicitly. No router business-logic replacements.
@@ -10,9 +10,9 @@ OUT=HERE/'.build-live-router'
 subprocess.run([sys.executable,str(HERE/'build.py'),'--output',str(OUT)],check=True)
 from jing_sources import checked_sources,market_fixture
 sources,hashes=checked_sources()
-s=sources['swap-router-sbtc-stx-jing-v5-5']
+s=sources['swap-router-sbtc-stx-jing-v5-6']
 refs={
-'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4':'v6-market',
+'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5':'v6-market',
 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token':'mock-ft',
 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2':'mock-ft',
 'SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.wstx':'mock-ft',
@@ -28,7 +28,7 @@ for a,b in refs.items():
  s=s.replace("'"+a,'.'+b)
 s=s.replace('"sbtc-token"','"mock-ft"')
 (OUT/'contracts/mock-router.clar').write_text(s)
-(OUT/'contracts/v6-market.clar').write_text(market_fixture(sources['markets-sbtc-stx-jing-v6-4']))
+(OUT/'contracts/v6-market.clar').write_text(market_fixture(sources['markets-sbtc-stx-jing-v6-5']))
 pool=(HERE/'fixtures/venues/pool.clar').read_text().replace('.asset-stx','.mock-ft').replace('.token','.mock-ft').replace('"token"','"mock-ft"')
 # v5-5 reads the pool-status gate; the old venue fixture lacked that field.
 pool=pool.replace('(ok {x-token:', '(ok {pool-status: true, x-token:')

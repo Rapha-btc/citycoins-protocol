@@ -1,7 +1,7 @@
 # Rendezvous verification of the final CityCoins contracts
 
 The active harnesses target the final vault SHA-256
-`ac0c305f8bfcfd9f210fb37cba6e1f4d61a26ad40ed7ca4792beca948778502e`
+`00f06f0c308f84c010c0cf823e09d9a1aa4a088f1d1b20d26244bf8b203bfdc1`
 and book SHA-256
 `b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f`.
 Builds reject changed production source bytes. No production contract is edited.
@@ -30,7 +30,7 @@ runtime exceptions; RV itself can ignore those while reporting success.
 
 ## Jing sources and test-only changes
 
-The market is the complete deployed **markets-sbtc-stx-jing-v6-4**, replacing the
+The market is the complete deployed **markets-sbtc-stx-jing-v6-5**, replacing the
 older adapted market. Pending deposits/limits and the final no-update deposit
 signatures now execute directly. No fake escrow map or compatibility wrappers
 remain. Deployed hashes and metadata are shared with [the vault suite](../vault/README.md).
@@ -38,7 +38,7 @@ The mainnet sources and local Jing sources have identical executable tokens;
 exact deployed bytes are vendored so runtime testing needs no network.
 
 The normal vault command includes an additional integration suite through the
-complete deployed **swap-router-sbtc-stx-jing-v5-5**, with explicit venue splits,
+complete deployed **swap-router-sbtc-stx-jing-v5-6**, with explicit venue splits,
 smart routing, real Jing book capacity/settlement and router balance assertions.
 The final RV suite deliberately retains an **adversarial router double** with
 the final router API: it can ignore per-leg floors and pay a sub-floor output.

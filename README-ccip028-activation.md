@@ -24,7 +24,7 @@ The test manifest compiles the book, vault and proposal as Clarity 6;
 the existing DAO, Direct Execute and treasury policies run as Clarity 2.
 
 Book SHA-256: `b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f`.
-Vault SHA-256: `ac0c305f8bfcfd9f210fb37cba6e1f4d61a26ad40ed7ca4792beca948778502e`.
+Vault SHA-256: `00f06f0c308f84c010c0cf823e09d9a1aa4a088f1d1b20d26244bf8b203bfdc1`.
 The vault's comments were refreshed (maker spread +1 bp, 0.01 sBTC chunk); code is
 unchanged from the reviewed version. The executable defaults
 and explicit activation values below are authoritative.

@@ -24,12 +24,12 @@ if out.exists():
 
 VAULT = 'ccd016-swap-vault-mia-v2'
 BOOK = 'ccd015-redemption-book-mia-stx'
-EXPECTED_VAULT_SHA = 'ac0c305f8bfcfd9f210fb37cba6e1f4d61a26ad40ed7ca4792beca948778502e'
+EXPECTED_VAULT_SHA = '00f06f0c308f84c010c0cf823e09d9a1aa4a088f1d1b20d26244bf8b203bfdc1'
 
 # Exact final dependency IDs; no prefix aliases for obsolete Jing contracts.
 replacements = [
-    ("'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4", '.v6-market'),
-    ("'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-5", '.mock-router'),
+    ("'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5", '.v6-market'),
+    ("'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6", '.mock-router'),
     ("'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.rfq-sbtc-stx-jing-v2-3", '.mock-native'),
     ("'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token", '.mock-ft'),
     ("'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2", '.mock-ft'),

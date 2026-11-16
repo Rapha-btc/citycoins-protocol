@@ -1,4 +1,4 @@
-;; RV ccd016-final: ADVERSARIAL mock of swap-router-sbtc-stx-jing-v5-5
+;; RV ccd016-final: ADVERSARIAL mock of swap-router-sbtc-stx-jing-v5-6
 ;; (overrides tests/vault/fixtures). One venue that fills `fill-bps` of the
 ;; amount at `quality-bps` of the Lazer mid, ignoring the limit price and the
 ;; per-leg mins. It honours only the overall min-stx-out (u3002), the one
