@@ -133,6 +133,32 @@ signature verify); doing it inside the vault would cost the same decoder call.
 
 **Verdict.** Valid, new, Low. Payout: TBD.
 
-## 4-5
+## 4. A partly filled offer under min-deposit cannot reprice
+
+**Finding.** A partial fill (`settle-step`) can leave an offer under
+`min-deposit` (100k MIA). `change-offer` (ccd015) checked the minimum on the
+offer's total even when the seller added nothing, so that leftover could not
+change its price (u15005); the only way out was `cancel-offer`.
+
+**Impact.** No loss: cancel refunds everything. Par only goes up, so a
+leftover is never pushed out of range; the seller just cannot lower the ask to
+fill faster. Info.
+
+**Submitter.** Cold Mast `mw4eymg09c517e848405` (right claim, wrong lines).
+
+**Fix = decision.** Check the minimum only when MIA is added:
+
+```clarity
+(asserts! (or (is-eq adding u0) (>= namount (var-get min-deposit)))
+  ERR_BELOW_MIN_DEPOSIT
+)
+```
+
+`cur` is the seller's offer in the book, `(get amount cur)` the MIA still in
+it, `namount` that plus what is added now. Repricing creates no new slot.
+
+**Evidence.** Pending sim. **Verdict.** Valid, new, Info. Payout: TBD.
+
+## 5
 
 Pending walkthrough.

@@ -216,7 +216,11 @@
         (nrec { owner: owner, amount: namount, ustx: new-ask-ustx })
         (rest (filter not-target-owner book))
       )
-      (asserts! (>= namount (var-get min-deposit)) ERR_BELOW_MIN_DEPOSIT)
+      ;; a partial fill can leave an offer under min-deposit: it may still
+      ;; reprice; the minimum applies only when MIA is added (bounty mw4761 H4)
+      (asserts! (or (is-eq adding u0) (>= namount (var-get min-deposit)))
+        ERR_BELOW_MIN_DEPOSIT
+      )
       (asserts! (<= namount MAX_PER_TRANSACTION) ERR_INVALID_OFFER)
       (asserts! (at-or-below-par? namount new-ask-ustx) ERR_ABOVE_PAR)
       (and (> adding u0)
