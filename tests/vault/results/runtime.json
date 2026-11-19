@@ -1,40 +1,60 @@
 {
   "sourceHashes": {
-    "markets-sbtc-stx-jing-v6-5": "6544268e7404da02f74f57d9f3b82204bfbd355f8f4152887a8b0b48bb9c6099",
-    "swap-router-sbtc-stx-jing-v5-6": "11f02b44a4ea41f87eaf12451dd39020fce18d0c84aec475c165fec35b2b7a7c",
-    "ccd016-swap-vault-mia-v2": "00f06f0c308f84c010c0cf823e09d9a1aa4a088f1d1b20d26244bf8b203bfdc1",
-    "ccd015-redemption-book-mia-stx": "b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f"
+    "ccd016-swap-vault-mia-v2": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "ccd015-redemption-book-mia-stx": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a"
   },
-  "checks": 349,
+  "checks": 325,
   "status": "passed",
-  "branchTotal": 121,
-  "branchHits": 121,
-  "uncoveredBranches": [],
-  "lineTotal": 485,
-  "lineHits": 463,
+  "branchTotal": 126,
+  "branchHits": 123,
+  "uncoveredBranches": [
+    {
+      "line": 409,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    },
+    {
+      "line": 639,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    },
+    {
+      "line": 664,
+      "block": 0,
+      "arm": 1,
+      "hits": "0"
+    }
+  ],
+  "lineTotal": 490,
+  "lineHits": 465,
   "zeroHitLines": [
-    407,
-    475,
-    515,
-    549,
-    584,
-    653,
-    685,
-    715,
-    749,
-    768,
-    827,
-    828,
-    834,
-    838,
+    409,
+    421,
+    489,
+    529,
+    563,
+    598,
+    639,
+    664,
+    670,
+    702,
+    732,
+    766,
+    785,
     844,
-    860,
+    845,
+    851,
+    855,
     861,
-    867,
-    874,
-    880,
-    904,
-    905
+    877,
+    878,
+    884,
+    891,
+    897,
+    921,
+    922
   ],
   "scope": "Current full vault/book source; dependency addresses and asset names rebound to declared fixtures. DAO equality and extension gates retained."
 }

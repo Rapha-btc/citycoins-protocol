@@ -13,7 +13,7 @@ const testDir = dirname(fileURLToPath(import.meta.url));
 const bookManifest = resolve(testDir, '.build/Clarinet.toml');
 
 if (process.env.RUN_CCD015_BOOK === '1') {
-  test('ccd015 redemption book against the source-pinned Clarinet manifest', async () => {
+  test('ccd015 redemption book against the source-pinned Clarinet manifest', async function () {
     const sim = await initSimnet(bookManifest, true, { trackCoverage: true });
     const accounts = sim.getAccounts();
     const admin = accounts.get('deployer');
@@ -90,7 +90,8 @@ if (process.env.RUN_CCD015_BOOK === '1') {
     ok(call('change-offer', [Cl.none(), u(oldPar / 2n)], alice));
     ok(call('change-offer', [Cl.some(u(50)), u(oldPar / 3n)], bob));
     ok(gov('set-min-deposit', [u(2000)]));
-    err(call('change-offer', [Cl.none(), u(1)], alice), 15005);
+    ok(call('change-offer', [Cl.none(), u(1)], alice));
+    err(call('change-offer', [Cl.some(u(1)), u(1)], alice), 15005);
     ok(gov('set-min-deposit', [u(10)]));
     err(call('change-offer', [Cl.none(), u(0)], bob), 15001);
     err(call('change-offer', [Cl.none(), u(1_000_000_000_000_001n)], bob), 15001);
@@ -138,6 +139,25 @@ if (process.env.RUN_CCD015_BOOK === '1') {
     ok(sim.callPublicFn(maker(0), 'cancel', [], admin));
     eq(read('get-offer-count').value, 49n);
 
+    // Recall all unspent STX without touching sellers' MIA or offer records.
+    // This also covers the new public function in this suite's coverage gate.
+    err(call('dao-recall-stx', [], alice), 15000);
+    ok(sim.callPublicFn('mock-base-dao', 'set-extension', [Cl.principal(admin), Cl.bool(true)], admin));
+    const recallBook = read('get-offer-book');
+    const mining = 'ST3NBRSFKX28FQ2ZJ1MAKX58HKHSDGNV5N7R21XCP';
+    const miningBefore = sim.getAssetsMap().get('STX').get(mining) ?? 0n;
+    ok(sim.transferSTX(12345n, `${admin}.${B}`, admin));
+    const recallBalance = sim.getAssetsMap().get('STX').get(`${admin}.${B}`);
+    const recalled = ok(call('dao-recall-stx', [], admin));
+    eq(recalled.value.payload.value.amount.value, recallBalance);
+    eq(recalled.value.payload.value.to.value, mining);
+    eq(sim.getAssetsMap().get('STX').get(mining), miningBefore + recallBalance);
+    eq(sim.getAssetsMap().get('STX').get(`${admin}.${B}`) ?? 0n, 0n);
+    assert.deepEqual(read('get-offer-book'), recallBook);
+    err(call('dao-recall-stx', [], admin), 15010);
+    // Remove just the recalled fixture budget before the existing zero-backing case.
+    ok(sim.transferSTX(recallBalance, admin, mining));
+
     // Exercise the empty-backing and zero-snapshot guards without changing the
     // production formula or its dependencies.
     const wallet8 = accounts.get('wallet_8');
@@ -175,15 +195,73 @@ if (process.env.RUN_CCD015_BOOK === '1') {
     const functionHits = Number(lcov.match(/^FNH:(\d+)$/m)?.[1] ?? 0);
     assert.equal(branchHits, branchTotal, 'every book branch has a hit');
     assert.equal(functionHits, functionTotal, 'every instrumented book function has a hit');
-    const results = resolve(testDir, 'results');
+    const results = process.env.BOOK_RESULTS_DIR || resolve(testDir, 'results');
     mkdirSync(results, { recursive: true });
     writeFileSync(resolve(results, 'ccd015-book-runtime.lcov'), lcov);
     writeFileSync(resolve(results, 'ccd015-book-runtime.json'), JSON.stringify({
-      sourceCommit: 'a9a6bd6', sourceSha256, status: 'passed',
+      sourceCommit: '2440559', sourceSha256, status: 'passed',
       publicFunctions: publicNames.length, publicFunctionsHit: publicNames.length,
       lineHits, lineTotal, branchHits, branchTotal, functionHits, functionTotal,
       uncoveredBranches: [...lcov.matchAll(/^BRDA:(\d+),\d+,\d+,(?:0|-)$/gm)].map(match => Number(match[1])),
     }, null, 2) + '\n');
+  });
+  test('mw4761 partly filled offers below 100k MIA can reprice but cannot add below the minimum', async function () {
+    // Arrange: default minimum is 100k whole MIA, with six token decimals.
+    const sim = await initSimnet(bookManifest, true);
+    const accounts = sim.getAccounts();
+    const dao = accounts.get('deployer')!;
+    const seller = accounts.get('wallet_1')!;
+    const book = 'ccd015-redemption-book-mia-stx';
+    const bookPrincipal = `${dao}.${book}`;
+    const minimum = 100_000n * 1_000_000n;
+    function call(fn: string, args: any[] = [], sender = seller) {
+      return sim.callPublicFn(book, fn, args, sender);
+    }
+    function read(fn: string, args: any[] = []) {
+      return sim.callReadOnlyFn(book, fn, args, seller).result as any;
+    }
+    function ok(receipt: any) {
+      assert.equal(receipt.result.type, 'ok', cvToString(receipt.result));
+      return receipt.result.value;
+    }
+    function mia(who: string) {
+      return (sim.callReadOnlyFn('mock-mia', 'get-balance', [Cl.principal(who)], seller).result as any).value.value;
+    }
+    function stx(who: string) { return sim.getAssetsMap().get('STX')?.get(who) ?? 0n; }
+    ok(sim.callPublicFn('mock-base-dao', 'set-extension', [Cl.principal(dao), Cl.bool(true)], dao));
+    ok(call('update-par', [], dao));
+    assert.deepEqual(read('get-info').value['min-deposit'], Cl.uint(minimum));
+    ok(call('place-offer', [Cl.uint(minimum), Cl.uint(1_000_000)]));
+    ok(sim.transferSTX(500_000n, bookPrincipal, dao));
+    ok(call('cross-book'));
+    const leftover = minimum / 2n;
+    const offer = read('get-offer', [Cl.principal(seller)]).value;
+    assert.deepEqual(offer.value.amount, Cl.uint(leftover));
+    assert.deepEqual(offer.value.ustx, Cl.uint(500_000));
+    const sellerMia = mia(seller), bookMia = mia(bookPrincipal), sellerStx = stx(seller);
+
+    // Act: reprice the actual remainder without adding a token or creating a slot.
+    ok(call('change-offer', [Cl.none(), Cl.uint(400_000)]));
+
+    // Assert: repricing works below the minimum and does not transfer funds.
+    const repriced = read('get-offer', [Cl.principal(seller)]).value;
+    assert.deepEqual(repriced.value.amount, Cl.uint(leftover));
+    assert.deepEqual(repriced.value.ustx, Cl.uint(400_000));
+    assert.deepEqual(read('get-offer-count'), Cl.uint(1));
+    assert.equal(mia(seller), sellerMia);
+    assert.equal(mia(bookPrincipal), bookMia);
+    assert.equal(stx(seller), sellerStx);
+    // Positive additions still obey the minimum, even when they raise an existing offer.
+    assert.equal(cvToString(call('change-offer', [Cl.some(Cl.uint(1_000_000)), Cl.uint(300_000)]).result), '(err u15005)');
+    assert.deepEqual(read('get-offer', [Cl.principal(seller)]).value, repriced);
+    assert.equal(mia(seller), sellerMia);
+    assert.equal(mia(bookPrincipal), bookMia);
+    ok(call('cancel-offer'));
+    assert.equal(mia(seller), sellerMia + leftover);
+    assert.equal(mia(bookPrincipal), bookMia - leftover);
+    assert.equal(stx(seller), sellerStx);
+    assert.deepEqual(read('get-offer', [Cl.principal(seller)]), Cl.none());
+    assert.deepEqual(read('get-offer-count'), Cl.uint(0));
   });
 } else {
   test.skip('set RUN_CCD015_BOOK=1 after building the source-pinned book manifest', () => {});

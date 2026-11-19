@@ -5,19 +5,22 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test:ccip028": "python3 tests/activation/build.py && vitest run --config tests/activation/vitest.config.ts",
     "test": "vitest run",
+    "sim:ccd015": "node simulations/stxer-ccd015-oracle-coverage.js",
+    "sim:ccd016": "node simulations/stxer-ccd016-v2-coverage.js",
     "test:report": "vitest run -- --coverage --costs",
     "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\"",
-    "test:ccip028": "python3 tests/activation/build.py && vitest run --config tests/activation/vitest.config.ts",
+    "rv:build": "bash tests/rv/build.sh all",
+    "rv:ccd015": "rv . ccd015-redemption-book-mia-stx invariant --runs=500",
     "rv:ccd016": "python3 tests/vault/build.py --rv && rv tests/vault/.build-rv ccd016-swap-vault-mia-v2 invariant --runs=1000",
-    "test:vault": "python3 tests/vault/build.py && node tests/vault/runtime.mjs",
-    "test:book": "python3 tests/vault/build.py && RUN_CCD015_BOOK=1 vitest run --silent --config tests/vault/vitest.book.config.ts tests/vault/ccd015-redemption-book.test.ts",
+    "test:vault": "python3 tests/vault/build-mw4761.py && node tests/vault/runtime.mjs && vitest run --config tests/vault/vitest.mw4761.config.ts",
+    "test:book": "python3 tests/vault/build-mw4761.py && RUN_CCD015_BOOK=1 vitest run --silent --config tests/vault/vitest.book.config.ts tests/vault/ccd015-redemption-book.test.ts",
     "rv:vault:build": "python3 tests/vault/build.py --rv",
     "rv:vault": "rv tests/vault/.build-rv ccd016-swap-vault-mia-v2 invariant --runs=1000",
     "rv:final:build": "python3 tests/rv/ccd016-final/build.py",
     "rv:final:invariant": "bash tests/rv/ccd016-final/run.sh invariant",
-    "rv:final:test": "bash tests/rv/ccd016-final/run.sh test",
-    "rv:ccd015": "bash tests/rv/run-book.sh"
+    "rv:final:test": "bash tests/rv/ccd016-final/run.sh test"
   },
   "author": "",
   "license": "ISC",
@@ -35,7 +38,7 @@
     "vitest-environment-clarinet": "^2.3.0"
   },
   "devDependencies": {
-    "@stacks/clarinet-sdk": "3.24.1",
+    "@stacks/clarinet-sdk": "^3.24.1",
     "@stacks/rendezvous": "^1.0.3"
   }
 }

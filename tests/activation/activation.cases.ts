@@ -164,3 +164,85 @@ test('permissionless funding, maker placement, expired-window swap, book funding
   expect(w.ft(`${w.deployer}.${VAULT}`)).toBe(0n);
   expect(w.stx(`${w.deployer}.${VAULT}`)).toBe(0n);
 });
+
+for (const disable of [false, true]) {
+  test(`mw4761 recall ${disable ? 'disables the vault first and blocks re-funding' : 'alone is undone by permissionless re-funding (control)'}`, async function () {
+    // Arrange: real base-dao/direct-execute and treasury withdrawal policies.
+    const w = await setup();
+    w.activate();
+    ok(w.call('mock-ft', 'mint', [Cl.uint(100000), w.cp('mock-treasury')]));
+    ok(w.call(VAULT, 'fund-from-treasury'));
+    const proposal = disable ? 'disable-and-recall' : 'recall-only';
+    const code = `(impl-trait .proposal-trait.proposal-trait)
+      (define-public (execute (sender principal))
+        (begin
+          (asserts! (is-eq contract-caller .base-dao) (err u1))
+          ${disable ? `(try! (contract-call? .base-dao set-extension .${VAULT} false))` : ''}
+          (try! (contract-call? .${VAULT} dao-recall-sbtc))
+          (ok true)))`;
+    expect(result(w.sim.deployContract(proposal, code, { clarityVersion: 2 }, w.deployer))).toBe('true');
+    ok(w.signal(w.approvers[0], proposal));
+    ok(w.signal(w.approvers[1], proposal));
+    expect(w.extension(VAULT)).toBe('true');
+    expect(w.ft(`${w.deployer}.${VAULT}`)).toBe(100000n);
+
+    // Act: the third distinct approver executes both actions in the same proposal.
+    expect(result(w.signal(w.approvers[2], proposal))).toBe('(ok u3)');
+
+    // Assert: recall still authenticates through tx-sender = base-dao after disable.
+    expect(w.extension(VAULT)).toBe(disable ? 'false' : 'true');
+    expect(w.ft(`${w.deployer}.${VAULT}`)).toBe(0n);
+    expect(w.ft(`${w.deployer}.mock-treasury`)).toBe(100000n);
+    expect(w.read(VAULT, 'get-clock').value['batch-start']).toEqual(Cl.none());
+    expect(w.read('mock-treasury', 'is-allowed', [w.cp('mock-ft')])).toEqual(Cl.bool(true));
+    const beforeClock = w.read(VAULT, 'get-clock');
+    const refund = w.call(VAULT, 'fund-from-treasury');
+    if (disable) {
+      expect(result(refund)).toBe('(err u2000)');
+      expect(w.ft(`${w.deployer}.mock-treasury`)).toBe(100000n);
+      expect(w.ft(`${w.deployer}.${VAULT}`)).toBe(0n);
+      expect(w.read(VAULT, 'get-clock')).toEqual(beforeClock);
+    } else {
+      expect(ok(refund).value.payload.value.opened).toEqual(Cl.bool(true));
+      expect(w.ft(`${w.deployer}.mock-treasury`)).toBe(0n);
+      expect(w.ft(`${w.deployer}.${VAULT}`)).toBe(100000n);
+    }
+  });
+}
+
+test('mw4761 book STX recall requires DAO authority and sends the whole budget to mining backing', async function () {
+  // Arrange: the activation fixture rebinds the mining treasury to BACKING[0].
+  const w = await setup();
+  w.activate();
+  const book = `${w.deployer}.${BOOK}`;
+  const miningBefore = w.stx(BACKING[0]);
+  const rewardsBefore = w.stx(`${w.deployer}.mock-treasury`);
+  ok(w.sim.transferSTX(1234567n, book, w.deployer));
+  for (const sender of [w.stranger, w.deployer, w.approvers[0]]) {
+    expect(result(w.call(BOOK, 'dao-recall-stx', [], sender))).toBe('(err u15000)');
+    expect(w.stx(book)).toBe(1234567n);
+  }
+  const source = `(impl-trait .proposal-trait.proposal-trait)
+    (define-public (execute (sender principal))
+      (begin
+        (asserts! (is-eq contract-caller .base-dao) (err u1))
+        (try! (contract-call? .${BOOK} dao-recall-stx))
+        (ok true)))`;
+  expect(result(w.sim.deployContract('recall-book-stx', source, { clarityVersion: 2 }, w.deployer))).toBe('true');
+  ok(w.signal(w.approvers[0], 'recall-book-stx'));
+  ok(w.signal(w.approvers[1], 'recall-book-stx'));
+
+  // Act.
+  expect(result(w.signal(w.approvers[2], 'recall-book-stx'))).toBe('(ok u3)');
+
+  // Assert: all STX goes to mining backing, none to rewards or an approver.
+  expect(w.stx(book)).toBe(0n);
+  expect(w.stx(BACKING[0])).toBe(miningBefore + 1234567n);
+  expect(w.stx(`${w.deployer}.mock-treasury`)).toBe(rewardsBefore);
+  // A second, independently approved proposal reaches the empty-budget guard.
+  expect(result(w.sim.deployContract('recall-empty-book', source, { clarityVersion: 2 }, w.deployer))).toBe('true');
+  ok(w.signal(w.approvers[0], 'recall-empty-book'));
+  ok(w.signal(w.approvers[1], 'recall-empty-book'));
+  expect(result(w.signal(w.approvers[2], 'recall-empty-book'))).toBe('(err u15010)');
+  expect(w.stx(BACKING[0])).toBe(miningBefore + 1234567n);
+});

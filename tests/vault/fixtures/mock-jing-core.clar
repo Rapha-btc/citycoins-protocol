@@ -6,19 +6,23 @@
 (define-public (log-deposit
     (token principal)
     (amount uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-withdraw
     (token principal)
     (amount uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-revoke (target-hash (buff 32))) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-revoke (target-hash (buff 32)))
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-cancel
     (market principal)
     (token-in principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-jing-deposit
     (msg-hash (buff 32))
@@ -37,7 +41,8 @@
     (amount uint)
     (limit-price uint)
     (out uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-deposit-x
     (depositor principal)
@@ -45,13 +50,15 @@
     (delta uint)
     (limit uint)
     (cycle uint)
-    (spread-bps (optional uint))
-    (readmitted uint)
+    ;; the resident this deposit displaced on size, if any. It is PARKED
+    ;; (funds and price kept in the market, readmittable), not refunded, so
+    ;; its equity stays: no debit here. The market logs park-x for it.
     (parked (optional principal))
     (parked-amount uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-deposit-y
     (depositor principal)
@@ -59,13 +66,15 @@
     (delta uint)
     (limit uint)
     (cycle uint)
-    (spread-bps (optional uint))
-    (readmitted uint)
+    ;; the resident this deposit displaced on size, if any. It is PARKED
+    ;; (funds and price kept in the market, readmittable), not refunded, so
+    ;; its equity stays: no debit here. The market logs park-y for it.
     (parked (optional principal))
     (parked-amount uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-refund-x
     (depositor principal)
@@ -73,7 +82,8 @@
     (cycle uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-refund-y
     (depositor principal)
@@ -81,7 +91,8 @@
     (cycle uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-withdraw-x
     (depositor principal)
@@ -91,7 +102,8 @@
     (cycle uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-withdraw-y
     (depositor principal)
@@ -101,7 +113,8 @@
     (cycle uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-set-limit-x
     (depositor principal)
@@ -146,7 +159,8 @@
     (price uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-readmit-x
     (who principal)
@@ -155,7 +169,8 @@
     (price uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-park-y
     (who principal)
@@ -164,7 +179,8 @@
     (price uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-readmit-y
     (who principal)
@@ -173,7 +189,8 @@
     (price uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-small-share-roll-x
     (depositor principal)
@@ -181,7 +198,8 @@
     (amount uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-small-share-roll-y
     (depositor principal)
@@ -189,7 +207,8 @@
     (amount uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-limit-roll-x
     (depositor principal)
@@ -199,7 +218,8 @@
     (clearing uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-limit-roll-y
     (depositor principal)
@@ -209,7 +229,8 @@
     (clearing uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-match
     (taker principal)
@@ -217,13 +238,13 @@
     (y-is-taker bool)
     (x-traded uint)
     (y-traded uint)
-    (maker-received uint)
     (price uint)
     (mid uint)
     (cycle uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-settlement
     (cycle uint)
@@ -240,7 +261,8 @@
     (x-is-binding bool)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-distribute-x-depositor
     (depositor principal)
@@ -250,7 +272,8 @@
     (x-rolled uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-distribute-y-depositor
     (depositor principal)
@@ -260,7 +283,8 @@
     (y-rolled uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-sweep-dust
     (x-unfilled uint)
@@ -273,7 +297,8 @@
     (y-roll-dust uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-rfq-open
     (rfq-id uint)
@@ -283,7 +308,8 @@
     (expiry uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-rfq-fill
     (rfq-id uint)
@@ -295,7 +321,8 @@
     (price uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-rfq-cancel
     (rfq-id uint)
@@ -303,50 +330,63 @@
     (x-in uint)
     (token-x principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-reserve-supply (amount uint)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-reserve-supply (amount uint))
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-reserve-withdraw-sbtc (amount uint)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-reserve-withdraw-sbtc (amount uint))
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-reserve-withdraw-stx (amount uint)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-reserve-withdraw-stx (amount uint))
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-reserve-open-credit-line
     (snpl principal)
     (borrower principal)
     (cap-sbtc uint)
     (interest-bps uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-reserve-set-credit-line-cap
     (snpl principal)
     (cap-sbtc uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-reserve-set-credit-line-interest
     (snpl principal)
     (interest-bps uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-reserve-close-credit-line (snpl principal)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-reserve-close-credit-line (snpl principal))
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-reserve-set-paused (paused-state bool)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-reserve-set-paused (paused-state bool))
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-reserve-set-min-sbtc-draw (amount uint)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-reserve-set-min-sbtc-draw (amount uint))
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-reserve-draw
     (snpl principal)
     (amount uint)
     (new-outstanding-sbtc uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-reserve-notify-return
     (snpl principal)
     (amount uint)
     (new-outstanding-sbtc uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-snpl-set-reserve (reserve principal)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-snpl-set-reserve (reserve principal))
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-snpl-borrow
     (loan-id uint)
@@ -355,21 +395,25 @@
     (interest-bps uint)
     (deadline uint)
     (reserve principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-snpl-swap-deposit
     (loan-id uint)
     (amount uint)
     (limit uint)
     (cycle uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
-(define-public (log-snpl-cancel-swap (loan-id uint)) (begin (asserts! true (err u0)) (ok true)))
+(define-public (log-snpl-cancel-swap (loan-id uint))
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-snpl-set-swap-limit
     (loan-id uint)
     (limit-price uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-snpl-repay
     (loan-id uint)
@@ -381,7 +425,8 @@
     (token-y-released uint)
     (reserve principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-snpl-seize
     (loan-id uint)
@@ -389,7 +434,8 @@
     (sbtc-seized uint)
     (reserve principal)
     (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
 
 (define-public (log-jing-swap
     (msg-hash (buff 32))
@@ -399,114 +445,5 @@
     (amount uint)
     (limit-price uint)
     (out uint)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-limit-y
-    (depositor principal)
-    (limit uint)
-    (spread-bps (optional uint))
-    (cycle uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-deposit-x
-    (depositor principal)
-    (amount uint)
-    (limit uint)
-    (spread-bps (optional uint))
-    (submitted-at uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-settle-refused-y
-    (depositor principal)
-    (action (string-ascii 8))
-    (reason (string-ascii 12))
-    (amount uint)
-    (price uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-refund-y
-    (depositor principal)
-    (amount uint)
-    (price uint)
-    (reason (string-ascii 12))
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-readmit-x
-    (depositor principal)
-    (amount uint)
-    (submitted-at uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-deposit-y
-    (depositor principal)
-    (amount uint)
-    (limit uint)
-    (spread-bps (optional uint))
-    (submitted-at uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-limit-x
-    (depositor principal)
-    (limit uint)
-    (spread-bps (optional uint))
-    (cycle uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-limit-y
-    (depositor principal)
-    (limit uint)
-    (spread-bps (optional uint))
-    (submitted-at uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-limit-x
-    (depositor principal)
-    (limit uint)
-    (spread-bps (optional uint))
-    (submitted-at uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-readmit-y
-    (depositor principal)
-    (amount uint)
-    (submitted-at uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-settle-refused-x
-    (depositor principal)
-    (action (string-ascii 8))
-    (reason (string-ascii 12))
-    (amount uint)
-    (price uint)
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
-
-(define-public (log-pending-refund-x
-    (depositor principal)
-    (amount uint)
-    (price uint)
-    (reason (string-ascii 12))
-    (token-x principal)
-    (token-y principal)
-  ) (begin (asserts! true (err u0)) (ok true)))
+  )
+  (begin (asserts! true (err u0)) (ok true)))
