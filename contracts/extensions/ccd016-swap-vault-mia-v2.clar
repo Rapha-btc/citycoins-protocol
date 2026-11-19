@@ -401,7 +401,7 @@
       ;; what is held (wallet + market) and at least MIN_RESTART_SATS: a real
       ;; batch never joins a window that a dust seed, or a sold-out batch's
       ;; leftover, opened earlier, and dust cannot prolong it (bounty mw4761 H2)
-      (empty (or
+      (can-open-window (or
         (is-empty)
         (is-none (var-get batch-start))
         (and (window-elapsed) (<= (+ (sbtc-balance) (market-total)) ROUTER_SLACK_SATS))
@@ -415,12 +415,12 @@
       'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token amount
       current-contract
     ))
-    (and empty (open-window))
+    (and can-open-window (open-window))
     (ok (print {
       notification: "fund-from-treasury",
       payload: {
         amount: amount,
-        opened: empty,
+        opened: can-open-window,
         batch-start: (var-get batch-start),
       },
     }))
