@@ -135,6 +135,21 @@
   )
 )
 
+;; Governance exit for the STX budget (bounty mw4761 H5): cross-book is the
+;; only other way STX leaves the book. Sends the whole balance to the MIA
+;; mining treasury, which par already counts as backing. Sellers are paid at
+;; fill time, so the book's STX is all unspent budget.
+(define-public (dao-recall-stx)
+  (let ((balance (stx-get-balance current-contract)))
+    (try! (is-dao-or-extension))
+    (asserts! (> balance u0) ERR_NO_BUDGET)
+    (try! (as-contract? ((with-stx balance))
+      (try! (stx-transfer? balance current-contract MINING_TREASURY))
+    ))
+    (ok (print { notification: "dao-recall-stx", payload: { amount: balance, to: MINING_TREASURY } }))
+  )
+)
+
 (define-public (set-min-deposit (amount uint))
   (begin
     (try! (is-dao-or-extension))
