@@ -1,0 +1,397 @@
+{
+  "name": "ccd015-ccip028-negatives",
+  "status": "passed",
+  "checks": [
+    {
+      "label": "ccd015-redemption-book-mia-stx source unchanged (sha256 pinned)",
+      "actual": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+      "expected": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+      "pass": true
+    },
+    {
+      "label": "ccd016-swap-vault-mia-v2 source unchanged (sha256 pinned)",
+      "actual": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "expected": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "pass": true
+    },
+    {
+      "label": "ccip028-activate-mia-fair-redemption source unchanged (sha256 pinned)",
+      "actual": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130",
+      "expected": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130",
+      "pass": true
+    },
+    {
+      "label": "deploy ccd015-redemption-book-mia-stx",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy ccd016-swap-vault-mia-v2",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy ccip028-activate-mia-fair-redemption",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-b-par-first",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-b-min-200k",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "Direct Execute enabled, not sunset",
+      "actual": "true",
+      "expected": "true",
+      "pass": true
+    },
+    {
+      "label": "treasury really is locked PoX STX (why L151/L153/L338/L42 are out of reach)",
+      "actual": "(tuple (mining (tuple (locked u0) (unlock-height u0) (unlocked u0))) (staking (tuple (locked u10241497066794) (unlock-height u1163750) (unlocked u0))))",
+      "expected": "(v) => { report.treasuryAccounts = v; return /\\(staking \\(tuple \\(locked u[1-9]\\d{12,}\\)/.test(v); }",
+      "pass": true
+    },
+    {
+      "label": "L15 stranger calls ccip028 execute directly -> (err u28000)",
+      "actual": "(err u28000)",
+      "expected": "(err u28000)",
+      "pass": true
+    },
+    {
+      "label": "L15 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u0) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u0) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "L15 deployer calls ccip028 execute directly -> (err u28000)",
+      "actual": "(err u28000)",
+      "expected": "(err u28000)",
+      "pass": true
+    },
+    {
+      "label": "L15 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u0) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u0) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "L15 real approver calls ccip028 execute directly -> (err u28000)",
+      "actual": "(err u28000)",
+      "expected": "(err u28000)",
+      "pass": true
+    },
+    {
+      "label": "L15 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u0) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u0) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "par still unset",
+      "actual": "u0",
+      "expected": "u0",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-b-par-first",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-b-par-first",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-b-par-first",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "par committed by the earlier proposal",
+      "actual": "u204249",
+      "expected": "(v) => uint(v) > 0n",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals ccip028-activate-mia-fair-redemption",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals ccip028-activate-mia-fair-redemption",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals ccip028-activate-mia-fair-redemption",
+      "actual": "(err u28001)",
+      "expected": "(err u28001)",
+      "pass": true
+    },
+    {
+      "label": "ccip028-activate-mia-fair-redemption reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L16 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u0) (executed none) (f1 u0) (f2 u0) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u0) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list )) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "vault still not an extension (sBTC was already allowlisted on mainnet; the snapshot shows it unchanged)",
+      "actual": "(tuple (a true) (v false))",
+      "expected": "(tuple (a true) (v false))",
+      "pass": true
+    },
+    {
+      "label": "real MIA holder funds a fresh seller with 100000 MIA",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "real MIA holder funds a fresh seller with 100000 MIA",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "F1 offers 100000 MIA at 90% of par (only offer)",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "L226 F1 reprices the only offer: re-appended (not placed by insert-step)",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "L226 book = the one repriced F1 record",
+      "actual": "(list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u174632895)))",
+      "expected": "(list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u174632895)))",
+      "pass": true
+    },
+    {
+      "label": "L223 F1 adds 1 micro-MIA it does not hold -> (err u1)",
+      "actual": "(err u1)",
+      "expected": "(err u1)",
+      "pass": true
+    },
+    {
+      "label": "L223 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u174632895)))) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u174632895)))) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "L179 F2 offers 150000 MIA holding 100000 -> (err u1)",
+      "actual": "(err u1)",
+      "expected": "(err u1)",
+      "pass": true
+    },
+    {
+      "label": "L179 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u174632895)))) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u100000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u174632895)))) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-b-min-200k",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-b-min-200k",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-b-min-200k",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "min-deposit raised to 200000 MIA",
+      "actual": "u200000000000",
+      "expected": "u200000000000",
+      "pass": true
+    },
+    {
+      "label": "H4 F1 reprices its 100000 MIA offer under the raised min (adds nothing): allowed",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "H4 book = F1 at the new ask, amount unchanged",
+      "actual": "(list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))",
+      "expected": "(list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))",
+      "pass": true
+    },
+    {
+      "label": "L219 F1 adds 1 micro-MIA, total still under the raised min -> (err u15005)",
+      "actual": "(err u15005)",
+      "expected": "(err u15005)",
+      "pass": true
+    },
+    {
+      "label": "L219 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "H5 stranger calls dao-recall-stx directly -> (err u15000)",
+      "actual": "(err u15000)",
+      "expected": "(err u15000)",
+      "pass": true
+    },
+    {
+      "label": "H5 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "H5 deployer calls dao-recall-stx directly -> (err u15000)",
+      "actual": "(err u15000)",
+      "expected": "(err u15000)",
+      "pass": true
+    },
+    {
+      "label": "H5 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "H5 seller calls dao-recall-stx directly -> (err u15000)",
+      "actual": "(err u15000)",
+      "expected": "(err u15000)",
+      "pass": true
+    },
+    {
+      "label": "H5 nothing moved",
+      "actual": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "expected": "(tuple (book-stx u0) (escrow u100000000000) (executed none) (f1 u0) (f2 u100000000000) (info (tuple (budget-ustx u0) (calculated-par (some u204249)) (min-deposit u200000000000) (offer-count u1) (par-scaled u204249) (paused false) (total-burned-mia u0) (total-spent-ustx u0))) (offers (list (tuple (amount u100000000000) (owner SP3X2J0GKRYDNB41ZQSX7WCH8PDXWCJVMQDH4A2YD) (ustx u183824100)))) (sbtc-allowed true) (vault-ext false))",
+      "pass": true
+    },
+    {
+      "label": "F1 cancels and is refunded",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "F1 holds its 100000 MIA again, book escrow empty",
+      "actual": "(tuple (escrow u0) (f1 u100000000000))",
+      "expected": "(tuple (escrow u0) (f1 u100000000000))",
+      "pass": true
+    }
+  ],
+  "arms": [
+    {
+      "arm": "L15",
+      "label": "stranger calls ccip028 execute directly",
+      "code": "(err u28000)"
+    },
+    {
+      "arm": "L15",
+      "label": "deployer calls ccip028 execute directly",
+      "code": "(err u28000)"
+    },
+    {
+      "arm": "L15",
+      "label": "real approver calls ccip028 execute directly",
+      "code": "(err u28000)"
+    },
+    {
+      "arm": "L16",
+      "label": "ccip028 through base-dao after par was set",
+      "code": "(err u28001)"
+    },
+    {
+      "arm": "L226",
+      "label": "change-offer on the only offer (else arm: push-rec)",
+      "code": "(ok true)"
+    },
+    {
+      "arm": "L223",
+      "label": "F1 adds 1 micro-MIA it does not hold",
+      "code": "(err u1)"
+    },
+    {
+      "arm": "L179",
+      "label": "F2 offers 150000 MIA holding 100000",
+      "code": "(err u1)"
+    },
+    {
+      "arm": "L219",
+      "label": "F1 adds 1 micro-MIA, total still under the raised min",
+      "code": "(err u15005)"
+    },
+    {
+      "arm": "H5",
+      "label": "stranger calls dao-recall-stx directly",
+      "code": "(err u15000)"
+    },
+    {
+      "arm": "H5",
+      "label": "deployer calls dao-recall-stx directly",
+      "code": "(err u15000)"
+    },
+    {
+      "arm": "H5",
+      "label": "seller calls dao-recall-stx directly",
+      "code": "(err u15000)"
+    }
+  ],
+  "sourceHashes": {
+    "ccd015-redemption-book-mia-stx": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+    "ccd016-swap-vault-mia-v2": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "ccip028-activate-mia-fair-redemption": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130"
+  },
+  "notReachable": [
+    {
+      "arms": "book L151, L153, L338 (then); proposal L42",
+      "why": "need an empty or dust MIA treasury; its STX (~10.2M) is locked in PoX in ccd014-pox5-staking-mia until burn 1,163,750 and get-treasury-balance counts locked STX"
+    }
+  ],
+  "fixtures": [
+    "Unsigned simulated senders; nothing is broadcast.",
+    "Two fresh seller addresses funded with 100,000 MIA each from a real MIA v2 holder.",
+    "DAO calls: test proposals signalled by three real ccd001-direct-execute approvers, executed by base-dao."
+  ],
+  "passed": 52,
+  "total": 52,
+  "simulationId": "270f530d5d5f03c41f6d61ed1c39c92e",
+  "url": "https://stxer.xyz/simulations/mainnet/270f530d5d5f03c41f6d61ed1c39c92e",
+  "forkHeight": 9518316,
+  "treasuryAccounts": "(tuple (mining (tuple (locked u0) (unlock-height u0) (unlocked u0))) (staking (tuple (locked u10241497066794) (unlock-height u1163750) (unlocked u0))))"
+}

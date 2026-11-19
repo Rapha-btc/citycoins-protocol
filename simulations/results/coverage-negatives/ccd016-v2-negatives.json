@@ -1,0 +1,900 @@
+{
+  "name": "ccd016-v2-negatives",
+  "status": "passed",
+  "checks": [
+    {
+      "label": "proposal source unchanged (sha256 pinned)",
+      "actual": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130",
+      "expected": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130",
+      "pass": true
+    },
+    {
+      "label": "deploy ccd015-redemption-book-mia-stx",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy ccd016-swap-vault-mia-v2",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy ccip028-activate-mia-fair-redemption",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-spread-51",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-recall-empty",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-trim-500",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-slippage-0",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-dia-split",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-band-1",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "real sBTC holder tops the rewards treasury up to 1000 sats",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "vault not yet an extension",
+      "actual": "false",
+      "expected": "false",
+      "pass": true
+    },
+    {
+      "label": "L400 fund-from-treasury before activation: ccd002 withdraw-ft refuses a non-extension -> (err u2000)",
+      "actual": "(err u2000)",
+      "expected": "(err u2000)",
+      "pass": true
+    },
+    {
+      "label": "L400 nothing moved",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "L261 stranger set-no-pyth-slippage-bps -> (err u16000)",
+      "actual": "(err u16000)",
+      "expected": "(err u16000)",
+      "pass": true
+    },
+    {
+      "label": "L261 nothing moved",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "L287 stranger set-maker-spread-bps -> (err u16000)",
+      "actual": "(err u16000)",
+      "expected": "(err u16000)",
+      "pass": true
+    },
+    {
+      "label": "L287 nothing moved",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "L316 stranger set-slippage-bps -> (err u16000)",
+      "actual": "(err u16000)",
+      "expected": "(err u16000)",
+      "pass": true
+    },
+    {
+      "label": "L316 nothing moved",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "L324 stranger set-max-chunk-sats -> (err u16000)",
+      "actual": "(err u16000)",
+      "expected": "(err u16000)",
+      "pass": true
+    },
+    {
+      "label": "L324 nothing moved",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "setters by a stranger changed no config",
+      "actual": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))",
+      "expected": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals ccip028-activate-mia-fair-redemption",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals ccip028-activate-mia-fair-redemption",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals ccip028-activate-mia-fair-redemption",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "vault enabled",
+      "actual": "true",
+      "expected": "true",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-spread-51",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-spread-51",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-spread-51",
+      "actual": "(err u16033)",
+      "expected": "(err u16033)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-spread-51 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L288 nothing moved",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "maker spread unchanged at u1",
+      "actual": "u1",
+      "expected": "u1",
+      "pass": true
+    },
+    {
+      "label": "vault empty",
+      "actual": "true",
+      "expected": "true",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-recall-empty",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-recall-empty",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-recall-empty",
+      "actual": "(err u16006)",
+      "expected": "(err u16006)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-recall-empty reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L353 nothing moved",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-trim-500",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-trim-500",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-trim-500",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "rewards treasury holds 500 sats",
+      "actual": "u500",
+      "expected": "u500",
+      "pass": true
+    },
+    {
+      "label": "permissionless fund-from-treasury (500 sats)",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u500) (batch-start (some u976501)) (opened true)))))",
+      "expected": "(v) => String(v).startsWith('(ok')",
+      "pass": true
+    },
+    {
+      "label": "vault 500 sats, window open",
+      "actual": "(tuple (b u500) (w true))",
+      "expected": "(tuple (b u500) (w true))",
+      "pass": true
+    },
+    {
+      "label": "L508 jing-place 500 sats: market min-token-x-deposit 1000 -> (err u1001)",
+      "actual": "(err u1001)",
+      "expected": "(err u1001)",
+      "pass": true
+    },
+    {
+      "label": "L508 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "L399 fund-from-treasury with an empty rewards treasury -> (err u16010)",
+      "actual": "(err u16010)",
+      "expected": "(err u16010)",
+      "pass": true
+    },
+    {
+      "label": "L399 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "real sBTC holder sends 100000 sats to the rewards treasury",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "fund-from-treasury 100000 (< MIN_RESTART_SATS) joins the open batch",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976501)) (opened false)))))",
+      "expected": "(v) => ok(v) && v.includes('(opened false)')",
+      "pass": true
+    },
+    {
+      "label": "vault 100500 sats, same batch clock",
+      "actual": "(tuple (b u100500) (s (some u976501)))",
+      "expected": "(tuple (b u100500) (s (some u976501)))",
+      "pass": true
+    },
+    {
+      "label": "L501 jing-place with a tampered update -> (err u2101)",
+      "actual": "(err u2101)",
+      "expected": "(err u2101)",
+      "pass": true
+    },
+    {
+      "label": "L501 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "L534 jing-refloor with a tampered update -> (err u2101)",
+      "actual": "(err u2101)",
+      "expected": "(err u2101)",
+      "pass": true
+    },
+    {
+      "label": "L534 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "L682 router-swap-split with a tampered update -> (err u2101)",
+      "actual": "(err u2101)",
+      "expected": "(err u2101)",
+      "pass": true
+    },
+    {
+      "label": "L682 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-1",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-1",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-1",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-1",
+      "actual": "(err u16034)",
+      "expected": "(err u16034)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-1 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L541 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-2",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-2",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-2",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-2",
+      "actual": "(err u16031)",
+      "expected": "(err u16031)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-2 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L694 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1142005) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "permissionless jing-place (whole balance)",
+      "actual": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100500) (floor u20724836465486)))))",
+      "expected": "(v) => String(v).startsWith('(ok')",
+      "pass": true
+    },
+    {
+      "label": "keeper settles the vault deposit",
+      "actual": "(ok u100500)",
+      "expected": "(v) => String(v).startsWith('(ok')",
+      "pass": true
+    },
+    {
+      "label": "vault wallet empty, 100500 resting",
+      "actual": "(tuple (r u100500) (w u0))",
+      "expected": "(tuple (r u100500) (w u0))",
+      "pass": true
+    },
+    {
+      "label": "window elapsed",
+      "actual": "true",
+      "expected": "true",
+      "pass": true
+    },
+    {
+      "label": "L623 router-swap with the wallet empty (all resting in Jing) -> (err u16006)",
+      "actual": "(err u16006)",
+      "expected": "(err u16006)",
+      "pass": true
+    },
+    {
+      "label": "L623 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-3",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-3",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-3",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-3",
+      "actual": "(err u16006)",
+      "expected": "(err u16006)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-3 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L573 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "real sBTC holder sends 30000 sats straight to the vault",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-4",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-4",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-4",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-4",
+      "actual": "(err u1018)",
+      "expected": "(err u1018)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-4 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L577 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-5",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-5",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-5",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-5",
+      "actual": "(err u16039)",
+      "expected": "(err u16039)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-5 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L695 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-6",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-6",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-6",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-6",
+      "actual": "(err u16006)",
+      "expected": "(err u16006)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-6 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L696 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-slippage-0",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-slippage-0",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-slippage-0",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "slippage 0 and no-Pyth slippage 0",
+      "actual": "(tuple (n u0) (s u0))",
+      "expected": "(tuple (n u0) (s u0))",
+      "pass": true
+    },
+    {
+      "label": "real sBTC holder sends 970000 sats straight to the vault",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "vault wallet = one full chunk",
+      "actual": "u1000000",
+      "expected": "u1000000",
+      "pass": true
+    },
+    {
+      "label": "deploy sim-neg-v-7",
+      "actual": "(ok true)",
+      "expected": "(v) => v === 'true' || ok(v)",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-7",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-7",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-7",
+      "actual": "(err u1020)",
+      "expected": "(err u1020)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-7 reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L702 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-dia-split",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-dia-split",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-dia-split",
+      "actual": "(err u1020)",
+      "expected": "(err u1020)",
+      "pass": true
+    },
+    {
+      "label": "sim-neg-v-dia-split reverted: not recorded as executed",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "L756 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "pass": true
+    },
+    {
+      "label": "approver 1 signals sim-neg-v-band-1",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "approver 2 signals sim-neg-v-band-1",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "approver 3 signals sim-neg-v-band-1",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "L1038 router-swap with the band at 1 bp (Lazer below DIA) -> (err u16037)",
+      "actual": "(err u16037)",
+      "expected": "(err u16037)",
+      "pass": true
+    },
+    {
+      "label": "L1038 nothing moved",
+      "actual": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976501)) (book-stx u0) (last-router-swap u0) (market-sbtc u1242505) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "pass": true
+    }
+  ],
+  "arms": [
+    {
+      "arm": "L400",
+      "label": "fund-from-treasury before activation: ccd002 withdraw-ft refuses a non-extension",
+      "code": "(err u2000)"
+    },
+    {
+      "arm": "L261",
+      "label": "stranger set-no-pyth-slippage-bps",
+      "code": "(err u16000)"
+    },
+    {
+      "arm": "L287",
+      "label": "stranger set-maker-spread-bps",
+      "code": "(err u16000)"
+    },
+    {
+      "arm": "L316",
+      "label": "stranger set-slippage-bps",
+      "code": "(err u16000)"
+    },
+    {
+      "arm": "L324",
+      "label": "stranger set-max-chunk-sats",
+      "code": "(err u16000)"
+    },
+    {
+      "arm": "L288",
+      "label": "DAO set-maker-spread-bps u51 (MAX u50)",
+      "code": "(err u16033)"
+    },
+    {
+      "arm": "L353",
+      "label": "DAO dao-recall-sbtc on an empty vault",
+      "code": "(err u16006)"
+    },
+    {
+      "arm": "L508",
+      "label": "jing-place 500 sats: market min-token-x-deposit 1000",
+      "code": "(err u1001)"
+    },
+    {
+      "arm": "L399",
+      "label": "fund-from-treasury with an empty rewards treasury",
+      "code": "(err u16010)"
+    },
+    {
+      "arm": "L501",
+      "label": "jing-place with a tampered update",
+      "code": "(err u2101)"
+    },
+    {
+      "arm": "L534",
+      "label": "jing-refloor with a tampered update",
+      "code": "(err u2101)"
+    },
+    {
+      "arm": "L682",
+      "label": "router-swap-split with a tampered update",
+      "code": "(err u2101)"
+    },
+    {
+      "arm": "L541",
+      "label": "DAO jing-refloor with nothing resting",
+      "code": "(err u16034)"
+    },
+    {
+      "arm": "L694",
+      "label": "DAO router-swap-split while the window is open",
+      "code": "(err u16031)"
+    },
+    {
+      "arm": "L623",
+      "label": "router-swap with the wallet empty (all resting in Jing)",
+      "code": "(err u16006)"
+    },
+    {
+      "arm": "L573",
+      "label": "DAO jing-take with the wallet empty",
+      "code": "(err u16006)"
+    },
+    {
+      "arm": "L577",
+      "label": "DAO jing-take while the vault rests in the market (u1018)",
+      "code": "(err u1018)"
+    },
+    {
+      "arm": "L695",
+      "label": "DAO router-swap-split above max-chunk-sats (1000000)",
+      "code": "(err u16039)"
+    },
+    {
+      "arm": "L696",
+      "label": "DAO router-swap-split above the wallet balance",
+      "code": "(err u16006)"
+    },
+    {
+      "arm": "L702",
+      "label": "DAO router-swap-split, one full chunk on XYK at the exact mid",
+      "code": "(err u1020)"
+    },
+    {
+      "arm": "L756",
+      "label": "DAO router-swap-split-dia, one full chunk on XYK at the exact DIA mid",
+      "code": "(err u1020)"
+    },
+    {
+      "arm": "L1038",
+      "label": "router-swap with the band at 1 bp (Lazer below DIA)",
+      "code": "(err u16037)"
+    }
+  ],
+  "sourceHashes": {
+    "ccd016-swap-vault-mia-v2": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "ccd015-redemption-book-mia-stx": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+    "ccip028-activate-mia-fair-redemption": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130",
+    "markets-sbtc-stx-jing-v6-5": "2e838afd3bac2e3de72f9e512912231c57c1c1f2120d41a6772ebbb4ed18b96f",
+    "swap-router-sbtc-stx-jing-v5-6": "11f02b44a4ea41f87eaf12451dd39020fce18d0c84aec475c165fec35b2b7a7c",
+    "sim-neg-v-1": "5e14e98290ca20872a767d1cde0789a87262ff3bdd82bc9111384191467f6826",
+    "sim-neg-v-2": "4ca54fe3713bc71b64573ba034f51258fa8bcf1ad2eaae65c68d3e538ead2aee",
+    "sim-neg-v-3": "a383f19f9e6365d7162a21de253f62848f3b777f88a176144e364b23e7129894",
+    "sim-neg-v-4": "373e11741d1501d72db033d6c30c05491fa22a3f37f7c74511d98574835bb51b",
+    "sim-neg-v-5": "63e53136b6c8d652314aef46804dc528ce5914ecc4805d423d59327619c41e80",
+    "sim-neg-v-6": "25947e4b351b7bc62c57967320c506904d8b0ab5d4eaae8af63d229480c8b444",
+    "sim-neg-v-7": "e57b26bb0aa3e9f8eb1bb04668398687bb254c1bb23be9e5c08f0971f8c5785d"
+  },
+  "fixtures": [
+    "Unsigned simulated senders; nothing is broadcast.",
+    "Real sBTC holder transfers into the rewards treasury and (once) straight into the vault.",
+    "DAO calls: test proposals signalled by three real ccd001-direct-execute approvers, executed by base-dao.",
+    "Bad Lazer update: the real signed update truncated by 10 bytes (oracle (err u2101)).",
+    "289 synthetic one-second burn blocks to elapse the 288-block window (as stxer-ccip028-activation.mjs)."
+  ],
+  "passed": 123,
+  "total": 123,
+  "simulationId": "5d381bf9797500974cbbe20c9a580e54",
+  "url": "https://stxer.xyz/simulations/mainnet/5d381bf9797500974cbbe20c9a580e54",
+  "forkHeight": 9517719,
+  "initialTip": {
+    "synthetic": false,
+    "stacks_height": 9517719,
+    "burn_height": 976501,
+    "coinbase_height": 262757,
+    "block_time": 1795044301,
+    "burn_block_time": 1795044301,
+    "index_block_hash": "d0992453bc05f32996ebfc87a0ba7b468665920854d8c002db8fbab4944a70af",
+    "consensus_hash": "ee50eafc137fbbdaf4f941408f4040f79511637c",
+    "burn_header_hash": "0000000000000000000060e3fb0141c1d47151fec963b29a592ae04c7c27161f",
+    "sortition_id": "e460365a69ef6c06bc145a3e5923e082e1c73d83fc53ab2858f1b9b3fe7de35d",
+    "epoch": "4.0"
+  },
+  "diaSide": {
+    "dia": "23201516720842",
+    "lazer": "23002158412273",
+    "arm": "L1038"
+  }
+}
