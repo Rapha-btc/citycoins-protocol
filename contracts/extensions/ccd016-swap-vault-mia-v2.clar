@@ -124,6 +124,11 @@
 ;; least a fund must bring to restart an OPEN window (bounty mw4761 H2)
 (define-constant MIN_RESTART_SATS u500000)
 (define-constant ERR_UPDATE_REQUIRED (err u16045))
+;; the caller's update is older than the market's rebate grace (30 s): a stale
+;; update raises the rebate the vault pays the book (bounty mw4761 H3)
+(define-constant ERR_STALE_UPDATE (err u16048))
+;; the market's taker rebate for an update at most 30 s old (TAKER_REBATE_BPS)
+(define-constant JING_BASE_REBATE_BPS u20)
 
 (define-constant PRICE_PRECISION u100000000)
 (define-constant DECIMAL_FACTOR u100)
@@ -629,6 +634,9 @@
       (mins (contract-call? JING_MARKET get-min-deposits))
     )
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
+    (asserts! (<= (contract-call? JING_MARKET get-taker-rebate-bps-for update)
+      JING_BASE_REBATE_BPS
+    ) ERR_STALE_UPDATE)
     (try! (check-amount amount))
     (try! (cooldown-tick))
     (let ((result (try! (as-contract?
