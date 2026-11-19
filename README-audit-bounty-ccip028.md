@@ -216,3 +216,6 @@ Payouts from the poster wallet SP3EKD9VTV30VBC7SVMC34K2MN7PE14KQDBPHF8VH (sBTC):
 | Titanium Coda | 2,000 | 483d04fe19fc0d1be164fcea5f43ea7f3312e7d12804c5f3124721556739ea21 |
 | Cold Mast | 2,000 | 59825ab55aeb748d93c075c7b3b8d30a8aa41f85e6784d324944d9ec1c74b4be |
 | apeir | 2,000 | 3d068e089c81aef91ded4f2cafc6ed228e7ea0bf72a750967216c1b8992d8973 |
+| Titanium Coda (winner, 2nd tx) | 5,000 | ec27efd2f854c2dded9175458df0dc28b1c2e8805979a4da31831e009ea4612f |
+
+Total: Titanium Coda 7,000, apeir 2,000, Cold Mast 2,000.
