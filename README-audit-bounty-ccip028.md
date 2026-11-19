@@ -159,6 +159,18 @@ it, `namount` that plus what is added now. Repricing creates no new slot.
 
 **Evidence.** Pending sim. **Verdict.** Valid, new, Info. Payout: TBD.
 
-## 5
+## 5. The book has no STX recall
 
-Pending walkthrough.
+**Finding.** Once the vault sends STX to the book (`fuel-fair-book`),
+`cross-book` buying MIA at or below par is the only way it leaves. If no
+seller ever offers, the STX sits in the book and the DAO cannot take it back.
+
+**Submitter.** apeir `mw47kvxjb293c87a08e8`.
+
+**Fix = decision.** New DAO-only `dao-recall-stx` in ccd015: sends the whole
+STX balance to `ccd002-treasury-mia-mining-v3`. Mining treasury, not rewards:
+par already counts it as MIA backing, and on rewards-v3 the still-enabled
+ccd013 could pay it out. Sellers are paid at fill time, so the book's STX is
+all unspent budget.
+
+**Evidence.** Pending sim. **Verdict.** Valid, new, Info. Payout: TBD.
