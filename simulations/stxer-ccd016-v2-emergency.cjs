@@ -18,7 +18,7 @@ const WHALE=process.env.SBTC_WHALE||'SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2';
 const NODE=process.env.STACKS_API_URL||'http://77.42.3.101/stacks-api',API=process.env.STXER_API_URL||'https://api.stxer.xyz';
 const nativeMode=process.argv.includes('--native');
 (async()=>{
-if(process.argv.includes('--recovery')) return (await import('./_vault-recovery-v6-4.mjs')).runRecoveryMatrix('citycoins');
+if(process.argv.includes('--recovery')) return (await import('./_vault-recovery-v6-3.mjs')).runRecoveryMatrix('citycoins');
 const tipResp=await fetch(NODE+'/extended/v1/block?limit=1',{signal:AbortSignal.timeout(20000)});
 if(!tipResp.ok)throw Error('tip '+tipResp.status);
 const tip=process.env.FORK_BLOCK?await (await fetch(NODE+'/extended/v1/block/by_height/'+process.env.FORK_BLOCK,{signal:AbortSignal.timeout(20000)})).json():(await tipResp.json()).results[0]; // FORK_BLOCK pins a rerun set to one height
@@ -107,8 +107,6 @@ else if(p.kind==='patch')value=r?.SetContractCode?.Ok!==undefined?'patch-ok':JSO
 else value=r?.Transaction?.Ok&&!r.Transaction.Ok.vm_error?cvToString(deserializeCV(r.Transaction.Ok.result)):JSON.stringify(r);
 console.log(p.label+': '+value);return {...p,value};});
 const expectedErrors={
- 'LIVE market v6-4 initialized, unpaused':'(tuple (i true) (p false))',
- 'LIVE router v5-5 targets market v6-4':DEP+'.markets-sbtc-stx-jing-v6-4',
  'tolerance above 50 percent rejected':'(err u16033)',
  'outsider cannot invoke emergency vault directly':'(err u16000)',
  'window above one week rejected':'(err u16033)',

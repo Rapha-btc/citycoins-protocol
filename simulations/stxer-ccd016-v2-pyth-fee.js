@@ -1,10 +1,3 @@
-// Runs on the LIVE Jing market v6-4 + router v5-5 at their mainnet principals
-// (deployed bytes sha256-checked; nothing Jing is redeployed or aliased). The
-// fork first empties the live book with real taker swaps and owner cancels
-// (_jing-live-v6-4.mjs); the vault and book deploy from the exact repo bytes,
-// sha256 pinned. Real signed Lazer update, fetched keylessly; synthetic burn
-// blocks use one-second intervals. The vault pegs at mid + maker-spread-bps
-// (default u1).
 // stxer-ccd016-v2-pyth-fee.js
 // SELF-VERIFYING stxer mainnet-fork harness for the ccd016-swap-vault-mia-v2
 // Pyth Lazer fee budget (pyth-fee-budget + set-pyth-fee-budget).

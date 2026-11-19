@@ -303,32 +303,6 @@
     },
     "steps": [
       {
-        "Eval": [
-          "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22",
-          "",
-          "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4",
-          "{i: (var-get initialized), p: (var-get paused)}"
-        ],
-        "Result": {
-          "Eval": {
-            "Ok": "0c00000002016903017004"
-          }
-        }
-      },
-      {
-        "Eval": [
-          "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22",
-          "",
-          "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-5",
-          "JING_MARKET"
-        ],
-        "Result": {
-          "Eval": {
-            "Ok": "06163699883a5bd5324eb8975e56bec8a9f843409b4e1a6d61726b6574732d736274632d7374782d6a696e672d76362d34"
-          }
-        }
-      },
-      {
         "ExecutionCost": {
           "read_count": 8,
           "read_length": 57,
