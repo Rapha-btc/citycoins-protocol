@@ -77,19 +77,33 @@ Best: Titanium Coda `mwaemnic62441ab15d27` (attacker seed, test, fix).
 vault holds. Alone, that lets anyone wait until the batch is almost sold and
 restart the clock with dust, forever.
 
-**Decision: code fix, `ea7621c`.** In `fund-from-treasury`, an OPEN window
-restarts when the new amount is at least what is held (wallet + market) AND
-at least `MIN_RESTART_SATS` (500k sats):
+**Second case.** The dust seed (more than 8 sats) stays until the window
+passes. The old rule keeps a passed window when more than 8 sats are left, so
+a real batch arriving later joins the passed window and can be dumped at once,
+with no rest at all.
+
+**Decision: code fix.** In `fund-from-treasury`, the window, open OR already
+passed, restarts when the new amount is at least what the vault holds (wallet
++ market) AND at least `MIN_RESTART_SATS` (500k sats). `ea7621c` covered the
+open window; dropping `(window-open)` covers the passed one:
 
 ```clarity
-(and (window-open) (>= amount MIN_RESTART_SATS)
+(and (>= amount MIN_RESTART_SATS)
   (>= amount (+ (sbtc-balance) (market-total)))
 )
 ```
 
-A real batch is always bigger than the dust and over 500k, so it always gets
-its full 2 days. Dust cannot move the clock, and prolonging it costs 500k sats
-donated to the DAO each time.
+Why it holds:
+- A normal batch (a few million sats) is over 500k and bigger than any dust
+  in the vault, so it always restarts the clock and gets its full 2 days.
+- Dust under 500k cannot move the clock.
+- With 1M sats in the vault, a restart needs at least 1M: the amount must be
+  at least what is held.
+- Restarting means donating that amount to the DAO, which then rests and
+  sells it too. Nobody gains: the only effect is the DAO's sBTC resting at
+  the mid longer.
+- The old 1-sat re-arm attack (mu0oy1) stays blocked: re-arming a real
+  leftover costs at least that leftover, and at least 500k.
 
 **Evidence.** `simulations/stxer-ccd016-window-restart.mjs` (mainnet fork):
 original vault 18/18 reproduces the bug
@@ -97,9 +111,8 @@ original vault 18/18 reproduces the bug
 fixed vault 21/21 (https://stxer.xyz/simulations/mainnet/3f9c7dc53f744f804bbbfa3d4a58a07a):
 50k and 200k do not move the clock, the 10M batch restarts it.
 
-**Open.** A real batch arriving AFTER the window passed, with the dust seed
-still above 8 sats, still joins the old window (not covered yet). Full vault
-suites not re-run on the new hash.
+**Open.** The sim above covers the open-window case only; the passed-window
+case and the full vault suites run at the end, with all fixes.
 
 **Verdict.** Valid, new, Low. Payout: TBD.
 
