@@ -13,7 +13,7 @@ const TREASURY = `${DAO}.ccd002-treasury-mia-rewards-v3`;
 const SBTC = 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token';
 const MIA = 'SP1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8Y634C7R.miamicoin-token-v2';
 const DIA = 'SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0.dia-oracle';
-const MARKET = `${DEP}.markets-sbtc-stx-jing-v6-4`;
+const MARKET = `${DEP}.markets-sbtc-stx-jing-v6-5`;
 const BOOK_NAME = 'ccd015-redemption-book-mia-stx', VAULT_NAME = 'ccd016-swap-vault-mia-v2';
 const PROPOSAL_NAME = 'ccip028-activate-mia-fair-redemption';
 const BOOK = `${DEP}.${BOOK_NAME}`, VAULT = `${DEP}.${VAULT_NAME}`, PROPOSAL = `${DEP}.${PROPOSAL_NAME}`;
@@ -76,7 +76,9 @@ async function main() {
   report.fixtures.push('Unsigned simulated senders; no real approvals or asset transfers.',
     '289 synthetic burn blocks at one second each; tests the full 288-block window, not two days of market evolution.');
   const files = [`contracts/extensions/${BOOK_NAME}.clar`, `contracts/extensions/${VAULT_NAME}.clar`, `contracts/proposals/${PROPOSAL_NAME}.clar`];
-  const expectedHashes = ['b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f', 'ac0c305f8bfcfd9f210fb37cba6e1f4d61a26ad40ed7ca4792beca948778502e'];
+  // Pinned to 2440559 (bounty mw4761 fixes); override with BOOK_SHA256 / VAULT_SHA256, or set to 'skip'.
+  const expectedHashes = [process.env.BOOK_SHA256 || '8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a',
+    process.env.VAULT_SHA256 || '9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05'].map(function pin(h) { return h === 'skip' ? null : h; });
   let builder = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(height).withSender(DEP);
   for (const [i, file] of files.entries()) {
     const source = fs.readFileSync(file, 'utf8');

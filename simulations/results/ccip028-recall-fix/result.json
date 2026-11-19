@@ -1,0 +1,805 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "label": "pinned contracts/extensions/ccd015-redemption-book-mia-stx.clar",
+      "actual": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+      "expected": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+      "pass": true
+    },
+    {
+      "label": "pinned contracts/extensions/ccd016-swap-vault-mia-v2.clar",
+      "actual": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "expected": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "pass": true
+    },
+    {
+      "label": "deploy #0",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy #1",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy #2",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy #3",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy #4",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy receipts",
+      "actual": 5,
+      "expected": 5,
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: approver signal 1",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: approver signal 2",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: approver signal 3",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: executed",
+      "actual": "(some u262764)",
+      "expected": "function recorded(v) { return v.startsWith('(some u'); }",
+      "pass": true
+    },
+    {
+      "label": "vault is an extension",
+      "actual": "true",
+      "expected": "true",
+      "pass": true
+    },
+    {
+      "label": "book is not an extension",
+      "actual": "false",
+      "expected": "false",
+      "pass": true
+    },
+    {
+      "label": "top up treasury",
+      "actual": "(ok true)",
+      "expected": "function ok(value) { return value.startsWith('(ok'); }",
+      "pass": true
+    },
+    {
+      "label": "fund-from-treasury #1",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
+      "expected": "function ok(value) { return value.startsWith('(ok'); }",
+      "pass": true
+    },
+    {
+      "label": "vault got the whole treasury",
+      "actual": "100000",
+      "expected": "100000",
+      "pass": true
+    },
+    {
+      "label": "plain recall: approver signal 1",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "plain recall: approver signal 2",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "plain recall: approver signal 3",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "plain recall: executed",
+      "actual": "(some u262764)",
+      "expected": "function recorded(v) { return v.startsWith('(some u'); }",
+      "pass": true
+    },
+    {
+      "label": "plain recall: vault 0",
+      "actual": "0",
+      "expected": "0",
+      "pass": true
+    },
+    {
+      "label": "plain recall: treasury back to F",
+      "actual": "100000",
+      "expected": "100000",
+      "pass": true
+    },
+    {
+      "label": "plain recall: clock cleared",
+      "actual": "none",
+      "expected": "none",
+      "pass": true
+    },
+    {
+      "label": "BUG: stranger fund-from-treasury right after plain recall succeeds",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
+      "expected": "function reopened(v) { return v.startsWith('(ok') && v.includes('(opened true)'); }",
+      "pass": true
+    },
+    {
+      "label": "BUG: vault holds everything again",
+      "actual": "100000",
+      "expected": "100000",
+      "pass": true
+    },
+    {
+      "label": "BUG: window re-opened",
+      "actual": "true",
+      "expected": "true",
+      "pass": true
+    },
+    {
+      "label": "fixed recall: approver signal 1",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "fixed recall: approver signal 2",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "fixed recall: approver signal 3",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "fixed recall: executed",
+      "actual": "(some u262764)",
+      "expected": "function recorded(v) { return v.startsWith('(some u'); }",
+      "pass": true
+    },
+    {
+      "label": "fixed recall: vault no longer an extension",
+      "actual": "false",
+      "expected": "false",
+      "pass": true
+    },
+    {
+      "label": "fixed recall: vault 0",
+      "actual": "0",
+      "expected": "0",
+      "pass": true
+    },
+    {
+      "label": "fixed recall: treasury back to F",
+      "actual": "100000",
+      "expected": "100000",
+      "pass": true
+    },
+    {
+      "label": "FIX: stranger fund-from-treasury after fixed recall -> (err u2000)",
+      "actual": "(err u2000)",
+      "expected": "(err u2000)",
+      "pass": true
+    },
+    {
+      "label": "FIX: treasury keeps F",
+      "actual": "100000",
+      "expected": "100000",
+      "pass": true
+    },
+    {
+      "label": "FIX: vault stays 0",
+      "actual": "0",
+      "expected": "0",
+      "pass": true
+    },
+    {
+      "label": "FIX: no window",
+      "actual": "false",
+      "expected": "false",
+      "pass": true
+    }
+  ],
+  "fixtures": [
+    "Unsigned simulated senders; nothing is broadcast."
+  ],
+  "sourceHashes": {
+    "contracts/extensions/ccd015-redemption-book-mia-stx.clar": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+    "contracts/extensions/ccd016-swap-vault-mia-v2.clar": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "contracts/proposals/ccip028-activate-mia-fair-redemption.clar": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130"
+  },
+  "receipts": [
+    {
+      "label": "CCIP-028: approver signal 1",
+      "sender": "SP7DGES13508FHRWS1FB0J3SZA326FP6QRMB6JDE",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u1)",
+      "resultHex": "070100000000000000000000000000000001",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000001",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 185,
+          "write_count": 2,
+          "read_length": 3651,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 50,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "CCIP-028: approver signal 2",
+      "sender": "SP3YYGCGX1B62CYAH4QX7PQE63YXG7RDTXD8BQHJQ",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u2)",
+      "resultHex": "070100000000000000000000000000000002",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000002",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 185,
+          "write_count": 2,
+          "read_length": 3669,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 49,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "CCIP-028: approver signal 3",
+      "sender": "SPN4Y5QPGQA8882ZXW90ADC2DHYXMSTN8VAR8C3X",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u3)",
+      "resultHex": "070100000000000000000000000000000003",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao\",\"raw_value\":\"0x0c00000002056576656e740d00000007657865637574650870726f706f73616c06163699883a5bd5324eb8975e56bec8a9f843409b4e24636369703032382d61637469766174652d6d69612d666169722d726564656d7074696f6e\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao\",\"raw_value\":\"0x0c0000000307656e61626c656403056576656e740d00000009657874656e73696f6e09657874656e73696f6e06163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632\",\"topic\":\"print\"},\"event_index\":1,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"raw_value\":\"0x0c0000000307656e61626c656403056576656e740d0000000b616c6c6f772d617373657405746f6b656e0614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d000000147365742d6d616b65722d7370726561642d627073077061796c6f61640c000000010576616c75650100000000000000000000000000000001\",\"topic\":\"print\"},\"event_index\":3,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d000000187365742d6e6f2d707974682d736c6970706167652d627073077061796c6f61640c000000010576616c756501000000000000000000000000000003e8\",\"topic\":\"print\"},\"event_index\":4,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d000000137365742d707974682d6665652d627564676574077061796c6f61640c000000010576616c75650100000000000000000000000000000000\",\"topic\":\"print\"},\"event_index\":5,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000f7365742d6d696e2d6465706f736974077061796c6f61640c000000010b6d696e2d6465706f736974010000000000000000000000174876e800\",\"topic\":\"print\"},\"event_index\":6,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000a7570646174652d706172077061796c6f61640c000000030a7061722d7363616c65640100000000000000000000000000031dd906737570706c790100000000000000000011d064c0d3c1ed0d74726561737572792d757374780100000000000000000000095088cb6d2a\",\"topic\":\"print\"},\"event_index\":7,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000a7365742d706175736564077061796c6f61640c000000010670617573656404\",\"topic\":\"print\"},\"event_index\":8,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccip028-activate-mia-fair-redemption\",\"raw_value\":\"0x0c000000040b617070726f7665642d627905162a4f16f685d484205fef120535826c7dda67554604626f6f6b06163699883a5bd5324eb8975e56bec8a9f843409b4e1e6363643031352d726564656d7074696f6e2d626f6f6b2d6d69612d737478056576656e740d00000011636369703032382d616374697661746564057661756c7406163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632\",\"topic\":\"print\"},\"event_index\":9,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000003",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 549,
+          "write_count": 17,
+          "read_length": 550446,
+          "read_count": 100,
+          "runtime": 630404
+        },
+        "costs": 195,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "CCIP-028: executed",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0a010000000000000000000000000004026c"
+          }
+        }
+      ]
+    },
+    {
+      "label": "vault is an extension",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "03"
+          }
+        }
+      ]
+    },
+    {
+      "label": "book is not an extension",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "04"
+          }
+        }
+      ]
+    },
+    {
+      "label": "treasury sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "label": "top up treasury",
+      "sender": "SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2",
+      "contract": "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
+      "functionName": "transfer",
+      "result": "(ok true)",
+      "resultHex": "0703",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"event_index\":0,\"ft_transfer_event\":{\"amount\":\"100000\",\"asset_identifier\":\"SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token\",\"recipient\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"sender\":\"SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2\"},\"txid\":\"0x722286d49555b07fb86741b147c7417bc29db3a3eb1e7cbed83498c7a8bcf2f0\",\"type\":\"ft_transfer_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "0703",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 1,
+          "write_count": 2,
+          "read_length": 4810,
+          "read_count": 5,
+          "runtime": 6950
+        },
+        "costs": 55,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "treasury sBTC before fund",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0701000000000000000000000000000186a0"
+          }
+        }
+      ]
+    },
+    {
+      "label": "fund-from-treasury #1",
+      "sender": "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2",
+      "functionName": "fund-from-treasury",
+      "result": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
+      "resultHex": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"raw_value\":\"0x0c000000050d6173736574436f6e74726163740614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e0663616c6c657206163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632056576656e740d0000000b77697468647261772d667409726563697069656e7406163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d76320673656e6465720516402da2c079e5d31d58b9cfc7286d1b1eb2f7834e\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x2680fabc1a79b08cc5f8706d19d7e7548259e4c884330013f3f046fd0dbd4e18\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"event_index\":1,\"ft_transfer_event\":{\"amount\":\"100000\",\"asset_identifier\":\"SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token\",\"recipient\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"sender\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\"},\"txid\":\"0x2680fabc1a79b08cc5f8706d19d7e7548259e4c884330013f3f046fd0dbd4e18\",\"type\":\"ft_transfer_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x2680fabc1a79b08cc5f8706d19d7e7548259e4c884330013f3f046fd0dbd4e18\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 20,
+          "write_count": 3,
+          "read_length": 464979,
+          "read_count": 45,
+          "runtime": 506014
+        },
+        "costs": 156,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "vault sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0701000000000000000000000000000186a0"
+          }
+        }
+      ]
+    },
+    {
+      "label": "plain recall: approver signal 1",
+      "sender": "SP7DGES13508FHRWS1FB0J3SZA326FP6QRMB6JDE",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u1)",
+      "resultHex": "070100000000000000000000000000000001",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000001",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 147,
+          "write_count": 2,
+          "read_length": 3613,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 46,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "plain recall: approver signal 2",
+      "sender": "SP3YYGCGX1B62CYAH4QX7PQE63YXG7RDTXD8BQHJQ",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u2)",
+      "resultHex": "070100000000000000000000000000000002",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000002",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 147,
+          "write_count": 2,
+          "read_length": 3631,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 45,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "plain recall: approver signal 3",
+      "sender": "SPN4Y5QPGQA8882ZXW90ADC2DHYXMSTN8VAR8C3X",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u3)",
+      "resultHex": "070100000000000000000000000000000003",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao\",\"raw_value\":\"0x0c00000002056576656e740d00000007657865637574650870726f706f73616c06163699883a5bd5324eb8975e56bec8a9f843409b4e11746573742d726563616c6c2d706c61696e\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0xb6ffa99b50e70502e5b17cd2a4fcafc0b4441a90d08249af60b7e619543ec91f\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"event_index\":1,\"ft_transfer_event\":{\"amount\":\"100000\",\"asset_identifier\":\"SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token\",\"recipient\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"sender\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\"},\"txid\":\"0xb6ffa99b50e70502e5b17cd2a4fcafc0b4441a90d08249af60b7e619543ec91f\",\"type\":\"ft_transfer_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000f64616f2d726563616c6c2d73627463077061796c6f61640c0000000106616d6f756e7401000000000000000000000000000186a0\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0xb6ffa99b50e70502e5b17cd2a4fcafc0b4441a90d08249af60b7e619543ec91f\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000003",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 209,
+          "write_count": 6,
+          "read_length": 462975,
+          "read_count": 55,
+          "runtime": 509688
+        },
+        "costs": 129,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "plain recall: executed",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0a010000000000000000000000000004026c"
+          }
+        }
+      ]
+    },
+    {
+      "label": "vault sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "label": "treasury sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0701000000000000000000000000000186a0"
+          }
+        }
+      ]
+    },
+    {
+      "label": "plain recall: clock cleared",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "09"
+          }
+        }
+      ]
+    },
+    {
+      "label": "BUG: stranger fund-from-treasury right after plain recall succeeds",
+      "sender": "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2",
+      "functionName": "fund-from-treasury",
+      "result": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
+      "resultHex": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"raw_value\":\"0x0c000000050d6173736574436f6e74726163740614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e0663616c6c657206163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632056576656e740d0000000b77697468647261772d667409726563697069656e7406163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d76320673656e6465720516402da2c079e5d31d58b9cfc7286d1b1eb2f7834e\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x6d3d77a139c184867956bae6fb500bb6771ac5e98624be3f75d926d46796775d\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"event_index\":1,\"ft_transfer_event\":{\"amount\":\"100000\",\"asset_identifier\":\"SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token\",\"recipient\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"sender\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\"},\"txid\":\"0x6d3d77a139c184867956bae6fb500bb6771ac5e98624be3f75d926d46796775d\",\"type\":\"ft_transfer_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x6d3d77a139c184867956bae6fb500bb6771ac5e98624be3f75d926d46796775d\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 20,
+          "write_count": 3,
+          "read_length": 464979,
+          "read_count": 45,
+          "runtime": 506014
+        },
+        "costs": 133,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "vault sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0701000000000000000000000000000186a0"
+          }
+        }
+      ]
+    },
+    {
+      "label": "BUG: window re-opened",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "03"
+          }
+        }
+      ]
+    },
+    {
+      "label": "fixed recall: approver signal 1",
+      "sender": "SP7DGES13508FHRWS1FB0J3SZA326FP6QRMB6JDE",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u1)",
+      "resultHex": "070100000000000000000000000000000001",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000001",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 147,
+          "write_count": 2,
+          "read_length": 3613,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 72,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "fixed recall: approver signal 2",
+      "sender": "SP3YYGCGX1B62CYAH4QX7PQE63YXG7RDTXD8BQHJQ",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u2)",
+      "resultHex": "070100000000000000000000000000000002",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000002",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 147,
+          "write_count": 2,
+          "read_length": 3631,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 45,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "fixed recall: approver signal 3",
+      "sender": "SPN4Y5QPGQA8882ZXW90ADC2DHYXMSTN8VAR8C3X",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u3)",
+      "resultHex": "070100000000000000000000000000000003",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao\",\"raw_value\":\"0x0c00000002056576656e740d00000007657865637574650870726f706f73616c06163699883a5bd5324eb8975e56bec8a9f843409b4e11746573742d726563616c6c2d6669786564\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x3d185d0442a981041fbd8f1bf33441a723e7eb40194ab3c800a6c837b2c3858c\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao\",\"raw_value\":\"0x0c0000000307656e61626c656404056576656e740d00000009657874656e73696f6e09657874656e73696f6e06163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632\",\"topic\":\"print\"},\"event_index\":1,\"txid\":\"0x3d185d0442a981041fbd8f1bf33441a723e7eb40194ab3c800a6c837b2c3858c\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"event_index\":2,\"ft_transfer_event\":{\"amount\":\"100000\",\"asset_identifier\":\"SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token\",\"recipient\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"sender\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\"},\"txid\":\"0x3d185d0442a981041fbd8f1bf33441a723e7eb40194ab3c800a6c837b2c3858c\",\"type\":\"ft_transfer_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000f64616f2d726563616c6c2d73627463077061796c6f61640c0000000106616d6f756e7401000000000000000000000000000186a0\",\"topic\":\"print\"},\"event_index\":3,\"txid\":\"0x3d185d0442a981041fbd8f1bf33441a723e7eb40194ab3c800a6c837b2c3858c\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000003",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 259,
+          "write_count": 7,
+          "read_length": 465849,
+          "read_count": 59,
+          "runtime": 514570
+        },
+        "costs": 131,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "fixed recall: executed",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0a010000000000000000000000000004026c"
+          }
+        }
+      ]
+    },
+    {
+      "label": "fixed recall: vault no longer an extension",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "04"
+          }
+        }
+      ]
+    },
+    {
+      "label": "vault sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "label": "treasury sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0701000000000000000000000000000186a0"
+          }
+        }
+      ]
+    },
+    {
+      "label": "FIX: stranger fund-from-treasury after fixed recall -> (err u2000)",
+      "sender": "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2",
+      "functionName": "fund-from-treasury",
+      "result": "(err u2000)",
+      "resultHex": "0801000000000000000000000000000007d0",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "0801000000000000000000000000000007d0",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 0,
+          "write_count": 0,
+          "read_length": 460112,
+          "read_count": 36,
+          "runtime": 469122
+        },
+        "costs": 107,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "treasury sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0701000000000000000000000000000186a0"
+          }
+        }
+      ]
+    },
+    {
+      "label": "vault sBTC",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "label": "FIX: no window",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "04"
+          }
+        }
+      ]
+    }
+  ],
+  "updates": [],
+  "parentHeight": 9518263,
+  "simulationId": "f74d8e34954730a89df1a0e1759e9d61",
+  "url": "https://stxer.xyz/simulations/mainnet/f74d8e34954730a89df1a0e1759e9d61"
+}

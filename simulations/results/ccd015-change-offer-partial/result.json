@@ -1,0 +1,570 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "label": "pinned contracts/extensions/ccd015-redemption-book-mia-stx.clar",
+      "actual": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+      "expected": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+      "pass": true
+    },
+    {
+      "label": "pinned contracts/extensions/ccd016-swap-vault-mia-v2.clar",
+      "actual": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "expected": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "pass": true
+    },
+    {
+      "label": "deploy #0",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy #1",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy #2",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy #3",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy receipts",
+      "actual": 4,
+      "expected": 4,
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: approver signal 1",
+      "actual": "(ok u1)",
+      "expected": "(ok u1)",
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: approver signal 2",
+      "actual": "(ok u2)",
+      "expected": "(ok u2)",
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: approver signal 3",
+      "actual": "(ok u3)",
+      "expected": "(ok u3)",
+      "pass": true
+    },
+    {
+      "label": "CCIP-028: executed",
+      "actual": "(some u262764)",
+      "expected": "function recorded(v) { return v.startsWith('(some u'); }",
+      "pass": true
+    },
+    {
+      "label": "vault is an extension",
+      "actual": "true",
+      "expected": "true",
+      "pass": true
+    },
+    {
+      "label": "book is not an extension",
+      "actual": "false",
+      "expected": "false",
+      "pass": true
+    },
+    {
+      "label": "min-deposit 100k MIA",
+      "actual": "u100000000000",
+      "expected": "u100000000000",
+      "pass": true
+    },
+    {
+      "label": "seller places 100k MIA for 100 STX",
+      "actual": "(ok true)",
+      "expected": "function ok(value) { return value.startsWith('(ok'); }",
+      "pass": true
+    },
+    {
+      "label": "real holder sends 40 STX to the book",
+      "actual": "(ok true)",
+      "expected": "function ok(value) { return value.startsWith('(ok'); }",
+      "pass": true
+    },
+    {
+      "label": "partial cross-book",
+      "actual": "(ok (tuple (acquired u40000000000) (spent u40000000)))",
+      "expected": "(ok (tuple (acquired u40000000000) (spent u40000000)))",
+      "pass": true
+    },
+    {
+      "label": "offer left under min-deposit",
+      "actual": "(some (tuple (amount u60000000000) (owner SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ) (ustx u60000000)))",
+      "expected": "function left(v) { return v.includes(`(amount u${LEFT})`) && v.includes(`(ustx u${LEFT_ASK})`); }",
+      "pass": true
+    },
+    {
+      "label": "leftover < 100k MIA",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "label": "change-offer none <lower ask> -> ok",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "book shows the lower ask",
+      "actual": "(list (tuple (amount u60000000000) (owner SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ) (ustx u50000000)))",
+      "expected": "(list (tuple (amount u60000000000) (owner SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ) (ustx u50000000)))",
+      "pass": true
+    },
+    {
+      "label": "change-offer (some 10k MIA) total < 100k -> (err u15005)",
+      "actual": "(err u15005)",
+      "expected": "(err u15005)",
+      "pass": true
+    },
+    {
+      "label": "book unchanged after the refused add",
+      "actual": "(list (tuple (amount u60000000000) (owner SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ) (ustx u50000000)))",
+      "expected": "(list (tuple (amount u60000000000) (owner SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ) (ustx u50000000)))",
+      "pass": true
+    },
+    {
+      "label": "seller MIA = start - 100k placed",
+      "actual": "1639558760105065",
+      "expected": "1639558760105065",
+      "pass": true
+    },
+    {
+      "label": "cancel-offer",
+      "actual": "(ok true)",
+      "expected": "(ok true)",
+      "pass": true
+    },
+    {
+      "label": "cancel refunds the rest",
+      "actual": "60000000000",
+      "expected": "60000000000",
+      "pass": true
+    },
+    {
+      "label": "book empty",
+      "actual": "u0",
+      "expected": "u0",
+      "pass": true
+    },
+    {
+      "label": "book holds no MIA",
+      "actual": "0",
+      "expected": "0",
+      "pass": true
+    }
+  ],
+  "fixtures": [
+    "Unsigned simulated senders; nothing is broadcast.",
+    "SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV sends 40000000 uSTX to the book."
+  ],
+  "sourceHashes": {
+    "contracts/extensions/ccd015-redemption-book-mia-stx.clar": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
+    "contracts/extensions/ccd016-swap-vault-mia-v2.clar": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "contracts/proposals/ccip028-activate-mia-fair-redemption.clar": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130"
+  },
+  "receipts": [
+    {
+      "label": "CCIP-028: approver signal 1",
+      "sender": "SP7DGES13508FHRWS1FB0J3SZA326FP6QRMB6JDE",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u1)",
+      "resultHex": "070100000000000000000000000000000001",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000001",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 185,
+          "write_count": 2,
+          "read_length": 3651,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 33,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "CCIP-028: approver signal 2",
+      "sender": "SP3YYGCGX1B62CYAH4QX7PQE63YXG7RDTXD8BQHJQ",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u2)",
+      "resultHex": "070100000000000000000000000000000002",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000002",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 185,
+          "write_count": 2,
+          "read_length": 3669,
+          "read_count": 11,
+          "runtime": 21957
+        },
+        "costs": 33,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "CCIP-028: approver signal 3",
+      "sender": "SPN4Y5QPGQA8882ZXW90ADC2DHYXMSTN8VAR8C3X",
+      "contract": "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd001-direct-execute",
+      "functionName": "direct-execute",
+      "result": "(ok u3)",
+      "resultHex": "070100000000000000000000000000000003",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao\",\"raw_value\":\"0x0c00000002056576656e740d00000007657865637574650870726f706f73616c06163699883a5bd5324eb8975e56bec8a9f843409b4e24636369703032382d61637469766174652d6d69612d666169722d726564656d7074696f6e\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.base-dao\",\"raw_value\":\"0x0c0000000307656e61626c656403056576656e740d00000009657874656e73696f6e09657874656e73696f6e06163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632\",\"topic\":\"print\"},\"event_index\":1,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"raw_value\":\"0x0c0000000307656e61626c656403056576656e740d0000000b616c6c6f772d617373657405746f6b656e0614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d000000147365742d6d616b65722d7370726561642d627073077061796c6f61640c000000010576616c75650100000000000000000000000000000001\",\"topic\":\"print\"},\"event_index\":3,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d000000187365742d6e6f2d707974682d736c6970706167652d627073077061796c6f61640c000000010576616c756501000000000000000000000000000003e8\",\"topic\":\"print\"},\"event_index\":4,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d000000137365742d707974682d6665652d627564676574077061796c6f61640c000000010576616c75650100000000000000000000000000000000\",\"topic\":\"print\"},\"event_index\":5,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000f7365742d6d696e2d6465706f736974077061796c6f61640c000000010b6d696e2d6465706f736974010000000000000000000000174876e800\",\"topic\":\"print\"},\"event_index\":6,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000a7570646174652d706172077061796c6f61640c000000030a7061722d7363616c65640100000000000000000000000000031dd906737570706c790100000000000000000011d064c0d3c1ed0d74726561737572792d757374780100000000000000000000095088cb6d2a\",\"topic\":\"print\"},\"event_index\":7,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000a7365742d706175736564077061796c6f61640c000000010670617573656404\",\"topic\":\"print\"},\"event_index\":8,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccip028-activate-mia-fair-redemption\",\"raw_value\":\"0x0c000000040b617070726f7665642d627905162a4f16f685d484205fef120535826c7dda67554604626f6f6b06163699883a5bd5324eb8975e56bec8a9f843409b4e1e6363643031352d726564656d7074696f6e2d626f6f6b2d6d69612d737478056576656e740d00000011636369703032382d616374697661746564057661756c7406163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632\",\"topic\":\"print\"},\"event_index\":9,\"txid\":\"0x9733a56b8db1331868155aa5e738dd260128555dbc74e846edc2a944c749cce3\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "070100000000000000000000000000000003",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 549,
+          "write_count": 17,
+          "read_length": 550446,
+          "read_count": 100,
+          "runtime": 630404
+        },
+        "costs": 131,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "CCIP-028: executed",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0a010000000000000000000000000004026c"
+          }
+        }
+      ]
+    },
+    {
+      "label": "vault is an extension",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "03"
+          }
+        }
+      ]
+    },
+    {
+      "label": "book is not an extension",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "04"
+          }
+        }
+      ]
+    },
+    {
+      "label": "min-deposit 100k MIA",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "010000000000000000000000174876e800"
+          }
+        }
+      ]
+    },
+    {
+      "label": "seller MIA before",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000005d342cdf2ec69"
+          }
+        }
+      ]
+    },
+    {
+      "label": "seller places 100k MIA for 100 STX",
+      "sender": "SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx",
+      "functionName": "place-offer",
+      "result": "(ok true)",
+      "resultHex": "0703",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"event_index\":0,\"ft_transfer_event\":{\"amount\":\"100000000000\",\"asset_identifier\":\"SP1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8Y634C7R.miamicoin-token-v2::miamicoin\",\"recipient\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"sender\":\"SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ\"},\"txid\":\"0xa60fb47165a8bd11c93d6eee4605132f3f8d7bbfe378423b009b6132bb7c8def\",\"type\":\"ft_transfer_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000b706c6163652d6f66666572077061796c6f61640c0000000306616d6f756e74010000000000000000000000174876e800056f776e65720516e3d94a92b80d0aabe8ef1b50de84449cd61ad63704757374780100000000000000000000000005f5e100\",\"topic\":\"print\"},\"event_index\":1,\"txid\":\"0xa60fb47165a8bd11c93d6eee4605132f3f8d7bbfe378423b009b6132bb7c8def\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "0703",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 109,
+          "write_count": 4,
+          "read_length": 32784,
+          "read_count": 15,
+          "runtime": 133781
+        },
+        "costs": 28,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "real holder sends 40 STX to the book",
+      "sender": "SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.sim-stx-send",
+      "functionName": "send",
+      "result": "(ok true)",
+      "resultHex": "0703",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"event_index\":0,\"stx_transfer_event\":{\"amount\":\"40000000\",\"memo\":\"\",\"recipient\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"sender\":\"SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV\"},\"txid\":\"0x5f7a67137d09060df462fc1e4854da2e18f6c9424187e7e453cd629478311184\",\"type\":\"stx_transfer_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "0703",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 1,
+          "write_count": 1,
+          "read_length": 90,
+          "read_count": 4,
+          "runtime": 5221
+        },
+        "costs": 29,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "partial cross-book",
+      "sender": "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx",
+      "functionName": "cross-book",
+      "result": "(ok (tuple (acquired u40000000000) (spent u40000000)))",
+      "resultHex": "070c0000000208616371756972656401000000000000000000000009502f9000057370656e740100000000000000000000000002625a00",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"event_index\":0,\"stx_transfer_event\":{\"amount\":\"40000000\",\"memo\":\"\",\"recipient\":\"SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ\",\"sender\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\"},\"txid\":\"0xcaede1a7445e9dec4d0d921665d58fd0c5b7f7ee0741bbedab26b35c156225a8\",\"type\":\"stx_transfer_event\"}",
+          "{\"committed\":true,\"event_index\":1,\"ft_burn_event\":{\"amount\":\"40000000000\",\"asset_identifier\":\"SP1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8Y634C7R.miamicoin-token-v2::miamicoin\",\"sender\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\"},\"txid\":\"0xcaede1a7445e9dec4d0d921665d58fd0c5b7f7ee0741bbedab26b35c156225a8\",\"type\":\"ft_burn_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000a63726f73732d626f6f6b077061796c6f61640c0000000408616371756972656401000000000000000000000009502f90000b6f666665722d636f756e7401000000000000000000000000000000010e72656d61696e696e672d757374780100000000000000000000000000000000057370656e740100000000000000000000000002625a00\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0xcaede1a7445e9dec4d0d921665d58fd0c5b7f7ee0741bbedab26b35c156225a8\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "070c0000000208616371756972656401000000000000000000000009502f9000057370656e740100000000000000000000000002625a00",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 123,
+          "write_count": 6,
+          "read_length": 32968,
+          "read_count": 20,
+          "runtime": 59483
+        },
+        "costs": 68,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "offer left under min-deposit",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0a0c0000000306616d6f756e740100000000000000000000000df8475800056f776e65720516e3d94a92b80d0aabe8ef1b50de84449cd61ad63704757374780100000000000000000000000003938700"
+          }
+        }
+      ]
+    },
+    {
+      "label": "change-offer none <lower ask> -> ok",
+      "sender": "SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx",
+      "functionName": "change-offer",
+      "result": "(ok true)",
+      "resultHex": "0703",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000c6368616e67652d6f66666572077061796c6f61640c0000000306616d6f756e740100000000000000000000000df8475800056f776e65720516e3d94a92b80d0aabe8ef1b50de84449cd61ad63704757374780100000000000000000000000002faf080\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x0e417e3948b44b27d8a6818198a94bc0483a82f3242eb869c6b951357553e644\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "0703",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 108,
+          "write_count": 2,
+          "read_length": 22417,
+          "read_count": 10,
+          "runtime": 123028
+        },
+        "costs": 17,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "book shows the lower ask",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0b000000010c0000000306616d6f756e740100000000000000000000000df8475800056f776e65720516e3d94a92b80d0aabe8ef1b50de84449cd61ad63704757374780100000000000000000000000002faf080"
+          }
+        }
+      ]
+    },
+    {
+      "label": "change-offer (some 10k MIA) total < 100k -> (err u15005)",
+      "sender": "SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx",
+      "functionName": "change-offer",
+      "result": "(err u15005)",
+      "resultHex": "080100000000000000000000000000003a9d",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [],
+        "post_condition_aborted": false,
+        "result": "080100000000000000000000000000003a9d",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 23,
+          "write_count": 1,
+          "read_length": 22417,
+          "read_count": 9,
+          "runtime": 95267
+        },
+        "costs": 20,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "book unchanged after the refused add",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0b000000010c0000000306616d6f756e740100000000000000000000000df8475800056f776e65720516e3d94a92b80d0aabe8ef1b50de84449cd61ad63704757374780100000000000000000000000002faf080"
+          }
+        }
+      ]
+    },
+    {
+      "label": "seller MIA before cancel",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000005d32b857c0469"
+          }
+        }
+      ]
+    },
+    {
+      "label": "cancel-offer",
+      "sender": "SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ",
+      "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx",
+      "functionName": "cancel-offer",
+      "result": "(ok true)",
+      "resultHex": "0703",
+      "vmError": null,
+      "pcAborted": false,
+      "receipt": {
+        "events": [
+          "{\"committed\":true,\"event_index\":0,\"ft_transfer_event\":{\"amount\":\"60000000000\",\"asset_identifier\":\"SP1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8Y634C7R.miamicoin-token-v2::miamicoin\",\"recipient\":\"SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ\",\"sender\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\"},\"txid\":\"0xb67ed59a5b364574396e81bfb2c9f46754b331a906d8ffa0d28d78e1796d8077\",\"type\":\"ft_transfer_event\"}",
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000000c63616e63656c2d6f66666572077061796c6f61640c00000001056f776e65720516e3d94a92b80d0aabe8ef1b50de84449cd61ad637\",\"topic\":\"print\"},\"event_index\":1,\"txid\":\"0xb67ed59a5b364574396e81bfb2c9f46754b331a906d8ffa0d28d78e1796d8077\",\"type\":\"contract_event\"}"
+        ],
+        "post_condition_aborted": false,
+        "result": "0703",
+        "stx_burned": 0,
+        "execution_cost": {
+          "write_length": 30,
+          "write_count": 4,
+          "read_length": 32853,
+          "read_count": 13,
+          "runtime": 131990
+        },
+        "costs": 47,
+        "tx_index": 0,
+        "vm_error": null
+      }
+    },
+    {
+      "label": "seller MIA after cancel",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000005d3397dc35c69"
+          }
+        }
+      ]
+    },
+    {
+      "label": "book empty",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "0100000000000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "label": "book MIA",
+      "steps": [
+        {
+          "Eval": {
+            "Ok": "070100000000000000000000000000000000"
+          }
+        }
+      ]
+    }
+  ],
+  "updates": [],
+  "parentHeight": 9518284,
+  "simulationId": "b32a585626805236092e3f2cd54cec30",
+  "url": "https://stxer.xyz/simulations/mainnet/b32a585626805236092e3f2cd54cec30",
+  "urls": [
+    "https://stxer.xyz/simulations/mainnet/b32a585626805236092e3f2cd54cec30"
+  ]
+}

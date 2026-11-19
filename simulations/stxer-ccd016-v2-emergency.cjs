@@ -1,4 +1,9 @@
 // Mainnet-fork emergency swap checks; no production transactions.
+// 2026-11-18: the vault binds the LIVE markets-sbtc-stx-jing-v6-5 +
+// swap-router-sbtc-stx-jing-v5-6, so no Jing stack is deployed; the emergency
+// path (router-swap-split-dia) never touches the Jing book (jing 0).
+// --recovery still runs the v6-3 recovery matrix (_vault-recovery-v6-3.mjs),
+// which deploys and pauses its own v6-3 market: NOT ported (see README).
 const fs=require('fs');
 const {createHash}=require('node:crypto');
 const path=require('node:path');
@@ -9,7 +14,7 @@ const DEP='SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22';
 const POOL=DEP+'.sim-emergency-dao-proxy', VAULT=DEP+'.ccd016-swap-vault-mia-v2';
 const SBTC='SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token';
 const DIA='SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0.dia-oracle';
-const WHALE='SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2'; // real sBTC holder at the tip (SM2RRFN4HXTS7EYP8MHHYKSTG118S3HKGDV8AB8M1 no longer holds 100k sats)
+const WHALE=process.env.SBTC_WHALE||'SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2'; // real sBTC holder (SM2RRF... is empty since 2026-11)
 const NODE=process.env.STACKS_API_URL||'http://77.42.3.101/stacks-api',API=process.env.STXER_API_URL||'https://api.stxer.xyz';
 const nativeMode=process.argv.includes('--native');
 (async()=>{
@@ -19,19 +24,12 @@ if(!tipResp.ok)throw Error('tip '+tipResp.status);
 const tip=process.env.FORK_BLOCK?await (await fetch(NODE+'/extended/v1/block/by_height/'+process.env.FORK_BLOCK,{signal:AbortSignal.timeout(20000)})).json():(await tipResp.json()).results[0]; // FORK_BLOCK pins a rerun set to one height
 const b=SimulationBuilder.new({stacksNodeAPI:NODE,apiEndpoint:API,skipTracing:false}).useBlockHeight(tip.height).withSender(DEP);
 const plan=[],sourceHashes={};
-// The LIVE Jing market v6-4 and router v5-5 at their mainnet principals (deployed bytes
-// checked); nothing Jing is redeployed. The emergency path allocates 0 to the book.
-const live=await import('./_jing-live-v6-4.mjs');
-Object.assign(sourceHashes,await live.liveJingHashes(NODE));
-live.exactSources(); // vault + book sha256 pinned (ac0c305f / b3526d4c)
-b.addEvalCode(live.MKT_ID,'{i: (var-get initialized), p: (var-get paused)}');plan.push({label:'LIVE market v6-4 initialized, unpaused',kind:'eval'});
-b.addEvalCode(live.ROUTER_ID,'JING_MARKET');plan.push({label:'LIVE router v5-5 targets market v6-4',kind:'eval'});
 const ev=(label,id,code)=>{b.addEvalCode(id,code);plan.push({label,kind:'eval'});};
 const call=(label,id,fn,args,sender=DEP)=>{b.addContractCall({contract_id:id,function_name:fn,function_args:args,sender});plan.push({label,kind:'tx'});};
 const DAO='SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH';
 const TREASURY=DAO+'.ccd002-treasury-mia-rewards-v3';
 for(const name of ['ccd015-redemption-book-mia-stx','ccd016-swap-vault-mia-v2']) {
- const source=fs.readFileSync(base+'/contracts/extensions/'+name+'.clar','utf8');sourceHashes[name]=createHash('sha256').update(source).digest('hex');
+ const source=fs.readFileSync(base+'/contracts/extensions/'+name+'.clar','utf8');if(name.startsWith('ccd016')&&!source.includes("'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6)"))throw Error('vault does not bind router v5-6');sourceHashes[name]=createHash('sha256').update(source).digest('hex');
  b.addContractDeploy({contract_name:name,source_code:source,clarity_version:ClarityVersion.Clarity6});plan.push({label:'deploy exact local '+name,kind:'tx'});
 }
 const proxy=`
@@ -135,7 +133,7 @@ for(const check of checks){
 for(let i=0;i<checks.length;i++)if(checks[i].label.startsWith('real ')&&checks[i].label.includes('swap')){
  const receipt=result.steps[i]?.Result?.Transaction?.Ok;
  const events=(receipt?.events||[]).map(e=>typeof e==='string'?JSON.parse(e):e);
- const event=events.find(e=>e.committed&&e.contract_event?.contract_identifier===DEP+'.swap-router-sbtc-stx-jing-v5-5');
+ const event=events.find(e=>e.committed&&e.contract_event?.contract_identifier===DEP+'.swap-router-sbtc-stx-jing-v5-6');
  const routing=event?deserializeCV(event.contract_event.raw_value).value:null;
  checks.push({label:'router reports Jing skipped and no unsold sats',kind:'event',value:routing?cvToString(deserializeCV(event.contract_event.raw_value)):'missing print',
  passed:routing?.['jing-ok']?.type==='false'&&routing?.['jing-in']?.value===0n&&routing?.['jing-out']?.value===0n&&routing?.unsold?.value===0n});

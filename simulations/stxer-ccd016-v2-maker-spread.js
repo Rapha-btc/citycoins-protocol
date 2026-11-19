@@ -1,15 +1,18 @@
 // stxer-ccd016-v2-maker-spread.js
 // stxer MAINNET-FORK proof (nothing is broadcast) for ccd016-swap-vault-mia-v2
 // maker-spread-bps (0462e6a, default u1, max u50) on the LIVE Jing stack:
-// markets-sbtc-stx-jing-v6-4 + swap-router-sbtc-stx-jing-v5-5 + the seated
-// jing-{buy,sell}-stx-* rungs, at their real principals and live state. The
-// older v2 harnesses deploy a fresh v6-3 stack and cannot run against v6-4.
+// markets-sbtc-stx-jing-v6-5 + swap-router-sbtc-stx-jing-v5-6 + the seated
+// jing-{buy,sell}-stx-20-v2 rungs, at their real principals and live state.
+// (Ported 2026-11-18 from v6-4 / v5-5: the vault now binds v6-5 / v5-6. The
+// live v6-5 book has no spread-0 rung: jing-buy-stx-20-v2 rests an sBTC ask at
+// mid + 20 bp and jing-sell-stx-20-v2 an STX bid at mid - 20 bp, so the taker
+// in B eats the vault's mid + 1 bp ask first and nothing of the rung.)
 //
 // Claims (bounty mv8wal, Cunning Nexus #2 ported to the MIA vault):
-//   A. On the live book (jing-buy-stx-0 rests an sBTC ask pegged at the mid,
-//      spread (some u0)), a stranger's jing-place goes pending and the keeper's
+//   A. On the live book (jing-buy-stx-20-v2 rests an sBTC ask pegged at
+//      mid + 20 bp), a stranger's jing-place goes pending and the keeper's
 //      settle-token-x-deposit RESTS it at mid + 1 bp: deposit-x, no refund.
-//   B. Gist condition: a taker eats buy-0 (and part of the vault at mid+1bp),
+//   B. Gist condition: a taker eats part of the vault at mid+1bp (best ask),
 //      then a real STX holder rests a bid AT the mid on Y. A refloor at the
 //      var (u1) settles; with the var set to u0 the same refloor is refused
 //      "crossing" and the order stays at (some u1). A top-up jing-place at u1
@@ -44,7 +47,8 @@ process.env.STACKS_API_URL ||= NODE;
 const DEP = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22";
 const KEEPER = DEP;
 const SBTC_WHALE = "SP2C7BCAP2NH3EYWCCVHJ6K0DMZBXDFKQ56KR7QN2";
-const STX_WHALE = "SP9BP4PN74CNR5XT7CMAMBPA0GWC9HMB69HVVV51";
+// real STX holder at the tip; the older SP9BP4PN74... is empty now
+const STX_WHALE = "SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV";
 const STRANGER = "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM";
 const DIA_UPDATER = "SP1G48FZ4Y7JY8G2Z0N51QTCYGBQ6F4J43J77BQC0";
 const DAO = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH";
@@ -53,8 +57,8 @@ const TREASURY = `${DAO}.ccd002-treasury-mia-rewards-v3`;
 const SBTC = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
 const WSTX = "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2";
 const DIA = `${DIA_UPDATER}.dia-oracle`;
-const MK = `${DEP}.markets-sbtc-stx-jing-v6-4`, ROUTER = `${DEP}.swap-router-sbtc-stx-jing-v5-5`;
-const B0 = `${DEP}.jing-buy-stx-0`;
+const MK = `${DEP}.markets-sbtc-stx-jing-v6-5`, ROUTER = `${DEP}.swap-router-sbtc-stx-jing-v5-6`;
+const B0 = `${DEP}.jing-buy-stx-20-v2`, B0_SPREAD = 20n;
 const BOOK = "ccd015-redemption-book-mia-stx", VAULT = "ccd016-swap-vault-mia-v2", PROXY = "sim-dao-proxy";
 const V = `${DEP}.${VAULT}`, PX = `${DEP}.${PROXY}`;
 const P = (s) => (s.includes(".") ? contractPrincipalCV(...s.split(".")) : standardPrincipalCV(s));
@@ -65,7 +69,7 @@ const FUND = 100_000n, TOPUP = 10_000n, HUGE = 999_999_999_999_999n;
 const strip = (f) => fs.readFileSync(f, "utf8").split("\n").filter((l) => !/^\s*;;/.test(l)).join("\n");
 const vaultFile = `contracts/extensions/${VAULT}.clar`;
 const vaultSrc = strip(vaultFile), bookSrc = strip(`contracts/extensions/${BOOK}.clar`);
-if (!vaultSrc.includes(`'${MK})`) || !vaultSrc.includes(`'${ROUTER})`)) throw new Error("vault does not bind live market v6-4 / router v5-5");
+if (!vaultSrc.includes(`'${MK})`) || !vaultSrc.includes(`'${ROUTER})`)) throw new Error("vault does not bind live market v6-5 / router v5-6");
 if (!/\(define-data-var maker-spread-bps uint u1\)/.test(vaultSrc)) throw new Error("vault has no maker-spread-bps var at u1");
 const vaultSha = createHash("sha256").update(fs.readFileSync(vaultFile)).digest("hex");
 const PROXY_SRC = `
@@ -145,7 +149,7 @@ const plan = [];
 const add = (id, label, f, want) => { b = f(b); plan.push({ id, label, want }); };
 const deploy = (name, src) => (bb) => bb.withSender(DEP).addContractDeploy({ contract_name: name, source_code: src, clarity_version: ClarityVersion.Clarity6 });
 add("S1", `deploy ${BOOK} (repo, comments stripped)`, deploy(BOOK, bookSrc), (v) => !v.includes("ERR"));
-add("S2", `deploy ${VAULT} (repo 3b04ed5, comments stripped)`, deploy(VAULT, vaultSrc), (v) => !v.includes("ERR"));
+add("S2", `deploy ${VAULT} (repo, sha ${vaultSha.slice(0, 12)}, comments stripped)`, deploy(VAULT, vaultSrc), (v) => !v.includes("ERR"));
 add("S3", `deploy ${PROXY} (passed-proposal stand-in)`, deploy(PROXY, PROXY_SRC), (v) => !v.includes("ERR"));
 add("S4", "FIXTURE patch base-dao: is-extension true for the vault + proxy", (bb) => bb.addSetContractCode({ contract_id: BASE_DAO, source_code: baseDaoPatched, clarity_version: ClarityVersion.Clarity1 }), "ok");
 sid = await b.run();
@@ -166,12 +170,13 @@ await tx("S5", "FIXTURE DIA: real updater pushes the Lazer prices", DIA_UPDATER,
 await tx("S6", "proxy allows sBTC on the treasury (idempotent)", DEP, PX, "allow-sbtc", [], ok, "(ok ...)");
 
 // ---- L: the live book on the fork ----
-await ev("L1", "live: jing-buy-stx-0 rests sBTC on X", MK, xdep(B0), (v) => /^u[1-9]/.test(v), "u > 0");
-await ev("L2", "live: its order is a peg at spread (some u0)", MK, `(get-token-x-order '${B0})`, has("(spread-bps (some u0))"));
-await ev("L3", "live: its ask at the update mid = the mid", MK, `(token-x-limit-at '${B0} u${mid})`, `u${mid}`);
+const b0Ask = (mid * (10000n + B0_SPREAD)) / 10000n;
+await ev("L1", "live: jing-buy-stx-20-v2 rests sBTC on X", MK, xdep(B0), (v) => /^u[1-9]/.test(v), "u > 0");
+await ev("L2", "live: its order is a peg at spread (some u20)", MK, `(get-token-x-order '${B0})`, has("(spread-bps (some u20))"));
+await ev("L3", "live: its ask at the update mid = mid + 20 bp", MK, `(token-x-limit-at '${B0} u${mid})`, `u${b0Ask}`);
 await ev("L4", "live: the Y list is non-empty (X deposits go pending)", MK, `(> (len (get-token-y-depositors ${cyc})) u0)`, "true");
 await ev("L5", "baseline: no live Y bid at the mid (would-take-as-x mid, mid)", MK, `(would-take-as-x u${mid} u${mid})`, "false");
-await ev("L6", "baseline: buy-0's ask at the mid makes would-take-as-y(mid, mid) true", MK, `(would-take-as-y u${mid} u${mid})`, "true");
+await ev("L6", "baseline: no live X ask at or below the mid (would-take-as-y mid, mid)", MK, `(would-take-as-y u${mid} u${mid})`, "false");
 
 // ---- C: setter auth + bounds + config ----
 await ev("C0", "get-config: maker-spread-bps u1 (default), live market + router", V, "(get-config)", has("(maker-spread-bps u1)", `(jing-market ${MK})`, `(jing-router ${ROUTER})`));
@@ -193,22 +198,22 @@ let r = await tx("A5", "keeper settle-token-x-deposit(vault, update)", KEEPER, M
 check("A6", "settle placed it: deposit-x event, no pending-refund", prints(r), (v) => v.includes('"deposit-x"') && !v.includes("pending-refund"), "deposit-x, no pending-refund-x");
 await ev("A7", "vault rests on X at spread (some u1)", MK, `{ dep: ${xdep(V)}, order: (get-token-x-order '${V}) }`, has(`(dep u${FUND})`, "(spread-bps (some u1))"));
 await ev("A8", "its ask at the mid = mid + 1 bp", MK, `(token-x-limit-at '${V} u${mid})`, `u${ask}`);
-await ev("A9", "buy-0 still at the mid, next to it", MK, `(token-x-limit-at '${B0} u${mid})`, `u${mid}`);
+await ev("A9", "buy-20-v2 still at mid + 20 bp, behind it", MK, `(token-x-limit-at '${B0} u${mid})`, `u${b0Ask}`);
 await ev("A10", "get-status: resting, nothing escrowed", V, "(get-status)", has(`(jing-resting u${FUND})`, "(jing-escrowed u0)"));
 
 // ---- B: the gist condition (a Y bid AT the mid) ----
-const d0 = U(await ev("B0", "buy-0 sats before the taker", MK, xdep(B0), (v) => /^u[1-9]/.test(v), "u > 0"));
+const d0 = U(await ev("B0", "buy-20-v2 sats before the taker", MK, xdep(B0), (v) => /^u[1-9]/.test(v), "u > 0"));
 // net = amount * 1e4 / (1e4 + 20); sats bought at price p = net * 1e10 / p.
-// Size: all of buy-0 at the mid plus ~20k sats of the vault at mid+1bp.
+// Size: ~20k sats of the vault at mid+1bp (the best ask; buy-20-v2 sits above the limit).
 const WANT_V = 20_000n;
-const net = ((d0 * mid) + (WANT_V * ask)) / 10_000_000_000n + 2n;
+const net = (WANT_V * ask) / 10_000_000_000n + 2n;
 const amount = (net * 10_020n) / 10_000n + 1n;
-r = await tx("B1", `real STX holder swaps ${amount} uSTX for sBTC, limit mid + 1 bp (eats buy-0, then the vault)`, STX_WHALE, MK, "swap",
+r = await tx("B1", `real STX holder swaps ${amount} uSTX for sBTC, limit mid + 1 bp (eats part of the vault)`, STX_WHALE, MK, "swap",
   [uintCV(amount), uintCV(ask), u1.cv, sbtcT, stringAsciiCV("sbtc-token"), wstxT, stringAsciiCV("wstx"), falseCV()], ok, "(ok ...)");
 const matches = prints(r).split(" | ").filter((e) => e.includes('"match"'));
 console.log(`         match events: ${matches.map((e) => e.slice(0, 260)).join("\n                       ")}`);
 check("B2", "the walk matched the vault at mid + 1 bp", matches.find((e) => e.includes(V)) ?? "", has(`(price u${ask})`), `match with maker ${V} at u${ask}`);
-await ev("B3", "buy-0 emptied (no X ask at or below the mid)", MK, `(would-take-as-y u${mid} u${mid})`, "false");
+await ev("B3", "no X ask at or below the mid; buy-20-v2 untouched", MK, `{ t: (would-take-as-y u${mid} u${mid}), d: ${xdep(B0)} }`, `(tuple (d u${d0}) (t false))`);
 const rest = U(await ev("B4", "vault still rests part of the batch", MK, xdep(V), (v) => U(v) > 0n && U(v) < FUND, `0 < u < ${FUND}`));
 r = await tx("B5", "real STX holder bids 300 STX pegged AT the mid (spread (some u0)) on Y", STX_WHALE, MK, "deposit-token-y", [uintCV(300_000_000), uintCV(HUGE), someCV(uintCV(0)), wstxT, stringAsciiCV("wstx")], (v) => ok(v), "(ok ...)");
 if (r.v.startsWith("(ok") && (await ev("B5a", "is the bid pending (X list non-empty)?", MK, `(is-some (get-token-y-pending-deposit '${STX_WHALE}))`)) === "true") {

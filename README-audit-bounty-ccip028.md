@@ -147,7 +147,11 @@ above the base rate (older than 30 s):
 `jing-take` are DAO-only and unchanged. The check decodes the payload (no
 signature verify); doing it inside the vault would cost the same decoder call.
 
-**Evidence.** Pending stxer sim.
+**Evidence.** `simulations/stxer-ccd016-router-stale.mjs` 26/26
+(https://stxer.xyz/simulations/mainnet/9fdd2827975975197ee3ab89dc54db42): an
+update 50 s old (market rebate u40) -> `(err u16048)`, vault balance and
+cooldown unchanged; a fresh update (rebate u20) -> ok. router-swap, 100k sats:
+runtime 5,724,737, read_count 451.
 
 **Verdict.** Valid, new, Low. Payout: TBD.
 
@@ -175,7 +179,10 @@ fill faster. Info.
 `cur` is the seller's offer in the book, `(get amount cur)` the MIA still in
 it, `namount` that plus what is added now. Repricing creates no new slot.
 
-**Evidence.** Pending sim. **Verdict.** Valid, new, Info. Payout: TBD.
+**Evidence.** `simulations/stxer-ccd015-change-offer-partial.mjs` 28/28
+(https://stxer.xyz/simulations/mainnet/b32a585626805236092e3f2cd54cec30): a
+partial cross leaves 60k MIA; reprice without adding -> ok; adding 10k (total
+70k) -> `(err u15005)`; cancel refunds exactly 60k. **Verdict.** Valid, new, Info.
 
 ## 5. The book has no STX recall
 
@@ -191,7 +198,11 @@ par already counts it as MIA backing, and on rewards-v3 the still-enabled
 ccd013 could pay it out. Sellers are paid at fill time, so the book's STX is
 all unspent budget.
 
-**Evidence.** Pending sim. **Verdict.** Valid, new, Info. Payout: TBD.
+**Evidence.** `simulations/stxer-ccd015-dao-recall-stx.mjs` 32/32
+(https://stxer.xyz/simulations/mainnet/3e1d8f1a7691434bd6c12267a80d23e7):
+stranger, deployer, seller and approver -> `(err u15000)`; 3-approver proposal
+empties 250 STX to mining-v3 (+250 exactly); empty book -> `(err u15010)`.
+**Verdict.** Valid, new, Info.
 
 ## Winner and payouts
 
@@ -220,3 +231,29 @@ Payouts from the poster wallet SP3EKD9VTV30VBC7SVMC34K2MN7PE14KQDBPHF8VH (sBTC):
 | Titanium Coda (winner, 3rd tx) | 1,000 | 13d7569e25524b1d55536d361ea437258a759d1f69c2977c9a6ea1775f8e2fc6 |
 
 Total: Titanium Coda 8,000, apeir 2,000, Cold Mast 2,000.
+
+## Final verification (all fixes, branch feat/ccd015-redemption-book)
+
+New sha256: ccd015 `8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a`,
+ccd016 `9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05`,
+ccip028 unchanged `8826bc5d...`.
+
+| Sim (mainnet fork) | Checks |
+|---|---|
+| #1 `stxer-ccip028-recall-fix.mjs` (https://stxer.xyz/simulations/mainnet/f74d8e34954730a89df1a0e1759e9d61) | 38/38 |
+| #2 `stxer-ccd016-window-restart.mjs`: open window, passed window, re-arm guard, 1M vault (4 forks) | 96/96 |
+| #3 `stxer-ccd016-router-stale.mjs` | 26/26 |
+| #4 `stxer-ccd015-change-offer-partial.mjs` | 28/28 |
+| #5 `stxer-ccd015-dao-recall-stx.mjs` | 32/32 |
+| Full activation cycle `stxer-ccip028-activation.mjs` (https://stxer.xyz/simulations/mainnet/c4da0424abed2f6f4a25d9472f1b53a8) | 47/47 |
+| ccd016 v2 sims ported to live v6-5 / router v5-6: coverage 112, happy-path 55, parked 173, clock-keyless 95, fixes 93, pyth-fee 65, emergency DIA 38, native 41, maker-spread 55 | all green |
+| `stxer-ccd016-v2-negatives.mjs` 123/123, `stxer-ccd015-ccip028-negatives.mjs` 52/52 | green |
+
+#2 forks: open window (500-sat seed; 50k and 200k do not move the clock; 10M
+restarts it), passed window (seed still there; 10M restarts with a fresh
+batch-start), re-arm guard (100k left after the window passed: 400k and 1 sat
+do not restart, 600k does), 1M vault (600k does not restart).
+
+Not covered: `stxer-ccd016-v2-emergency.cjs --recovery` (needs the core-v6 /
+ladder multisig owner); the v3 rung vault and old oracle-book sims are
+obsolete on this branch. Clarinet suites are updated in a separate change.
