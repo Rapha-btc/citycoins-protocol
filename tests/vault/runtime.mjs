@@ -125,7 +125,7 @@ ok(gov('jing-take',[u(10000),update]));eq(ft(p(V)),990001n);ok(call('v6-market',
 // to fill this 1-BTC slice, so the vault rejects the unsold result below its floor.
 ok(gov('set-max-chunk-sats',[u(100000000)]));fund(100000001);err(vault('router-swap',[update]),16047);
 ok(gov('dao-recall-sbtc'));ok(gov('set-max-chunk-sats',[u(1000000)]));
-const output=dir+'results/';mkdirSync(output,{recursive:true});const report=sim.collectReport(false,'');
+const output=process.env.VAULT_RESULTS_DIR ? process.env.VAULT_RESULTS_DIR.replace(/\/$/,'')+'/' : dir+'results/';mkdirSync(output,{recursive:true});const report=sim.collectReport(false,'');
 const record=report.coverage.split('end_of_record').find(r=>r.includes('/'+V+'.clar'));assert.ok(record);
 const lcov=record.replace(/^SF:.*$/m,'SF:contracts/extensions/'+V+'.clar')+'end_of_record\n';writeFileSync(output+'runtime.lcov',lcov);
 const branches=[...lcov.matchAll(/^BRDA:(\d+),(\d+),(\d+),([^\n]+)$/gm)].map(m=>({line:+m[1],block:+m[2],arm:+m[3],hits:m[4]}));

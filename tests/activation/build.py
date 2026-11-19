@@ -12,7 +12,7 @@ import sys
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 OUT = HERE / '.build'
-subprocess.run([sys.executable, str(ROOT / 'tests/vault/build.py'), '--output', str(OUT)], check=True)
+subprocess.run([sys.executable, str(ROOT / 'tests/vault/build-mw4761.py'), '--output', str(OUT)], check=True)
 
 def write(name, source):
     (OUT / 'contracts' / (name + '.clar')).write_text(source)
