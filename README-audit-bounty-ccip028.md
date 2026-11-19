@@ -192,3 +192,27 @@ ccd013 could pay it out. Sellers are paid at fill time, so the book's STX is
 all unspent budget.
 
 **Evidence.** Pending sim. **Verdict.** Valid, new, Info. Payout: TBD.
+
+## Winner and payouts
+
+**Winner: Titanium Coda (`mwaemnic62441ab15d27`, SP2J2CG070HCGYZ665T8KSXTS5XFTZB02QF3057FT).**
+#2 is the most critical finding: the attack removes the resting period
+entirely, so the DAO's whole reward batch can be dumped at the floor (mid -1%)
+with no time at the mid, every batch, for a few sats. It needed a real code
+fix. Titanium Coda's report is the strongest version: an attacker seed that
+works from the very first batch, a Clarinet test with a control, and a tested
+fix (we added the 500k minimum and the passed-window case on top).
+#1 (apeir) loses nothing: the DAO's stop just does not stick, and it is fixed
+by procedure, no code. #3 and #5 (apeir) are Low/Info. #4 (Cold Mast) is a
+detail: the seller can always cancel.
+
+The aibtc board shows apeir (`mw47kvxjb293c87a08e8`) as accepted: it was
+picked first, and the board does not allow changing the winner after that.
+
+Payouts from the poster wallet SP3EKD9VTV30VBC7SVMC34K2MN7PE14KQDBPHF8VH (sBTC):
+
+| To | Sats | Tx |
+|---|---:|---|
+| Titanium Coda | 2,000 | 483d04fe19fc0d1be164fcea5f43ea7f3312e7d12804c5f3124721556739ea21 |
+| Cold Mast | 2,000 | 59825ab55aeb748d93c075c7b3b8d30a8aa41f85e6784d324944d9ec1c74b4be |
+| apeir | 2,000 | 3d068e089c81aef91ded4f2cafc6ed228e7ea0bf72a750967216c1b8992d8973 |
