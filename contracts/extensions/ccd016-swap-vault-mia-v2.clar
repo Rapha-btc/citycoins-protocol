@@ -121,6 +121,8 @@
 ;; the router lets each leg land up to ROUND_SLACK (2) sats under the limit;
 ;; four legs at most
 (define-constant ROUTER_SLACK_SATS u8)
+;; least a fund must bring to restart an OPEN window (bounty mw4761 H2)
+(define-constant MIN_RESTART_SATS u500000)
 (define-constant ERR_UPDATE_REQUIRED (err u16045))
 
 (define-constant PRICE_PRECISION u100000000)
@@ -389,11 +391,18 @@
       ;; window elapsed and what is left (wallet + market) is unsellable dust
       ;; (at most ROUTER_SLACK_SATS, under router-swap's u16047 limit). A
       ;; larger leftover keeps the elapsed window, so a 1-sat fund cannot
-      ;; re-arm the clock and block the exits forever
+      ;; re-arm the clock and block the exits forever.
+      ;; An OPEN window restarts when the new amount is at least what is held
+      ;; (wallet + market) and at least MIN_RESTART_SATS: a real batch never
+      ;; joins a window that a dust seed, or a sold-out batch's leftover,
+      ;; opened earlier, and dust cannot prolong the window (bounty mw4761 H2)
       (empty (or
         (is-empty)
         (is-none (var-get batch-start))
         (and (window-elapsed) (<= (+ (sbtc-balance) (market-total)) ROUTER_SLACK_SATS))
+        (and (window-open) (>= amount MIN_RESTART_SATS)
+          (>= amount (+ (sbtc-balance) (market-total)))
+        )
       ))
     )
     (asserts! (> amount u0) ERR_NO_BUDGET)
