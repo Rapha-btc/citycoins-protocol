@@ -111,6 +111,11 @@ original vault 18/18 reproduces the bug
 fixed vault 21/21 (https://stxer.xyz/simulations/mainnet/3f9c7dc53f744f804bbbfa3d4a58a07a):
 50k and 200k do not move the clock, the 10M batch restarts it.
 
+**Rename, `e008779`.** The flag in `fund-from-treasury` that decides whether
+a new window opens was called `empty`; it now also covers restarts, so it is
+`can-open-window` (`(and can-open-window (open-window))`). The printed field
+stays `opened`.
+
 **Open.** The sim above covers the open-window case only; the passed-window
 case and the full vault suites run at the end, with all fixes.
 
