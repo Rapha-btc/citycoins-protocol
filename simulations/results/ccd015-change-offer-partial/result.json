@@ -9,8 +9,14 @@
     },
     {
       "label": "pinned contracts/extensions/ccd016-swap-vault-mia-v2.clar",
-      "actual": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
-      "expected": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "actual": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
+      "expected": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
+      "pass": true
+    },
+    {
+      "label": "vault binds router v6",
+      "actual": true,
+      "expected": true,
       "pass": true
     },
     {
@@ -38,9 +44,15 @@
       "pass": true
     },
     {
-      "label": "deploy receipts",
-      "actual": 4,
-      "expected": 4,
+      "label": "deploy #4",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy receipts (router v6 + book + vault + ccip028 + extra)",
+      "actual": 5,
+      "expected": 5,
       "pass": true
     },
     {
@@ -63,7 +75,7 @@
     },
     {
       "label": "CCIP-028: executed",
-      "actual": "(some u262764)",
+      "actual": "(some u262876)",
       "expected": "function recorded(v) { return v.startsWith('(some u'); }",
       "pass": true
     },
@@ -172,11 +184,13 @@
   ],
   "fixtures": [
     "Unsigned simulated senders; nothing is broadcast.",
+    "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6 deployed on the fork from jing repo bytes (sha 8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84); not live on mainnet.",
     "SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV sends 40000000 uSTX to the book."
   ],
   "sourceHashes": {
+    "/home/raphastacks/projects/jing-contracts-v3/contracts/sbtc-stx/swap-router-sbtc-stx-jing-v6.clar": "8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84",
     "contracts/extensions/ccd015-redemption-book-mia-stx.clar": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
-    "contracts/extensions/ccd016-swap-vault-mia-v2.clar": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "contracts/extensions/ccd016-swap-vault-mia-v2.clar": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
     "contracts/proposals/ccip028-activate-mia-fair-redemption.clar": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130"
   },
   "receipts": [
@@ -201,7 +215,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 33,
+        "costs": 6,
         "tx_index": 0,
         "vm_error": null
       }
@@ -227,7 +241,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 33,
+        "costs": 9,
         "tx_index": 0,
         "vm_error": null
       }
@@ -260,11 +274,11 @@
         "execution_cost": {
           "write_length": 549,
           "write_count": 17,
-          "read_length": 550446,
+          "read_length": 557835,
           "read_count": 100,
-          "runtime": 630404
+          "runtime": 637793
         },
-        "costs": 131,
+        "costs": 39,
         "tx_index": 0,
         "vm_error": null
       }
@@ -274,7 +288,7 @@
       "steps": [
         {
           "Eval": {
-            "Ok": "0a010000000000000000000000000004026c"
+            "Ok": "0a01000000000000000000000000000402dc"
           }
         }
       ]
@@ -343,7 +357,7 @@
           "read_count": 15,
           "runtime": 133781
         },
-        "costs": 28,
+        "costs": 9,
         "tx_index": 0,
         "vm_error": null
       }
@@ -371,7 +385,7 @@
           "read_count": 4,
           "runtime": 5221
         },
-        "costs": 29,
+        "costs": 5,
         "tx_index": 0,
         "vm_error": null
       }
@@ -401,7 +415,7 @@
           "read_count": 20,
           "runtime": 59483
         },
-        "costs": 68,
+        "costs": 13,
         "tx_index": 0,
         "vm_error": null
       }
@@ -439,7 +453,7 @@
           "read_count": 10,
           "runtime": 123028
         },
-        "costs": 17,
+        "costs": 4,
         "tx_index": 0,
         "vm_error": null
       }
@@ -475,7 +489,7 @@
           "read_count": 9,
           "runtime": 95267
         },
-        "costs": 20,
+        "costs": 4,
         "tx_index": 0,
         "vm_error": null
       }
@@ -524,7 +538,7 @@
           "read_count": 13,
           "runtime": 131990
         },
-        "costs": 47,
+        "costs": 8,
         "tx_index": 0,
         "vm_error": null
       }
@@ -561,10 +575,10 @@
     }
   ],
   "updates": [],
-  "parentHeight": 9518284,
-  "simulationId": "b32a585626805236092e3f2cd54cec30",
-  "url": "https://stxer.xyz/simulations/mainnet/b32a585626805236092e3f2cd54cec30",
+  "parentHeight": 9525311,
+  "simulationId": "82b58be98ad7b1282521ef57c6e47c0d",
+  "url": "https://stxer.xyz/simulations/mainnet/82b58be98ad7b1282521ef57c6e47c0d",
   "urls": [
-    "https://stxer.xyz/simulations/mainnet/b32a585626805236092e3f2cd54cec30"
+    "https://stxer.xyz/simulations/mainnet/82b58be98ad7b1282521ef57c6e47c0d"
   ]
 }

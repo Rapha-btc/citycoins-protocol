@@ -9,8 +9,14 @@
     },
     {
       "label": "pinned contracts/extensions/ccd016-swap-vault-mia-v2.clar",
-      "actual": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
-      "expected": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+      "actual": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
+      "expected": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
+      "pass": true
+    },
+    {
+      "label": "vault binds router v6",
+      "actual": true,
+      "expected": true,
       "pass": true
     },
     {
@@ -44,9 +50,15 @@
       "pass": true
     },
     {
-      "label": "deploy receipts",
-      "actual": 5,
-      "expected": 5,
+      "label": "deploy #5",
+      "actual": "(ok true)",
+      "expected": "function deployed(v) { return v === 'true' || v === '(ok true)'; }",
+      "pass": true
+    },
+    {
+      "label": "deploy receipts (router v6 + book + vault + ccip028 + extra)",
+      "actual": 6,
+      "expected": 6,
       "pass": true
     },
     {
@@ -69,7 +81,7 @@
     },
     {
       "label": "CCIP-028: executed",
-      "actual": "(some u262764)",
+      "actual": "(some u262876)",
       "expected": "function recorded(v) { return v.startsWith('(some u'); }",
       "pass": true
     },
@@ -93,7 +105,7 @@
     },
     {
       "label": "fund-from-treasury #1",
-      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976672)) (opened true)))))",
       "expected": "function ok(value) { return value.startsWith('(ok'); }",
       "pass": true
     },
@@ -123,7 +135,7 @@
     },
     {
       "label": "plain recall: executed",
-      "actual": "(some u262764)",
+      "actual": "(some u262876)",
       "expected": "function recorded(v) { return v.startsWith('(some u'); }",
       "pass": true
     },
@@ -147,7 +159,7 @@
     },
     {
       "label": "BUG: stranger fund-from-treasury right after plain recall succeeds",
-      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976672)) (opened true)))))",
       "expected": "function reopened(v) { return v.startsWith('(ok') && v.includes('(opened true)'); }",
       "pass": true
     },
@@ -183,7 +195,7 @@
     },
     {
       "label": "fixed recall: executed",
-      "actual": "(some u262764)",
+      "actual": "(some u262876)",
       "expected": "function recorded(v) { return v.startsWith('(some u'); }",
       "pass": true
     },
@@ -231,11 +243,13 @@
     }
   ],
   "fixtures": [
-    "Unsigned simulated senders; nothing is broadcast."
+    "Unsigned simulated senders; nothing is broadcast.",
+    "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6 deployed on the fork from jing repo bytes (sha 8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84); not live on mainnet."
   ],
   "sourceHashes": {
+    "/home/raphastacks/projects/jing-contracts-v3/contracts/sbtc-stx/swap-router-sbtc-stx-jing-v6.clar": "8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84",
     "contracts/extensions/ccd015-redemption-book-mia-stx.clar": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
-    "contracts/extensions/ccd016-swap-vault-mia-v2.clar": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "contracts/extensions/ccd016-swap-vault-mia-v2.clar": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
     "contracts/proposals/ccip028-activate-mia-fair-redemption.clar": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130"
   },
   "receipts": [
@@ -260,7 +274,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 50,
+        "costs": 5,
         "tx_index": 0,
         "vm_error": null
       }
@@ -286,7 +300,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 49,
+        "costs": 9,
         "tx_index": 0,
         "vm_error": null
       }
@@ -319,11 +333,11 @@
         "execution_cost": {
           "write_length": 549,
           "write_count": 17,
-          "read_length": 550446,
+          "read_length": 557835,
           "read_count": 100,
-          "runtime": 630404
+          "runtime": 637793
         },
-        "costs": 195,
+        "costs": 33,
         "tx_index": 0,
         "vm_error": null
       }
@@ -333,7 +347,7 @@
       "steps": [
         {
           "Eval": {
-            "Ok": "0a010000000000000000000000000004026c"
+            "Ok": "0a01000000000000000000000000000402dc"
           }
         }
       ]
@@ -391,7 +405,7 @@
           "read_count": 5,
           "runtime": 6950
         },
-        "costs": 55,
+        "costs": 8,
         "tx_index": 0,
         "vm_error": null
       }
@@ -411,27 +425,27 @@
       "sender": "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM",
       "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2",
       "functionName": "fund-from-treasury",
-      "result": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
-      "resultHex": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+      "result": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976672)) (opened true)))))",
+      "resultHex": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee720066f70656e656403",
       "vmError": null,
       "pcAborted": false,
       "receipt": {
         "events": [
           "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"raw_value\":\"0x0c000000050d6173736574436f6e74726163740614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e0663616c6c657206163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632056576656e740d0000000b77697468647261772d667409726563697069656e7406163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d76320673656e6465720516402da2c079e5d31d58b9cfc7286d1b1eb2f7834e\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x2680fabc1a79b08cc5f8706d19d7e7548259e4c884330013f3f046fd0dbd4e18\",\"type\":\"contract_event\"}",
           "{\"committed\":true,\"event_index\":1,\"ft_transfer_event\":{\"amount\":\"100000\",\"asset_identifier\":\"SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token\",\"recipient\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"sender\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\"},\"txid\":\"0x2680fabc1a79b08cc5f8706d19d7e7548259e4c884330013f3f046fd0dbd4e18\",\"type\":\"ft_transfer_event\"}",
-          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x2680fabc1a79b08cc5f8706d19d7e7548259e4c884330013f3f046fd0dbd4e18\",\"type\":\"contract_event\"}"
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee720066f70656e656403\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x2680fabc1a79b08cc5f8706d19d7e7548259e4c884330013f3f046fd0dbd4e18\",\"type\":\"contract_event\"}"
         ],
         "post_condition_aborted": false,
-        "result": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+        "result": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee720066f70656e656403",
         "stx_burned": 0,
         "execution_cost": {
           "write_length": 20,
           "write_count": 3,
-          "read_length": 464979,
+          "read_length": 465800,
           "read_count": 45,
-          "runtime": 506014
+          "runtime": 506835
         },
-        "costs": 156,
+        "costs": 31,
         "tx_index": 0,
         "vm_error": null
       }
@@ -467,7 +481,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 46,
+        "costs": 9,
         "tx_index": 0,
         "vm_error": null
       }
@@ -493,7 +507,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 45,
+        "costs": 8,
         "tx_index": 0,
         "vm_error": null
       }
@@ -519,11 +533,11 @@
         "execution_cost": {
           "write_length": 209,
           "write_count": 6,
-          "read_length": 462975,
+          "read_length": 463796,
           "read_count": 55,
-          "runtime": 509688
+          "runtime": 510509
         },
-        "costs": 129,
+        "costs": 30,
         "tx_index": 0,
         "vm_error": null
       }
@@ -533,7 +547,7 @@
       "steps": [
         {
           "Eval": {
-            "Ok": "0a010000000000000000000000000004026c"
+            "Ok": "0a01000000000000000000000000000402dc"
           }
         }
       ]
@@ -573,27 +587,27 @@
       "sender": "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM",
       "contract": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2",
       "functionName": "fund-from-treasury",
-      "result": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976508)) (opened true)))))",
-      "resultHex": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+      "result": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976672)) (opened true)))))",
+      "resultHex": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee720066f70656e656403",
       "vmError": null,
       "pcAborted": false,
       "receipt": {
         "events": [
           "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\",\"raw_value\":\"0x0c000000050d6173736574436f6e74726163740614f6decc7cfff2a413bd7cd4f53c25ad7fd1899acc0a736274632d746f6b656e0663616c6c657206163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d7632056576656e740d0000000b77697468647261772d667409726563697069656e7406163699883a5bd5324eb8975e56bec8a9f843409b4e186363643031362d737761702d7661756c742d6d69612d76320673656e6465720516402da2c079e5d31d58b9cfc7286d1b1eb2f7834e\",\"topic\":\"print\"},\"event_index\":0,\"txid\":\"0x6d3d77a139c184867956bae6fb500bb6771ac5e98624be3f75d926d46796775d\",\"type\":\"contract_event\"}",
           "{\"committed\":true,\"event_index\":1,\"ft_transfer_event\":{\"amount\":\"100000\",\"asset_identifier\":\"SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token\",\"recipient\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"sender\":\"SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-rewards-v3\"},\"txid\":\"0x6d3d77a139c184867956bae6fb500bb6771ac5e98624be3f75d926d46796775d\",\"type\":\"ft_transfer_event\"}",
-          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x6d3d77a139c184867956bae6fb500bb6771ac5e98624be3f75d926d46796775d\",\"type\":\"contract_event\"}"
+          "{\"committed\":true,\"contract_event\":{\"contract_identifier\":\"SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2\",\"raw_value\":\"0x0c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee720066f70656e656403\",\"topic\":\"print\"},\"event_index\":2,\"txid\":\"0x6d3d77a139c184867956bae6fb500bb6771ac5e98624be3f75d926d46796775d\",\"type\":\"contract_event\"}"
         ],
         "post_condition_aborted": false,
-        "result": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee67c066f70656e656403",
+        "result": "070c000000020c6e6f74696669636174696f6e0d0000001266756e642d66726f6d2d7472656173757279077061796c6f61640c0000000306616d6f756e7401000000000000000000000000000186a00b62617463682d73746172740a01000000000000000000000000000ee720066f70656e656403",
         "stx_burned": 0,
         "execution_cost": {
           "write_length": 20,
           "write_count": 3,
-          "read_length": 464979,
+          "read_length": 465800,
           "read_count": 45,
-          "runtime": 506014
+          "runtime": 506835
         },
-        "costs": 133,
+        "costs": 30,
         "tx_index": 0,
         "vm_error": null
       }
@@ -639,7 +653,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 72,
+        "costs": 9,
         "tx_index": 0,
         "vm_error": null
       }
@@ -665,7 +679,7 @@
           "read_count": 11,
           "runtime": 21957
         },
-        "costs": 45,
+        "costs": 9,
         "tx_index": 0,
         "vm_error": null
       }
@@ -692,11 +706,11 @@
         "execution_cost": {
           "write_length": 259,
           "write_count": 7,
-          "read_length": 465849,
+          "read_length": 466670,
           "read_count": 59,
-          "runtime": 514570
+          "runtime": 515391
         },
-        "costs": 131,
+        "costs": 30,
         "tx_index": 0,
         "vm_error": null
       }
@@ -706,7 +720,7 @@
       "steps": [
         {
           "Eval": {
-            "Ok": "0a010000000000000000000000000004026c"
+            "Ok": "0a01000000000000000000000000000402dc"
           }
         }
       ]
@@ -758,11 +772,11 @@
         "execution_cost": {
           "write_length": 0,
           "write_count": 0,
-          "read_length": 460112,
+          "read_length": 460933,
           "read_count": 36,
-          "runtime": 469122
+          "runtime": 469943
         },
-        "costs": 107,
+        "costs": 25,
         "tx_index": 0,
         "vm_error": null
       }
@@ -799,7 +813,10 @@
     }
   ],
   "updates": [],
-  "parentHeight": 9518263,
-  "simulationId": "f74d8e34954730a89df1a0e1759e9d61",
-  "url": "https://stxer.xyz/simulations/mainnet/f74d8e34954730a89df1a0e1759e9d61"
+  "parentHeight": 9525311,
+  "simulationId": "afb2aefb5e5eac8b2f73d7756f864c70",
+  "url": "https://stxer.xyz/simulations/mainnet/afb2aefb5e5eac8b2f73d7756f864c70",
+  "urls": [
+    "https://stxer.xyz/simulations/mainnet/afb2aefb5e5eac8b2f73d7756f864c70"
+  ]
 }

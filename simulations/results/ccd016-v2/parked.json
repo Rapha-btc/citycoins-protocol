@@ -1,29 +1,30 @@
 {
-  "simulationId": "34318bbb5fc530cc0dc690003792fb43",
-  "url": "https://stxer.xyz/simulations/mainnet/34318bbb5fc530cc0dc690003792fb43",
-  "checks": 173,
+  "simulationId": "6602c66200e4016df6b594ab9c27c1c5",
+  "url": "https://stxer.xyz/simulations/mainnet/6602c66200e4016df6b594ab9c27c1c5",
+  "checks": 174,
   "failures": 0,
   "failed": [],
   "liveStack": {
     "market": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5",
-    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6"
+    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6",
+    "routerFromRepoSha256": "8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84"
   },
   "fork": {
     "synthetic": false,
-    "stacks_height": 9518355,
-    "burn_height": 976511,
-    "coinbase_height": 262766,
-    "block_time": 1795052017,
-    "burn_block_time": 1795052017,
-    "index_block_hash": "74847ef5ba111cccc74f9fe39c1949a9ef8d03429a9eba796f27cdc0169ff512",
-    "consensus_hash": "329ef504d36d392c89ac6832435990fb938a0ef9",
-    "burn_header_hash": "0000000000000000000032809e4657f01b967329994f216190734c3d13ffe4f8",
-    "sortition_id": "f3070b270d8bd0a4c349feaf9058f6dc65c7e8f10832c2821b2b8bc956afcb79",
+    "stacks_height": 9525393,
+    "burn_height": 976672,
+    "coinbase_height": 262876,
+    "block_time": 1795142962,
+    "burn_block_time": 1795142962,
+    "index_block_hash": "67cb85927d85eadf375e9ce41639d6f8e1eb122a051278c258ff716a4bf51672",
+    "consensus_hash": "44e083eeb9c5aaad96d18372f3824f6696226e73",
+    "burn_header_hash": "00000000000000000000c2ae4c25135e89a6319b8f94cecdbb5c368785bb6569",
+    "sortition_id": "7def4ffa11c5ea2791fefaa9211b5010ab125f98562daad832bec511dd6d5fb0",
     "epoch": "4.0"
   },
-  "vaultSha256": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+  "vaultSha256": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
   "bookSha256": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
-  "mid": "22932195107326",
+  "mid": "23760163052174",
   "liveOpenMakers": "0",
   "fillers": 39,
   "steps": [
@@ -53,11 +54,11 @@
     },
     {
       "label": "P0 fund-from-treasury -> window opens",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000) (batch-start (some u976511)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000) (batch-start (some u976672)) (opened true)))))"
     },
     {
       "label": "P0 stranger jing-place: 1,000 sats as the peg",
-      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u1000) (floor u21785585351959)))))"
+      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u1000) (floor u22572154899565)))))"
     },
     {
       "label": "P0: vault deposit pending?",
@@ -737,7 +738,7 @@
     },
     {
       "label": "P3 jing-place again: smallest size on a full side -> submits",
-      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u1000) (floor u21785585351959)))))"
+      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u1000) (floor u22572154899565)))))"
     },
     {
       "label": "P3 settle refunds the too-small entrant",
@@ -753,7 +754,7 @@
     },
     {
       "label": "P3 jing-place lands",
-      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u1000) (floor u21785585351959)))))"
+      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u1000) (floor u22572154899565)))))"
     },
     {
       "label": "P3: vault deposit pending?",
@@ -813,7 +814,7 @@
     },
     {
       "label": "P4 still the vault's peg (some u1)",
-      "raw": "(tuple (limit u21785585351959) (set-at u1795052307) (spread-bps (some u1)))"
+      "raw": "(tuple (limit u22572154899565) (set-at u1795144142) (spread-bps (some u1)))"
     },
     {
       "label": "P5 fund another fresh maker",
@@ -837,7 +838,7 @@
     },
     {
       "label": "P5 window elapsed",
-      "raw": "(tuple (batch-start (some u976511)) (burn-height u976513) (window-elapsed true) (window-ends (some u976512)) (window-open false))"
+      "raw": "(tuple (batch-start (some u976672)) (burn-height u976674) (window-elapsed true) (window-ends (some u976673)) (window-open false))"
     },
     {
       "label": "P5 stranger jing-reclaim: the PARKED amount comes home",
@@ -853,15 +854,15 @@
     },
     {
       "label": "P5 stranger router-swap the 1,000 sats at the floor (fresh update) -> unsold 0, empty",
-      "raw": "(ok (tuple (notification \"router-swap\") (payload (tuple (amount u1000) (limit-price u22702873156252) (mid u22932195107326) (out u2286147) (unsold u0)))))"
+      "raw": "(ok (tuple (notification \"router-swap\") (payload (tuple (amount u1000) (limit-price u23522561421652) (mid u23760163052174) (out u2358617) (unsold u0)))))"
     },
     {
       "label": "P5 empty",
-      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u2286147))"
+      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u2358617))"
     },
     {
       "label": "P5 clock cleared",
-      "raw": "(tuple (batch-start none) (burn-height u976513) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976674) (window-elapsed false) (window-ends none) (window-open false))"
     }
   ]
 }

@@ -1,27 +1,28 @@
 {
-  "simulationId": "bd1cf34137b5b0166f4bb4cbc3ffa899",
-  "url": "https://stxer.xyz/simulations/mainnet/bd1cf34137b5b0166f4bb4cbc3ffa899",
-  "checks": 95,
+  "simulationId": "ceffea3134508c6cd46e3152df74e3a9",
+  "url": "https://stxer.xyz/simulations/mainnet/ceffea3134508c6cd46e3152df74e3a9",
+  "checks": 96,
   "failures": 0,
   "failed": [],
   "liveStack": {
     "market": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5",
-    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6"
+    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6",
+    "routerFromRepoSha256": "8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84"
   },
   "fork": {
     "synthetic": false,
-    "stacks_height": 9518362,
-    "burn_height": 976511,
-    "coinbase_height": 262766,
-    "block_time": 1795052017,
-    "burn_block_time": 1795052017,
-    "index_block_hash": "de64d0801477a883314a293d05e656c8d7c2ec2cb244b29afcb6dbff0b4c3fe0",
-    "consensus_hash": "329ef504d36d392c89ac6832435990fb938a0ef9",
-    "burn_header_hash": "0000000000000000000032809e4657f01b967329994f216190734c3d13ffe4f8",
-    "sortition_id": "f3070b270d8bd0a4c349feaf9058f6dc65c7e8f10832c2821b2b8bc956afcb79",
+    "stacks_height": 9525373,
+    "burn_height": 976672,
+    "coinbase_height": 262876,
+    "block_time": 1795142962,
+    "burn_block_time": 1795142962,
+    "index_block_hash": "04aff8f0d2b47833e015b1af7f5649fe0401ffd0429aa5aadd904cb88a253ab2",
+    "consensus_hash": "44e083eeb9c5aaad96d18372f3824f6696226e73",
+    "burn_header_hash": "00000000000000000000c2ae4c25135e89a6319b8f94cecdbb5c368785bb6569",
+    "sortition_id": "7def4ffa11c5ea2791fefaa9211b5010ab125f98562daad832bec511dd6d5fb0",
     "epoch": "4.0"
   },
-  "vaultSha256": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+  "vaultSha256": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
   "bookSha256": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
   "steps": [
     {
@@ -34,7 +35,7 @@
     },
     {
       "label": "S0 no clock",
-      "raw": "(tuple (batch-start none) (burn-height u976511) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976672) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "S0 close-batch with no clock -> u16032",
@@ -50,11 +51,11 @@
     },
     {
       "label": "S1 stranger fund-from-treasury -> 1M sats in, window opens (vault was empty)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000000) (batch-start (some u976511)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000000) (batch-start (some u976672)) (opened true)))))"
     },
     {
       "label": "S1 clock: open",
-      "raw": "(tuple (batch-start (some u976511)) (burn-height u976511) (window-elapsed false) (window-ends (some u976799)) (window-open true))"
+      "raw": "(tuple (batch-start (some u976672)) (burn-height u976672) (window-elapsed false) (window-ends (some u976960)) (window-open true))"
     },
     {
       "label": "S1 1M home, not empty",
@@ -66,11 +67,11 @@
     },
     {
       "label": "S1 fund-from-treasury while open -> joins, opens nothing",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100) (batch-start (some u976511)) (opened false)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100) (batch-start (some u976672)) (opened false)))))"
     },
     {
       "label": "S1 clock unchanged by the top-up",
-      "raw": "(tuple (batch-start (some u976511)) (burn-height u976511) (window-elapsed false) (window-ends (some u976799)) (window-open true))"
+      "raw": "(tuple (batch-start (some u976672)) (burn-height u976672) (window-elapsed false) (window-ends (some u976960)) (window-open true))"
     },
     {
       "label": "S1 reclaim while open -> u16031",
@@ -82,7 +83,7 @@
     },
     {
       "label": "S2 window elapsed, leftovers home",
-      "raw": "(tuple (batch-start (some u976511)) (burn-height u976513) (window-elapsed true) (window-ends (some u976512)) (window-open false))"
+      "raw": "(tuple (batch-start (some u976672)) (burn-height u976674) (window-elapsed true) (window-ends (some u976673)) (window-open false))"
     },
     {
       "label": "S2 1,000,100 home, not empty",
@@ -98,7 +99,7 @@
     },
     {
       "label": "S3 fund-from-treasury on a non-empty vault -> pulls the sat, opens nothing (was: re-armed)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1) (batch-start (some u976511)) (opened false)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1) (batch-start (some u976672)) (opened false)))))"
     },
     {
       "label": "S3 still elapsed: the sat joined the liquidation phase",
@@ -138,7 +139,7 @@
     },
     {
       "label": "S4 the exit cleared the clock",
-      "raw": "(tuple (batch-start none) (burn-height u976513) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976674) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "S4 close-batch with no clock -> u16032",
@@ -150,7 +151,7 @@
     },
     {
       "label": "S5 the treasury has the recalled sats: fund again -> fresh window (opened true)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000101) (batch-start (some u976513)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000101) (batch-start (some u976674)) (opened true)))))"
     },
     {
       "label": "S5 window open",
@@ -162,7 +163,7 @@
     },
     {
       "label": "S5 clock cleared",
-      "raw": "(tuple (batch-start none) (burn-height u976513) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976674) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "S6 whale sends 1000 sats straight to the empty vault",
@@ -170,7 +171,7 @@
     },
     {
       "label": "S6 no clock: neither open nor elapsed",
-      "raw": "(tuple (batch-start none) (burn-height u976513) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976674) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "S6 reclaim with no clock -> u16031",
@@ -186,7 +187,7 @@
     },
     {
       "label": "S6 fund-from-treasury: vault not empty but no clock -> opens (the stray sats join)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000301) (batch-start (some u976513)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000301) (batch-start (some u976674)) (opened true)))))"
     },
     {
       "label": "S6 window open",
@@ -210,7 +211,7 @@
     },
     {
       "label": "S6 clock cleared, empty",
-      "raw": "(tuple (batch-start none) (burn-height u976515) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976676) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "S6 empty",
@@ -262,7 +263,7 @@
     },
     {
       "label": "S8 start: empty, no clock",
-      "raw": "(tuple (batch-start none) (burn-height u976515) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976676) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "S8a 3 sats land in the treasury",
@@ -270,11 +271,11 @@
     },
     {
       "label": "S8a empty vault: fund-from-treasury opens as before (opened true)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u3) (batch-start (some u976515)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u3) (batch-start (some u976676)) (opened true)))))"
     },
     {
       "label": "S8a batch-start = this burn height",
-      "raw": "(some u976515)"
+      "raw": "(some u976676)"
     },
     {
       "label": "S8a batch-start is the current burn height",
@@ -290,11 +291,11 @@
     },
     {
       "label": "S8b window open: funding joins the batch (opened false)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u5) (batch-start (some u976515)) (opened false)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u5) (batch-start (some u976676)) (opened false)))))"
     },
     {
       "label": "S8b batch-start unchanged",
-      "raw": "(some u976515)"
+      "raw": "(some u976676)"
     },
     {
       "label": "S8b batch-start is now behind the burn height",
@@ -314,11 +315,11 @@
     },
     {
       "label": "S8c elapsed + dust: funding opens a fresh window (opened true)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000000) (batch-start (some u976519)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1000000) (batch-start (some u976680)) (opened true)))))"
     },
     {
       "label": "S8c batch-start moved",
-      "raw": "(some u976519)"
+      "raw": "(some u976680)"
     },
     {
       "label": "S8c batch-start is the current burn height",
@@ -326,7 +327,7 @@
     },
     {
       "label": "S8c window open again",
-      "raw": "(tuple (batch-start (some u976519)) (burn-height u976519) (window-elapsed false) (window-ends (some u976522)) (window-open true))"
+      "raw": "(tuple (batch-start (some u976680)) (burn-height u976680) (window-elapsed false) (window-ends (some u976683)) (window-open true))"
     },
     {
       "label": "S8c router-swap on the new rewards -> u16031 (they rest at the mid first)",
@@ -346,11 +347,11 @@
     },
     {
       "label": "S8d elapsed + more than 8 sats: funding joins (opened false)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1) (batch-start (some u976519)) (opened false)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1) (batch-start (some u976680)) (opened false)))))"
     },
     {
       "label": "S8d batch-start unchanged",
-      "raw": "(some u976519)"
+      "raw": "(some u976680)"
     },
     {
       "label": "S8d still elapsed: no re-arm",

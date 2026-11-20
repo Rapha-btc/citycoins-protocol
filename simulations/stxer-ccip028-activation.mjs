@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { Cl, cvToString, deserializeCV } from '@stacks/transactions';
 import { SimulationBuilder, getSimulationResult, getSimulationTip, submitSimulationSteps, callContract } from 'stxer';
+import { ROUTER_V6, ROUTER_V6_ID, ROUTER_V6_FILE, ROUTER_V6_CLARITY, routerV6Source } from './_router-v6.mjs';
 
 const NODE = process.env.STACKS_API_URL || 'http://77.42.3.101/stacks-api';
 const DEP = 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22';
@@ -76,14 +77,19 @@ async function main() {
   report.fixtures.push('Unsigned simulated senders; no real approvals or asset transfers.',
     '289 synthetic burn blocks at one second each; tests the full 288-block window, not two days of market evolution.');
   const files = [`contracts/extensions/${BOOK_NAME}.clar`, `contracts/extensions/${VAULT_NAME}.clar`, `contracts/proposals/${PROPOSAL_NAME}.clar`];
-  // Pinned to 2440559 (bounty mw4761 fixes); override with BOOK_SHA256 / VAULT_SHA256, or set to 'skip'.
+  // Vault pinned to the router-v6 rebind (zest leg); book to 2440559 (bounty mw4761 fixes); override with BOOK_SHA256 / VAULT_SHA256, or set to 'skip'.
   const expectedHashes = [process.env.BOOK_SHA256 || '8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a',
-    process.env.VAULT_SHA256 || '9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05'].map(function pin(h) { return h === 'skip' ? null : h; });
+    process.env.VAULT_SHA256 || '67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935'].map(function pin(h) { return h === 'skip' ? null : h; });
   let builder = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(height).withSender(DEP);
+  // router v6 is not on mainnet: deploy it from the jing repo bytes as its real deployer first
+  const router = routerV6Source(); report.sourceHashes[ROUTER_V6_FILE] = router.sha;
+  report.fixtures.push(`${ROUTER_V6_ID} deployed on the fork from jing repo bytes (sha ${router.sha}), not live on mainnet.`);
+  builder = builder.addContractDeploy({ contract_name: ROUTER_V6, source_code: router.source, clarity_version: ROUTER_V6_CLARITY });
   for (const [i, file] of files.entries()) {
     const source = fs.readFileSync(file, 'utf8');
     const hash = createHash('sha256').update(source).digest('hex'); report.sourceHashes[file] = hash;
     if (expectedHashes[i]) check(`unchanged ${file}`, hash, expectedHashes[i]);
+    if (i === 1) check('vault binds router v6', source.includes(`'${ROUTER_V6_ID})`), true);
     if (i === 2) check('proposal leeway is 10%', source.includes('set-leeway-bps u1000)'), true);
     builder = builder.addContractDeploy({ contract_name: [BOOK_NAME, VAULT_NAME, PROPOSAL_NAME][i], source_code: source, clarity_version: 6 });
   }
@@ -91,8 +97,9 @@ async function main() {
   console.log(report.url); save();
   const setup = await getSimulationResult(sid); report.setup = setup;
   let i = 0;
-  for (const step of setup.steps) if (step.Result?.Transaction) check(`deploy ${files[i++]}`, decode(step), (v) => v === 'true' || v === '(ok true)');
-  check('three deploy receipts', i, 3);
+  const deployed = [ROUTER_V6_FILE, ...files];
+  for (const step of setup.steps) if (step.Result?.Transaction) check(`deploy ${deployed[i++]}`, decode(step), (v) => v === 'true' || v === '(ok true)');
+  check('four deploy receipts (router v6 + book + vault + proposal)', i, 4);
   report.initialTip = await getSimulationTip(sid);
   await read('Direct Execute enabled', BASE, `(is-extension '${DIRECT})`, 'true');
   await read('live signal threshold', DIRECT, '(get-signals-required)', 'u3');
@@ -118,9 +125,12 @@ async function main() {
     report.fixtures.push(`Real holder ${SBTC_HOLDER} transfers ${topup} sats into rewards treasury on the fork.`);
     await call('fund treasury from real sBTC holder', SBTC_HOLDER, SBTC, 'transfer', [Cl.uint(topup), Cl.principal(SBTC_HOLDER), Cl.principal(TREASURY), Cl.none()]);
   }
-  const miaAmount = 100000000000n, ask = 100000000n;
+  // OFFER_ASK_USTX: the router leg sells only inside mid - 1%; when the live
+  // AMMs sit further below the Lazer mid, 100k sats cannot raise 100 STX.
+  const miaAmount = 100000000000n, ask = BigInt(process.env.OFFER_ASK_USTX || 100000000);
+  if (ask !== 100000000n) report.fixtures.push(`Offer ask lowered to ${ask} uSTX (OFFER_ASK_USTX): live AMMs below mid - 1%.`);
   await read('seller owns at least 100000 MIA', MIA, `(>= (unwrap-panic (get-balance '${SELLER})) u${miaAmount})`, 'true');
-  await call('seller offers 100000 MIA for 100 STX', SELLER, BOOK, 'place-offer', [Cl.uint(miaAmount), Cl.uint(ask)]);
+  await call(`seller offers 100000 MIA for ${Number(ask) / 1e6} STX`, SELLER, BOOK, 'place-offer', [Cl.uint(miaAmount), Cl.uint(ask)]);
   await call('permissionless fund-from-treasury', CALLER, VAULT, 'fund-from-treasury');
   await read('maker window open', VAULT, '(window-open)', 'true');
   const u1 = await update('placement');
@@ -138,7 +148,7 @@ async function main() {
   await call('permissionless jing-reclaim', CALLER, VAULT, 'jing-reclaim', [Cl.some(u2.cv)]);
   await call('permissionless router-swap', CALLER, VAULT, 'router-swap', [u2.cv]);
   const proceeds = uint(await read('vault STX proceeds', VAULT, `(stx-get-balance '${VAULT})`));
-  check('proceeds cover the 100 STX offer', proceeds.toString(), function enough(v) { return BigInt(v) >= ask; });
+  check(`proceeds cover the ${Number(ask) / 1e6} STX offer`, proceeds.toString(), function enough(v) { return BigInt(v) >= ask; });
   await call('permissionless fuel-fair-book', CALLER, VAULT, 'fuel-fair-book');
   await read('all STX proceeds reached book', BOOK, `(stx-get-balance '${BOOK})`, `u${proceeds}`);
   const supplyBefore = uint(await read('MIA supply before crossing', MIA, '(get-total-supply)'));
@@ -147,7 +157,7 @@ async function main() {
   const supplyAfter = uint(await read('MIA supply after crossing', MIA, '(get-total-supply)'));
   const sellerAfter = uint(await read('seller STX after crossing', BOOK, `(stx-get-balance '${SELLER})`));
   check('100000 MIA burned from real token supply', (supplyBefore - supplyAfter).toString(), miaAmount.toString());
-  check('seller received exactly 100 STX', (sellerAfter - sellerBefore).toString(), ask.toString());
+  check(`seller received exactly ${Number(ask) / 1e6} STX`, (sellerAfter - sellerBefore).toString(), ask.toString());
   await read('book burn accounting', BOOK, '(get total-burned-mia (get-info))', `u${miaAmount}`);
   await read('offer fully consumed', BOOK, '(get-offer-count)', 'u0');
   await read('remaining vault state', VAULT, '(get-status)');

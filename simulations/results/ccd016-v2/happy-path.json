@@ -1,29 +1,46 @@
 {
-  "simulationId": "2da4ca3d879d44f206c878f91beb29d5",
-  "url": "https://stxer.xyz/simulations/mainnet/2da4ca3d879d44f206c878f91beb29d5",
-  "checks": 55,
-  "failures": 0,
-  "failed": [],
+  "simulationId": "fb34f5bab2463aadacef2961bad42d50",
+  "url": "https://stxer.xyz/simulations/mainnet/fb34f5bab2463aadacef2961bad42d50",
+  "checks": 54,
+  "failures": 15,
+  "failed": [
+    "B1 live depth behind the vault: other asks rest on X",
+    "B1 a taker sells 400 STX: the vault's whole batch fills first (best ask, mid + 1 bp), the rest hits the live asks",
+    "B1 the vault matched at mid + 1 bp",
+    "B1 sold out: nothing resting, no sats home, STX home, EMPTY",
+    "B1 stranger close-batch: the vault is empty, the stale clock clears",
+    "B1 clock cleared by close-batch",
+    "B1 close-batch again -> u16032 (no clock)",
+    "B1 stranger fuel-fair-book: the STX goes to the book",
+    "B1 clock still clear after the flush",
+    "B2 fund-from-treasury: empty vault -> a SECOND window opens",
+    "B2 100k resting",
+    "B2 stranger jing-reclaim: the batch comes home",
+    "B2 100,001 home, nothing resting, not empty",
+    "B2 stranger router-swap the whole 100,001 sats at the floor (fresh update): sells what fits inside it",
+    "B2 batch-start moved on from B1"
+  ],
   "liveStack": {
     "market": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5",
-    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6"
+    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6",
+    "routerFromRepoSha256": "8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84"
   },
   "fork": {
     "synthetic": false,
-    "stacks_height": 9518346,
-    "burn_height": 976511,
-    "coinbase_height": 262766,
-    "block_time": 1795052017,
-    "burn_block_time": 1795052017,
-    "index_block_hash": "6762287954214294c0dfd1c6756a40e0051a507cbc6b5e7056bd46fdbbb43e86",
-    "consensus_hash": "329ef504d36d392c89ac6832435990fb938a0ef9",
-    "burn_header_hash": "0000000000000000000032809e4657f01b967329994f216190734c3d13ffe4f8",
-    "sortition_id": "f3070b270d8bd0a4c349feaf9058f6dc65c7e8f10832c2821b2b8bc956afcb79",
+    "stacks_height": 9525396,
+    "burn_height": 976673,
+    "coinbase_height": 262877,
+    "block_time": 1795144160,
+    "burn_block_time": 1795144160,
+    "index_block_hash": "f724da8461abcfe1146a1e21f6b8fde8fe9097ec075b12f03101b4bfad924bf2",
+    "consensus_hash": "2a7ccd014f6dfea13fcaf467a56b52d96d115a52",
+    "burn_header_hash": "00000000000000000000b5b580a1a14ca5d28b05e6a78c8c6da682d68d59493b",
+    "sortition_id": "710eecb35228296b6c13aebe41282008c695416e40148f37b157d022e8e8d856",
     "epoch": "4.0"
   },
-  "vaultSha256": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+  "vaultSha256": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
   "bookSha256": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
-  "mid": "22954807939532",
+  "mid": "23769846103135",
   "steps": [
     {
       "label": "DIA: push the Lazer prices, fresh",
@@ -35,7 +52,7 @@
     },
     {
       "label": "S0 empty, no clock",
-      "raw": "(tuple (batch-start none) (burn-height u976511) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976673) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "S0 treasury sats (live)",
@@ -47,15 +64,15 @@
     },
     {
       "label": "B1 fund-from-treasury: empty vault -> window opens",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976511)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976673)) (opened true)))))"
     },
     {
       "label": "B1 clock open",
-      "raw": "(tuple (batch-start (some u976511)) (burn-height u976511) (window-elapsed false) (window-ends (some u976799)) (window-open true))"
+      "raw": "(tuple (batch-start (some u976673)) (burn-height u976673) (window-elapsed false) (window-ends (some u976961)) (window-open true))"
     },
     {
       "label": "B1 stranger jing-place: the whole batch",
-      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100000) (floor u21807067542555)))))"
+      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100000) (floor u22581353797978)))))"
     },
     {
       "label": "B1: vault deposit pending?",
@@ -71,39 +88,39 @@
     },
     {
       "label": "B1 live depth behind the vault: other asks rest on X",
-      "raw": "u2"
+      "raw": "u1"
     },
     {
       "label": "B1 a taker sells 400 STX: the vault's whole batch fills first (best ask, mid + 1 bp), the rest hits the live asks",
-      "raw": "(ok (tuple (rebate-refunded u2) (token-x-received u173577) (token-x-rolled u0) (token-y-received u0) (token-y-rolled u271)))"
+      "raw": "(err u1017)"
     },
     {
       "label": "B1 sold out: nothing resting, no sats home, STX home, EMPTY",
-      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u229800605))"
+      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u100000) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u0))"
     },
     {
       "label": "B1 the clock still shows (no exit call ran here)",
-      "raw": "(tuple (batch-start (some u976511)) (burn-height u976511) (window-elapsed false) (window-ends (some u976799)) (window-open true))"
+      "raw": "(tuple (batch-start (some u976673)) (burn-height u976673) (window-elapsed false) (window-ends (some u976961)) (window-open true))"
     },
     {
       "label": "B1 stranger close-batch: the vault is empty, the stale clock clears",
-      "raw": "(ok (tuple (notification \"close-batch\") (payload (tuple (burn-height u976511)))))"
+      "raw": "(err u16043)"
     },
     {
       "label": "B1 clock cleared by close-batch",
-      "raw": "(tuple (batch-start none) (burn-height u976511) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start (some u976673)) (burn-height u976673) (window-elapsed false) (window-ends (some u976961)) (window-open true))"
     },
     {
       "label": "B1 close-batch again -> u16032 (no clock)",
-      "raw": "(err u16032)"
+      "raw": "(err u16043)"
     },
     {
       "label": "B1 stranger fuel-fair-book: the STX goes to the book",
-      "raw": "(ok (tuple (notification \"fuel-fair-book\") (payload (tuple (amount u229800605) (book SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx)))))"
+      "raw": "(err u16006)"
     },
     {
       "label": "B1 clock still clear after the flush",
-      "raw": "(tuple (batch-start none) (burn-height u976511) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start (some u976673)) (burn-height u976673) (window-elapsed false) (window-ends (some u976961)) (window-open true))"
     },
     {
       "label": "B2 whale sends 100k sats to the treasury",
@@ -111,15 +128,15 @@
     },
     {
       "label": "B2 fund-from-treasury: empty vault -> a SECOND window opens",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976514)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976673)) (opened false)))))"
     },
     {
       "label": "B2 clock open, fresh batch-start",
-      "raw": "(tuple (batch-start (some u976514)) (burn-height u976514) (window-elapsed false) (window-ends (some u976802)) (window-open true))"
+      "raw": "(tuple (batch-start (some u976673)) (burn-height u976676) (window-elapsed false) (window-ends (some u976961)) (window-open true))"
     },
     {
       "label": "B2 stranger jing-place",
-      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100000) (floor u21807067542555)))))"
+      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100000) (floor u22581353797978)))))"
     },
     {
       "label": "B2: vault deposit pending?",
@@ -131,7 +148,7 @@
     },
     {
       "label": "B2 100k resting",
-      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u100000) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u0))"
+      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u200000) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u0))"
     },
     {
       "label": "B2 1 sat to the treasury",
@@ -139,7 +156,7 @@
     },
     {
       "label": "B2 fund-from-treasury while the batch rests -> joins, opens nothing (1 sat < MIN_RESTART_SATS)",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1) (batch-start (some u976514)) (opened false)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u1) (batch-start (some u976673)) (opened false)))))"
     },
     {
       "label": "B2 proxy set-window-blocks 1",
@@ -147,23 +164,23 @@
     },
     {
       "label": "B2 window elapsed: nobody took",
-      "raw": "(tuple (batch-start (some u976514)) (burn-height u976516) (window-elapsed true) (window-ends (some u976515)) (window-open false))"
+      "raw": "(tuple (batch-start (some u976673)) (burn-height u976678) (window-elapsed true) (window-ends (some u976674)) (window-open false))"
     },
     {
       "label": "B2 stranger jing-reclaim: the batch comes home",
-      "raw": "(ok (tuple (notification \"jing-reclaim\") (payload (tuple (amount u100000)))))"
+      "raw": "(ok (tuple (notification \"jing-reclaim\") (payload (tuple (amount u200000)))))"
     },
     {
       "label": "B2 100,001 home, nothing resting, not empty",
-      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u100001) (stx-balance u0))"
+      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u200001) (stx-balance u0))"
     },
     {
       "label": "B2 stranger router-swap the whole 100,001 sats at the floor (fresh update): sells what fits inside it",
-      "raw": "(ok (tuple (notification \"router-swap\") (payload (tuple (amount u100001) (limit-price u22725259860136) (mid u22954807939532) (out u228404463) (unsold u1)))))"
+      "raw": "(ok (tuple (notification \"router-swap\") (payload (tuple (amount u200001) (limit-price u23532147642103) (mid u23769846103135) (out u264654790) (unsold u87611)))))"
     },
     {
       "label": "B2 exactly the unsold rest stays home",
-      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u1) (stx-balance u228404463))"
+      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u87611) (stx-balance u264654790))"
     },
     {
       "label": "B2 STX whale rests a 300 STX bid pegged at the mid",
@@ -171,31 +188,27 @@
     },
     {
       "label": "B2: bid pending?",
-      "raw": "true"
-    },
-    {
-      "label": "B2: keeper settle-token-y-deposit",
-      "raw": "(ok u300000000)"
+      "raw": "false"
     },
     {
       "label": "B2 next burn block: router-swap sells the rest (or, if the first call left at most DUST_SATS 2, the batch is closed: u16031)",
-      "raw": "(err u16031)"
+      "raw": "(ok (tuple (notification \"router-swap\") (payload (tuple (amount u87611) (limit-price u23532147642103) (mid u23769846103135) (out u207626192) (unsold u0)))))"
     },
     {
       "label": "B2 sold: at most 2 dust sats home, nothing on the market, EMPTY",
-      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u1) (stx-balance u228404463))"
+      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u472280982))"
     },
     {
       "label": "B2 the exit cleared the clock",
-      "raw": "(tuple (batch-start none) (burn-height u976517) (window-elapsed false) (window-ends none) (window-open false))"
+      "raw": "(tuple (batch-start none) (burn-height u976679) (window-elapsed false) (window-ends none) (window-open false))"
     },
     {
       "label": "B2 stranger fuel-fair-book",
-      "raw": "(ok (tuple (notification \"fuel-fair-book\") (payload (tuple (amount u228404463) (book SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx)))))"
+      "raw": "(ok (tuple (notification \"fuel-fair-book\") (payload (tuple (amount u472280982) (book SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx)))))"
     },
     {
       "label": "B2 the bidder cancels what is left of its bid",
-      "raw": "(ok u300000000)"
+      "raw": "(ok u92165974)"
     },
     {
       "label": "B3 whale sends 100k sats to the treasury",
@@ -203,27 +216,23 @@
     },
     {
       "label": "B3 fund-from-treasury: empty vault -> a THIRD window opens",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976517)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976679)) (opened true)))))"
     },
     {
       "label": "B3 clock open",
-      "raw": "(tuple (batch-start (some u976517)) (burn-height u976517) (window-elapsed false) (window-ends (some u976518)) (window-open true))"
+      "raw": "(tuple (batch-start (some u976679)) (burn-height u976679) (window-elapsed false) (window-ends (some u976680)) (window-open true))"
     },
     {
       "label": "B3 stranger jing-place",
-      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100001) (floor u21807067542555)))))"
+      "raw": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100000) (floor u22581353797978)))))"
     },
     {
       "label": "B3: vault deposit pending?",
-      "raw": "true"
-    },
-    {
-      "label": "B3: keeper settle-token-x-deposit",
-      "raw": "(ok u100001)"
+      "raw": "false"
     },
     {
       "label": "B3 resting: the batch plus B2's dust (at most 2 sats), nothing escrowed",
-      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u100001) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u0))"
+      "raw": "(tuple (empty false) (jing-escrowed u0) (jing-parked u0) (jing-resting u100000) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u0))"
     }
   ]
 }

@@ -1,29 +1,30 @@
 {
-  "simulationId": "e06749486b9056f38049894b1efc8540",
-  "url": "https://stxer.xyz/simulations/mainnet/e06749486b9056f38049894b1efc8540",
+  "simulationId": "629963a3748534de53535f83632af5de",
+  "url": "https://stxer.xyz/simulations/mainnet/629963a3748534de53535f83632af5de",
   "checks": 65,
   "failures": 0,
   "failed": [],
   "liveStack": {
     "market": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5",
-    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6"
+    "router": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6",
+    "routerFromRepoSha256": "8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84"
   },
   "fork": {
     "synthetic": false,
-    "stacks_height": 9518377,
-    "burn_height": 976513,
-    "coinbase_height": 262767,
-    "block_time": 1795052453,
-    "burn_block_time": 1795052453,
-    "index_block_hash": "5a5a64168891f2fd14deb5240bb6ec0354b836c03389dd0e6a60054d3e25bddd",
-    "consensus_hash": "32bc95662a59ae496b7809082b0e7e16f2d62677",
-    "burn_header_hash": "00000000000000000002112ca09c15e72b965108f0ab033c49c6bf9144f481f5",
-    "sortition_id": "f960f116cbf7c0bd00c1483b99127ad9a4e51f4c0a2608d53f0528a6b0876a19",
+    "stacks_height": 9525373,
+    "burn_height": 976672,
+    "coinbase_height": 262876,
+    "block_time": 1795142962,
+    "burn_block_time": 1795142962,
+    "index_block_hash": "04aff8f0d2b47833e015b1af7f5649fe0401ffd0429aa5aadd904cb88a253ab2",
+    "consensus_hash": "44e083eeb9c5aaad96d18372f3824f6696226e73",
+    "burn_header_hash": "00000000000000000000c2ae4c25135e89a6319b8f94cecdbb5c368785bb6569",
+    "sortition_id": "7def4ffa11c5ea2791fefaa9211b5010ab125f98562daad832bec511dd6d5fb0",
     "epoch": "4.0"
   },
-  "vaultSha256": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+  "vaultSha256": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
   "bookSha256": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
-  "mid": "22886025669485",
+  "mid": "23806286742728",
   "steps": [
     {
       "label": "DIA: push the Lazer prices, fresh",
@@ -39,7 +40,7 @@
     },
     {
       "label": "S0 get-config: pyth-fee-budget defaults to u0",
-      "raw": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
+      "raw": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
     },
     {
       "label": "S1 stranger set-pyth-fee-budget 10 -> u16000",
@@ -55,7 +56,7 @@
     },
     {
       "label": "S2 get-config: pyth-fee-budget = 10 STX",
-      "raw": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u10000000) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
+      "raw": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u10000000) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
     },
     {
       "label": "proxy set-pyth-fee-budget 0",
@@ -63,7 +64,7 @@
     },
     {
       "label": "S3 get-config: pyth-fee-budget back to u0",
-      "raw": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
+      "raw": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
     },
     {
       "label": "F0 live oracle fee on the fork (before)",
@@ -95,11 +96,11 @@
     },
     {
       "label": "fund-from-treasury opens a batch",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976513)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976672)) (opened true)))))"
     },
     {
       "label": "fixture: an sBTC whale routes up to 20000000 sats down to mid - 1% (min-out 0)",
-      "raw": "(ok (tuple (dlmm-in u170875) (dlmm-out u389219842) (jing-in u135949) (jing-ok true) (jing-out u309582102) (out u4659187638) (unsold u17945261) (velar-in u1133489) (velar-out u2568235217) (xyk-in u614426) (xyk-out u1392150487)))"
+      "raw": "(ok (tuple (dlmm-in u786) (dlmm-out u1854320) (jing-in u3717) (jing-ok true) (jing-out u8805654) (out u10659964) (unsold u19995497) (velar-in u0) (velar-out u0) (xyk-in u0) (xyk-out u0) (zest-in u0) (zest-out u0)))"
     },
     {
       "label": "STX whale rests a 600 STX bid pegged at the mid",
@@ -107,11 +108,7 @@
     },
     {
       "label": "bid: bid pending?",
-      "raw": "true"
-    },
-    {
-      "label": "bid: keeper settle-token-y-deposit",
-      "raw": "(ok u600000000)"
+      "raw": "false"
     },
     {
       "label": "vault STX = 0",
@@ -187,11 +184,11 @@
     },
     {
       "label": "C1 budget 20 = 2 x fee: a 0-STX caller runs router-swap, it fills through the book leg",
-      "raw": "(ok (tuple (notification \"router-swap\") (payload (tuple (amount u100000) (limit-price u22771595541137) (mid u22886025669485) (out u228174124) (unsold u0)))))"
+      "raw": "(ok (tuple (notification \"router-swap\") (payload (tuple (amount u100000) (limit-price u23687255309014) (mid u23806286742728) (out u237349145) (unsold u0)))))"
     },
     {
       "label": "C2 vault STX after router-swap",
-      "raw": "u228174134"
+      "raw": "u237349155"
     },
     {
       "label": "E1 the caller still holds 0 STX: the vault paid both verifies",
@@ -199,7 +196,7 @@
     },
     {
       "label": "C3 vault empty after the sale",
-      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u228174134))"
+      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u237349155))"
     },
     {
       "label": "whale sends 100000 more sats to the treasury",
@@ -207,11 +204,11 @@
     },
     {
       "label": "fund-from-treasury opens the next batch",
-      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976513)) (opened true)))))"
+      "raw": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976672)) (opened true)))))"
     },
     {
       "label": "D4 stranger fuel-fair-book sweeps the router-swap proceeds, keeps the budget",
-      "raw": "(ok (tuple (notification \"fuel-fair-book\") (payload (tuple (amount u228174114) (book SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx)))))"
+      "raw": "(ok (tuple (notification \"fuel-fair-book\") (payload (tuple (amount u237349135) (book SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx)))))"
     },
     {
       "label": "D5 vault keeps exactly the 20 uSTX budget",
@@ -223,15 +220,15 @@
     },
     {
       "label": "C5 budget 20 = 2 x fee: jing-take fills the bid",
-      "raw": "(ok (tuple (notification \"jing-take\") (payload (tuple (amount u100000) (limit-price u22771595541137) (out u228174134)))))"
+      "raw": "(ok (tuple (notification \"jing-take\") (payload (tuple (amount u100000) (limit-price u23687255309014) (out u237349155)))))"
     },
     {
       "label": "C6 vault STX after jing-take",
-      "raw": "u228174134"
+      "raw": "u237349155"
     },
     {
       "label": "C7 vault sBTC 0 after the take",
-      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u228174134))"
+      "raw": "(tuple (empty true) (jing-escrowed u0) (jing-parked u0) (jing-resting u0) (pending-treasury-sats u0) (sbtc-balance u0) (stx-balance u237349155))"
     },
     {
       "label": "fixture: oracle fee back to its live value",
@@ -243,7 +240,7 @@
     },
     {
       "label": "fuel-fair-book sweeps the float and proceeds",
-      "raw": "(ok (tuple (notification \"fuel-fair-book\") (payload (tuple (amount u228174134) (book SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx)))))"
+      "raw": "(ok (tuple (notification \"fuel-fair-book\") (payload (tuple (amount u237349155) (book SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx)))))"
     },
     {
       "label": "vault STX 0 after the sweep (the float goes with it)",

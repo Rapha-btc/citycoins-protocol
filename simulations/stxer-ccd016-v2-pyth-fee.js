@@ -14,7 +14,7 @@
 // runs router-swap.
 //
 // 2026-11-18 port: on the LIVE Jing stack the vault binds
-// (markets-sbtc-stx-jing-v6-5 + swap-router-sbtc-stx-jing-v5-6, real
+// (markets-sbtc-stx-jing-v6-5 + swap-router-sbtc-stx-jing-v6 (jing repo bytes, deployed first), real
 // principals, live state); shared setup in simulations/_vault-live-v6-5.mjs.
 // The book bid rests pegged at the mid (a fixed bid at any price would cross
 // the live rung asks) and the keeper settles it.

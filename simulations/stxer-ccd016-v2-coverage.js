@@ -1,7 +1,7 @@
 // stxer-ccd016-v2-coverage.js
 // SELF-VERIFYING stxer mainnet-fork harness for ccd016-swap-vault-mia-v2, on
 // the LIVE Jing stack the vault binds: markets-sbtc-stx-jing-v6-5 +
-// swap-router-sbtc-stx-jing-v5-6 at their real principals and live state
+// swap-router-sbtc-stx-jing-v6 (repo bytes, deployed first: not on mainnet) at their real principals and live state
 // (2026-11-18 port; the old harness deployed a fresh v6-3 stack, which the
 // vault no longer binds). Shared setup: simulations/_vault-live-v6-5.mjs.
 //
@@ -28,7 +28,7 @@
 // Run: node simulations/stxer-ccd016-v2-coverage.js
 import fs from "node:fs";
 import {
-  uintCV, noneCV, listCV, tupleCV, stringAsciiCV, bufferCV, falseCV,
+  uintCV, intCV, noneCV, listCV, tupleCV, stringAsciiCV, bufferCV, falseCV,
   standardPrincipalCV, someCV,
 } from "@stacks/transactions";
 import { liveSession, freshUpdate, patchedBaseDao, strip, sha, assertVaultBindsLive, DEP, MKT_ID, ROUTER_ID, SBTC, WSTX, P } from "./_vault-live-v6-5.mjs";
@@ -72,7 +72,7 @@ const PROXY_SRC = `
 (define-public (set-slippage (bps uint)) (contract-call? '${VAULT_ID} set-slippage-bps bps))
 (define-public (set-chunk (sats uint)) (contract-call? '${VAULT_ID} set-max-chunk-sats sats))
 (define-public (set-dia (bps uint)) (contract-call? '${VAULT_ID} set-dia-band-bps bps))
-(define-public (split (amount uint) (jing uint) (dlmm uint) (xyk uint) (velar uint) (update (buff 8192))) (contract-call? '${VAULT_ID} router-swap-split amount jing dlmm xyk velar update))
+(define-public (split (amount uint) (jing uint) (zest uint) (zt (list 32 int)) (dlmm uint) (xyk uint) (velar uint) (update (buff 8192))) (contract-call? '${VAULT_ID} router-swap-split amount jing zest zt dlmm xyk velar update))
 (define-public (probe) (ok { clock: (contract-call? '${VAULT_ID} get-clock), config: (contract-call? '${VAULT_ID} get-config), status: (contract-call? '${VAULT_ID} get-status) }))
 `;
 
@@ -104,7 +104,7 @@ async function main() {
 
   // ---- S0 ----
   await tx("DIA: push the Lazer prices, fresh", DIA_UPDATER, DIA, "set-multiple-values", [diaPush(lz.py, lz.px, FRESH_MS)], "(ok true)");
-  await ev("S0 config binds live market v6-5 + router v5-6 + the book", VAULT_ID, "(get-config)", (v) => v.includes(MKT_ID) && v.includes(ROUTER_ID) && v.includes(BOOK_ID) && v.includes("(maker-spread-bps u1)"));
+  await ev("S0 config binds live market v6-5 + router v6 + the book", VAULT_ID, "(get-config)", (v) => v.includes(MKT_ID) && v.includes(ROUTER_ID) && v.includes(BOOK_ID) && v.includes("(maker-spread-bps u1)"));
   await ev("S0 empty", VAULT_ID, "(is-empty)", "true");
   await tx("S0 probe (traced): no clock -> batch-start none, window-ends none", DEPLOYER, PROXY_ID, "probe", [], (v) => ok(v) && v.includes("(batch-start none)") && v.includes("(window-ends none)"));
   await tx("S0 jing-place with no clock -> u16030", STRANGER, VAULT_ID, "jing-place", [UPD], "(err u16030)");
@@ -248,12 +248,14 @@ async function main() {
   await ev("S8 vault STX from the take", VAULT_ID, "(get-status)", (v) => bare(field(v, "stx-balance")) > 0n);
 
   // ---- S8b router-swap-split ----
-  await tx("S8b stranger router-swap-split -> u16000", STRANGER, VAULT_ID, "router-swap-split", [uintCV(2000), uintCV(0), uintCV(2000), uintCV(0), uintCV(0), UPD2], "(err u16000)");
-  await tx("S8b proxy split 2000 = 0 + 1000 + 0 + 0 -> u16040 (mismatch)", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(1000), uintCV(0), uintCV(0), UPD2], "(err u16040)");
+  await tx("S8b stranger router-swap-split -> u16000", STRANGER, VAULT_ID, "router-swap-split", [uintCV(2000), uintCV(0), uintCV(0), listCV([]), uintCV(2000), uintCV(0), uintCV(0), UPD2], "(err u16000)");
+  await tx("S8b proxy split 2000 = 0 + 1000 + 0 + 0 -> u16040 (mismatch)", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(0), listCV([]), uintCV(1000), uintCV(0), uintCV(0), UPD2], "(err u16040)");
   await tx("S8b proxy set-slippage-bps 500", DEPLOYER, PROXY_ID, "set-slippage", [uintCV(500)], "(ok true)");
   await advance(1);
-  await tx("S8b proxy split 2000 sats, all to the DLMM -> ok, unsold 0", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(2000), uintCV(0), uintCV(0), UPD2], (v) => ok(v) && v.includes("(unsold u0)"));
-  await tx("S8b proxy split again in the same burn block -> u16044 (shared cooldown)", DEPLOYER, PROXY_ID, "split", [uintCV(1000), uintCV(0), uintCV(1000), uintCV(0), uintCV(0), UPD2], "(err u16044)");
+  await tx("S8b proxy split 2000 = 0 + zest 1 + dlmm 2000 -> u16040 (zest counts in the sum)", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(1), listCV([]), uintCV(2000), uintCV(0), uintCV(0), UPD2], "(err u16040)");
+  await tx("S8b proxy split 2000 = zest 1000 (ticks) + dlmm 1000, no Zest pool u3 on mainnet -> leg skipped, router min-out u3002", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(1000), listCV([intCV(-1), intCV(-2)]), uintCV(1000), uintCV(0), uintCV(0), UPD2], "(err u3002)");
+  await tx("S8b proxy split 2000 sats, all to the DLMM -> ok, unsold 0", DEPLOYER, PROXY_ID, "split", [uintCV(2000), uintCV(0), uintCV(0), listCV([]), uintCV(2000), uintCV(0), uintCV(0), UPD2], (v) => ok(v) && v.includes("(unsold u0)") && v.includes("(zest u0)"));
+  await tx("S8b proxy split again in the same burn block -> u16044 (shared cooldown)", DEPLOYER, PROXY_ID, "split", [uintCV(1000), uintCV(0), uintCV(0), listCV([]), uintCV(1000), uintCV(0), uintCV(0), UPD2], "(err u16044)");
   await tx("S8b proxy set-slippage-bps back to 100", DEPLOYER, PROXY_ID, "set-slippage", [uintCV(100)], "(ok true)");
 
   // ---- S9 recall ----
