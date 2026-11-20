@@ -119,8 +119,9 @@
 (define-constant ERR_COOLDOWN (err u16044))
 (define-constant ERR_BELOW_FLOOR (err u16047))
 ;; the router lets each leg land up to ROUND_SLACK (2) sats under the limit;
-;; four legs at most
-(define-constant ROUTER_SLACK_SATS u8)
+;; four legs at most (8), plus the Zest walk: up to 32 bins, each rounding up
+;; to 2 sats against the seller (64; bounty mwofjt42, Valiant Brio F-01)
+(define-constant ROUTER_SLACK_SATS u72)
 ;; least a fund must bring to restart the window, open or elapsed (bounty mw4761 H2)
 (define-constant MIN_RESTART_SATS u500000)
 (define-constant ERR_UPDATE_REQUIRED (err u16045))

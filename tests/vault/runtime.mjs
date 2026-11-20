@@ -113,7 +113,7 @@ ok(call('v6-market','set-min-token-x-deposit',[u(1)],admin));ok(gov('set-window-
 ok(vault('jing-place',[update]));eq(read('v6-market','get-token-x-deposit',[read('v6-market','get-current-cycle'),Cl.principal(p(V))]).value,1n);
 ok(vault('close-batch'));eq(read(V,'is-empty').type,'true');eq(clock()['batch-start'].type,'none');
 // A fresh treasury pull must not restart an elapsed batch with more than router dust resting.
-fund(10);ok(vault('jing-place',[update]));const dustBatchStart=clock()['batch-start'].value.value;
+fund(100);ok(vault('jing-place',[update]));const dustBatchStart=clock()['batch-start'].value.value;
 sim.mineEmptyBurnBlocks(2);eq(clock()['window-elapsed'].type,'true');fund(1);
 eq(clock()['batch-start'].value.value,dustBatchStart);eq(clock()['window-elapsed'].type,'true');
 ok(gov('dao-reclaim',[Cl.none()]));ok(gov('dao-recall-sbtc'));eq(clock()['batch-start'].type,'none');
