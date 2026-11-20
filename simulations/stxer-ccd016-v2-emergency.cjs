@@ -1,7 +1,7 @@
 // Mainnet-fork emergency swap checks; no production transactions.
 // 2026-11-18: the vault binds the LIVE markets-sbtc-stx-jing-v6-5 +
-// swap-router-sbtc-stx-jing-v6; router v6 is not on mainnet, so it is deployed
-// first from the jing repo bytes as its real deployer (./_router-v6.mjs). The
+// swap-router-sbtc-stx-jing-v6; router v6 is LIVE since block 9525511 and used as-is
+// when the fork has it (code-equal to the jing repo bytes, ./_router-v6.mjs). The
 // emergency path (router-swap-split-dia) never touches the Jing book (jing 0).
 // Zest pool u3 does not exist on mainnet: splits pass zest u0 + an empty tick
 // list; one DIA-mode case passes a zest slice and is refused at min-out.
@@ -22,7 +22,7 @@ const NODE=process.env.STACKS_API_URL||'http://77.42.3.101/stacks-api',API=proce
 const nativeMode=process.argv.includes('--native');
 (async()=>{
 if(process.argv.includes('--recovery')) return (await import('./_vault-recovery-v6-3.mjs')).runRecoveryMatrix('citycoins');
-const {routerV6Source,ROUTER_V6,ROUTER_V6_ID,ROUTER_V6_CLARITY}=await import('./_router-v6.mjs');
+const {routerV6Source,ROUTER_V6,ROUTER_V6_ID,ROUTER_V6_CLARITY,ROUTER_V6_LIVE,routerV6LiveAt}=await import('./_router-v6.mjs');
 const tipResp=await fetch(NODE+'/extended/v1/block?limit=1',{signal:AbortSignal.timeout(20000)});
 if(!tipResp.ok)throw Error('tip '+tipResp.status);
 const tip=process.env.FORK_BLOCK?await (await fetch(NODE+'/extended/v1/block/by_height/'+process.env.FORK_BLOCK,{signal:AbortSignal.timeout(20000)})).json():(await tipResp.json()).results[0]; // FORK_BLOCK pins a rerun set to one height
@@ -32,7 +32,9 @@ const ev=(label,id,code)=>{b.addEvalCode(id,code);plan.push({label,kind:'eval'})
 const call=(label,id,fn,args,sender=DEP)=>{b.addContractCall({contract_id:id,function_name:fn,function_args:args,sender});plan.push({label,kind:'tx'});};
 const DAO='SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH';
 const router=routerV6Source();sourceHashes[ROUTER_V6]=router.sha;
-b.addContractDeploy({contract_name:ROUTER_V6,source_code:router.source,clarity_version:ROUTER_V6_CLARITY});plan.push({label:'deploy router v6 from jing repo bytes (not on mainnet)',kind:'tx'});
+// router v6 LIVE since block 9525511: use it when the fork has it (code-equal check in _router-v6.mjs), else deploy the repo bytes
+if(routerV6LiveAt(tip.height))sourceHashes[ROUTER_V6+' (live, code-equal)']=ROUTER_V6_LIVE.sha256;
+else{b.addContractDeploy({contract_name:ROUTER_V6,source_code:router.source,clarity_version:ROUTER_V6_CLARITY});plan.push({label:'deploy router v6 from jing repo bytes (fork below its publish block)',kind:'tx'});}
 const TREASURY=DAO+'.ccd002-treasury-mia-rewards-v3';
 for(const name of ['ccd015-redemption-book-mia-stx','ccd016-swap-vault-mia-v2']) {
  const source=fs.readFileSync(base+'/contracts/extensions/'+name+'.clar','utf8');if(name.startsWith('ccd016')&&!source.includes(`'${ROUTER_V6_ID})`))throw Error('vault does not bind router v6');sourceHashes[name]=createHash('sha256').update(source).digest('hex');
@@ -43,7 +45,7 @@ const proxy=`
 (define-public (set-vault-no-pyth-slippage-bps (n uint)) (begin (try! (admin)) (contract-call? '${VAULT} set-no-pyth-slippage-bps n)))
 (define-public (set-vault-window-blocks (n uint)) (begin (try! (admin)) (contract-call? '${VAULT} set-window-blocks n)))
 (define-public (set-vault-router-cooldown (n uint)) (begin (try! (admin)) (contract-call? '${VAULT} set-router-cooldown n)))
-(define-public (router-swap-split-dia (a uint) (z uint) (zt (list 32 int)) (d uint) (x uint) (v uint)) (begin (try! (admin)) (contract-call? '${VAULT} router-swap-split-dia a z zt d x v)))
+(define-public (router-swap-split-dia (a uint) (z uint) (zt (list 32 int)) (d uint) (x uint) (v uint) (f (optional uint))) (begin (try! (admin)) (contract-call? '${VAULT} router-swap-split-dia a z zt d x v f)))
 (define-public (allow-sbtc) (begin (try! (admin)) (contract-call? '${TREASURY} set-allowed '${SBTC} true)))`;
 b.addContractDeploy({contract_name:'sim-emergency-dao-proxy',source_code:proxy,clarity_version:ClarityVersion.Clarity6});plan.push({label:'deploy sim-only passed-proposal proxy',kind:'tx'});
 const daoResp=await fetch(NODE+'/extended/v1/contract/'+DAO+'.base-dao');if(!daoResp.ok)throw Error('DAO source '+daoResp.status);
@@ -69,38 +71,38 @@ call('fixture: real whale sBTC funds treasury on fork',SBTC,'transfer',[Cl.uint(
 call('fixture: proposal allows sBTC treasury withdrawals',POOL,'allow-sbtc',[]);
 call('treasury funds exact draft vault',VAULT,'fund-from-treasury',[]);
 ev('zero window immediately elapsed',VAULT,'(get-clock)');
-call('outsider cannot invoke emergency vault directly',VAULT,'router-swap-split-dia',[Cl.uint(1000),Cl.uint(0),Cl.list([]),Cl.uint(1000),Cl.uint(0),Cl.uint(0)],'SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM');
+call('outsider cannot invoke emergency vault directly',VAULT,'router-swap-split-dia',[Cl.uint(1000),Cl.uint(0),Cl.list([]),Cl.uint(1000),Cl.uint(0),Cl.uint(0),Cl.none()],'SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM');
 call('window above one week rejected',POOL,'set-vault-window-blocks',[Cl.uint(1009)]);
 call('DAO can restore patience during this batch',POOL,'set-vault-window-blocks',[Cl.uint(288)]);
-call('emergency sale blocked during patience',POOL,'router-swap-split-dia',[Cl.uint(1000),Cl.uint(0),Cl.list([]),Cl.uint(1000),Cl.uint(0),Cl.uint(0)]);
+call('emergency sale blocked during patience',POOL,'router-swap-split-dia',[Cl.uint(1000),Cl.uint(0),Cl.list([]),Cl.uint(1000),Cl.uint(0),Cl.uint(0),Cl.none()]);
 call('DAO can release patience during this batch',POOL,'set-vault-window-blocks',[Cl.uint(0)]);
-call('emergency split mismatch rejected',POOL,'router-swap-split-dia',[Cl.uint(1001),Cl.uint(0),Cl.list([]),Cl.uint(1000),Cl.uint(0),Cl.uint(0)]);
-call('emergency chunk above cap rejected',POOL,'router-swap-split-dia',[Cl.uint(1000001),Cl.uint(0),Cl.list([]),Cl.uint(1000001),Cl.uint(0),Cl.uint(0)]);
-call('emergency zero amount rejected',POOL,'router-swap-split-dia',[Cl.uint(0),Cl.uint(0),Cl.list([]),Cl.uint(0),Cl.uint(0),Cl.uint(0)]);
-call('emergency amount above balance rejected',POOL,'router-swap-split-dia',[Cl.uint(100001),Cl.uint(0),Cl.list([]),Cl.uint(100001),Cl.uint(0),Cl.uint(0)]);
+call('emergency split mismatch rejected',POOL,'router-swap-split-dia',[Cl.uint(1001),Cl.uint(0),Cl.list([]),Cl.uint(1000),Cl.uint(0),Cl.uint(0),Cl.none()]);
+call('emergency chunk above cap rejected',POOL,'router-swap-split-dia',[Cl.uint(1000001),Cl.uint(0),Cl.list([]),Cl.uint(1000001),Cl.uint(0),Cl.uint(0),Cl.none()]);
+call('emergency zero amount rejected',POOL,'router-swap-split-dia',[Cl.uint(0),Cl.uint(0),Cl.list([]),Cl.uint(0),Cl.uint(0),Cl.uint(0),Cl.none()]);
+call('emergency amount above balance rejected',POOL,'router-swap-split-dia',[Cl.uint(100001),Cl.uint(0),Cl.list([]),Cl.uint(100001),Cl.uint(0),Cl.uint(0),Cl.none()]);
 
 if(nativeMode){
 ev('fixture: DIA feed stale by one second',DIA,`(let ((old (unwrap-panic (contract-call? '${DIA} get-value "STX/USD"))) (now (unwrap-panic (get-stacks-block-info? time (- stacks-block-height u1))))) (map-set values "STX/USD" {value: (get value old), timestamp: (* (- now u7201) u1000)}))`);
 ev('DIA helper rejects stale feed',VAULT,'(get-dia-value "STX/USD")');
 ev('emergency quote falls back to native half-price',VAULT,'(get-no-pyth-price)');
-call('real native fallback swap, no Pyth or Jing',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(4000),Cl.uint(3000),Cl.uint(3000)]);
+call('real native fallback swap, no Pyth or Jing',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(4000),Cl.uint(3000),Cl.uint(3000),Cl.none()]);
 ev('balances after native fallback',VAULT,'{sbtc: (sbtc-balance), stx: (stx-get-balance current-contract)}');
 ev('fixture: DIA STX price zero',DIA,'(map-set values "STX/USD" {value: u0, timestamp: u0})');
 ev('zero DIA also falls back to native',VAULT,'(get-no-pyth-price)');
-call('outsider cannot use emergency DAO proxy',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0)],'SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM');
+call('outsider cannot use emergency DAO proxy',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0),Cl.none()],'SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM');
 ev('fixture: native coinbase zero',DEP+'.rfq-sbtc-stx-jing-v2-3','(var-set coinbase-ustx u0)');
 ev('neither price usable fails closed',VAULT,'(get-no-pyth-price)');
 call('fixture: disable cooldown only to isolate invalid price guard',POOL,'set-vault-router-cooldown',[Cl.uint(0)]);
-call('unusable price split rejected',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0)]);
+call('unusable price split rejected',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0),Cl.none()]);
 }else{
-call('real DIA emergency DLMM swap',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0)]);
+call('real DIA emergency DLMM swap',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0),Cl.none()]);
 ev('balances after DIA emergency',VAULT,'{sbtc: (sbtc-balance), stx: (stx-get-balance current-contract)}');
-call('second emergency swap same burn block rejected',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0)]);
+call('second emergency swap same burn block rejected',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(0),Cl.list([]),Cl.uint(10000),Cl.uint(0),Cl.uint(0),Cl.none()]);
 call('DAO disables cooldown for full drain test',POOL,'set-vault-router-cooldown',[Cl.uint(0)]);
-call('zest slice + ticks with no Zest pool u3: leg skipped, min-out refuses',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(4000),Cl.list([Cl.int(-1),Cl.int(-2)]),Cl.uint(6000),Cl.uint(0),Cl.uint(0)]);
-call('emergency zest split mismatch rejected',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(4001),Cl.list([]),Cl.uint(6000),Cl.uint(0),Cl.uint(0)]);
-ev('balances unchanged after refused zest slice',VAULT,'{sbtc: (sbtc-balance)}');
-call('real DIA full-drain emergency DLMM swap',POOL,'router-swap-split-dia',[Cl.uint(90000),Cl.uint(0),Cl.list([]),Cl.uint(90000),Cl.uint(0),Cl.uint(0)]);
+call('zest slice + ticks with no Zest pool u3, fallback none: Zest fills 0, kept unsold, sale ok',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(4000),Cl.list([Cl.int(-1),Cl.int(-2)]),Cl.uint(6000),Cl.uint(0),Cl.uint(0),Cl.none()]);
+call('emergency zest split mismatch rejected',POOL,'router-swap-split-dia',[Cl.uint(10000),Cl.uint(4001),Cl.list([]),Cl.uint(6000),Cl.uint(0),Cl.uint(0),Cl.none()]);
+ev('balances after the zest slice: 6000 sold, 4000 kept',VAULT,'{sbtc: (sbtc-balance)}');
+call('real DIA full-drain emergency DLMM swap',POOL,'router-swap-split-dia',[Cl.uint(84000),Cl.uint(0),Cl.list([]),Cl.uint(84000),Cl.uint(0),Cl.uint(0),Cl.none()]);
 ev('full drain closes batch automatically',VAULT,'{empty: (is-empty), clock: (var-get batch-start), sbtc: (sbtc-balance)}');
 call('public fuel forwards all emergency proceeds',VAULT,'fuel-fair-book',[]);
 ev('no STX retained after fuel',VAULT,'{stx: (stx-get-balance current-contract)}');
@@ -125,9 +127,8 @@ const expectedErrors={
  'emergency zero amount rejected':'(err u16006)',
  'emergency amount above balance rejected':'(err u16006)',
  'second emergency swap same burn block rejected':'(err u16044)',
- 'zest slice + ticks with no Zest pool u3: leg skipped, min-out refuses':'(err u3002)',
  'emergency zest split mismatch rejected':'(err u16040)',
- 'balances unchanged after refused zest slice':'(tuple (sbtc u90000))',
+ 'balances after the zest slice: 6000 sold, 4000 kept':'(tuple (sbtc u84000))',
  'full drain closes batch automatically':'(tuple (clock none) (empty true) (sbtc u0))',
  'no STX retained after fuel':'(tuple (stx u0))',
  'DIA helper rejects stale feed':'(err u16036)',

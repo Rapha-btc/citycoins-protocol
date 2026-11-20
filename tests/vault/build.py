@@ -66,6 +66,11 @@ for n,s in files.items():
    assert s.count(f'  ({fn} ')==1,fn
    s=s.replace(f'  ({fn} ',f'  ({fn}-fixture-v6 ')
    s+=f'(define-public ({fn} {sig}) ({fn}-fixture-v6 {args}))\n'
+  # ccd016 v2 reads the v6-5 rebate getter (router-swap / jing-take stale-update
+  # guard). The fixture predates it: an empty update = base 20 bps, otherwise the
+  # update's leading bytes encode the rebate (same shim build-mw4761.py used to add).
+  if '(define-read-only (get-taker-rebate-bps-for ' not in s:
+   s+='\n;; fixture only: update carries the rebate getter result, not a signed price.\n(define-read-only (get-taker-rebate-bps-for (update (buff 8192)))\n  (if (is-eq (len update) u0) u20\n    (buff-to-uint-be (unwrap-panic (as-max-len? update u16)))))\n'
   s+='\n(define-public (test-park (who principal)) (park-token-x (var-get current-cycle) (contract-call? .mock-lazer-oracle get-mid) who (get-token-x-depositors (var-get current-cycle))))\n'
   start=s.index('(define-public (refresh-mid');depth=0
   for i in range(start,len(s)):

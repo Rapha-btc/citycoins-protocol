@@ -23,12 +23,11 @@ for name, expected in EXPECTED.items():
         raise SystemExit(f'Unexpected {name} sha256: {hashes[name]}; expected {expected}')
 market = OUT / 'contracts/v6-market.clar'
 source = market.read_text()
-assert '(define-read-only (get-taker-rebate-bps-for ' not in source
+# build.py now adds the rebate getter shim itself (same definition: empty
+# update = base 20 bps, else the update's bytes encode the rebate), so the
+# plain `--rv` build compiles; only the pending-bucket helper is added here.
+assert '(define-read-only (get-taker-rebate-bps-for (update (buff 8192)))' in source
 market.write_text(source + '''
-;; SDK fixture only: update carries the rebate getter result, not a signed price.
-(define-read-only (get-taker-rebate-bps-for (update (buff 8192)))
-  (if (is-eq (len update) u0) u20
-    (buff-to-uint-be (unwrap-panic (as-max-len? update u16)))))
 ;; Fund the pending bucket with a real token transfer. The older market fixture
 ;; has a pending getter but no deposit path that populates it.
 (define-public (test-fund-pending (who principal) (amount uint))

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { Cl, cvToString, deserializeCV } from '@stacks/transactions';
 import { SimulationBuilder, getSimulationResult, getSimulationTip, submitSimulationSteps, callContract } from 'stxer';
-import { ROUTER_V6, ROUTER_V6_ID, ROUTER_V6_FILE, ROUTER_V6_CLARITY, routerV6Source } from './_router-v6.mjs';
+import { ROUTER_V6, ROUTER_V6_ID, ROUTER_V6_FILE, ROUTER_V6_CLARITY, ROUTER_V6_LIVE, routerV6Source, routerV6LiveAt, routerV6Note } from './_router-v6.mjs';
 
 export { ROUTER_V6_ID };
 
@@ -33,7 +33,7 @@ export const SELLER = 'SP3HXJJMJQ06GNAZ8XWDN1QM48JEDC6PP6W3YZPZJ';
 // Book pinned to 2440559 (bounty mw4761 fixes), vault to its router-v6 rebind (zest leg); override with BOOK_SHA256 / VAULT_SHA256 ('skip' disables).
 export const PINS = {
   [BOOK_NAME]: process.env.BOOK_SHA256 || '8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a',
-  [VAULT_NAME]: process.env.VAULT_SHA256 || '67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935',
+  [VAULT_NAME]: process.env.VAULT_SHA256 || '237e2f007825b40a1b6f62fab6aae0e154eb11f0d0ac026a53df5a7a830f8382',
 };
 
 export function harness(outDir) {
@@ -108,10 +108,13 @@ export function harness(outDir) {
     const files = [[BOOK_NAME, `contracts/extensions/${BOOK_NAME}.clar`], [VAULT_NAME, `contracts/extensions/${VAULT_NAME}.clar`],
       [PROPOSAL_NAME, `contracts/proposals/${PROPOSAL_NAME}.clar`]];
     let builder = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(height).withSender(DEP);
-    // router v6 is not on mainnet: deployed first from the jing repo bytes as its real deployer
+    // router v6 is LIVE since block 9525511: at or past it use the live router (code-equal check in
+    // _router-v6.mjs); on an older parent deploy the deployed-commit bytes as its real deployer first
     const router = routerV6Source(); report.sourceHashes[ROUTER_V6_FILE] = router.sha;
-    report.fixtures.push(`${ROUTER_V6_ID} deployed on the fork from jing repo bytes (sha ${router.sha}); not live on mainnet.`);
-    builder = builder.addContractDeploy({ contract_name: ROUTER_V6, source_code: router.source, clarity_version: ROUTER_V6_CLARITY });
+    const routerLive = routerV6LiveAt(height);
+    report.fixtures.push(routerV6Note(height));
+    if (routerLive) report.sourceHashes[`${ROUTER_V6} (live, code-equal)`] = ROUTER_V6_LIVE.sha256;
+    else builder = builder.addContractDeploy({ contract_name: ROUTER_V6, source_code: router.source, clarity_version: ROUTER_V6_CLARITY });
     for (const [name, file] of files) {
       const source = fs.readFileSync(file, 'utf8');
       const hash = createHash('sha256').update(source).digest('hex'); report.sourceHashes[file] = hash;
@@ -126,7 +129,7 @@ export function harness(outDir) {
     const res = await getSimulationResult(h.sid);
     let n = 0;
     for (const step of res.steps) if (step.Result?.Transaction) check(`deploy #${n++}`, decode(step), function deployed(v) { return v === 'true' || v === '(ok true)'; });
-    check('deploy receipts (router v6 + book + vault + ccip028 + extra)', n, 4 + extra.length);
+    check(`deploy receipts (${routerLive ? '' : 'router v6 + '}book + vault + ccip028 + extra)`, n, (routerLive ? 3 : 4) + extra.length);
     await h.signal3('CCIP-028', PROPOSAL);
     await h.read('vault is an extension', BASE, `(is-extension '${VAULT})`, 'true');
     // ccip028 does not make the book an extension; its DAO calls run as tx-sender = base-dao
