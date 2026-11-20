@@ -160,7 +160,7 @@
 ;; the maker venue and the price oracle. The smart router splits a taker
 ;; order across the book, Bitflow DLMM, Bitflow XYK and Velar at execution.
 (define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5)
-(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6)
+(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6)
 (define-constant WSTX_TOKEN 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2)
 (define-constant ASSET_WSTX "wstx")
 
@@ -679,8 +679,20 @@
   )
 )
 
+;; Zest leg of a split sale (router v6). Selling sBTC is Zest's y -> x, so the
+;; caller passes the ticks walking down from the market, as the FE does. The
+;; route price (Zest's min-price) is 0: the leg's floor is `amm-mins.zest`,
+;; floor-out of the same oracle limit as dlmm and xyk, and the router scales
+;; it to what Zest filled. zest u0 with an empty list skips the leg.
+(define-private (zest-route (ticks (list 32 int)))
+  {
+    ticks: ticks,
+    price: u0,
+  }
+)
+
 ;; DAO only. Same liquidation sale through the router's manual entry: the caller picks
-;; the jing / dlmm / xyk / velar split (jing u0 while a position is still
+;; the jing / zest / dlmm / xyk / velar split (jing u0 while a position is still
 ;; resting on the book, the market refuses a taker with resting size). Every
 ;; leg's min comes from the oracle: mid minus SLIPPAGE for jing, dlmm, xyk
 ;; and mid minus VELAR_SLIPPAGE_BPS for velar, twice each venue's fee, so a
@@ -690,6 +702,8 @@
 (define-public (router-swap-split
     (amount uint)
     (jing uint)
+    (zest uint)
+    (zest-ticks (list 32 int))
     (dlmm uint)
     (xyk uint)
     (velar uint)
@@ -700,6 +714,7 @@
       (limit (floor-of mid))
       (velar-limit (/ (* mid (- BPS_PRECISION VELAR_SLIPPAGE_BPS)) BPS_PRECISION))
       (mins {
+        zest: (floor-out zest limit),
         dlmm: (floor-out dlmm limit),
         xyk: (floor-out xyk limit),
         velar: (floor-out velar velar-limit),
@@ -707,7 +722,7 @@
       (market-mins (contract-call? JING_MARKET get-min-deposits))
     )
     (try! (is-dao-or-extension))
-    (asserts! (is-eq amount (+ jing dlmm xyk velar)) ERR_SPLIT_MISMATCH)
+    (asserts! (is-eq amount (+ jing zest dlmm xyk velar)) ERR_SPLIT_MISMATCH)
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (asserts! (<= amount (var-get max-chunk-sats)) ERR_CHUNK_TOO_BIG)
     (try! (check-amount amount))
@@ -718,12 +733,14 @@
         )
         (try! (contract-call? JING_ROUTER swap-sbtc-for-stx amount jing limit
           (some update) none {
+          zest: zest,
           dlmm: dlmm,
           xyk: xyk,
           velar: velar,
         }
           mins
-          (+ (floor-out (+ jing dlmm xyk) limit) (floor-out velar velar-limit))
+          (+ (floor-out (+ jing zest dlmm xyk) limit) (floor-out velar velar-limit))
+          (zest-route zest-ticks)
         ))
       ))))
       (close-if-empty)
@@ -732,6 +749,7 @@
         payload: {
           amount: amount,
           jing: jing,
+          zest: zest,
           dlmm: dlmm,
           xyk: xyk,
           velar: velar,
@@ -749,13 +767,15 @@
 ;; Emergency AMM-only liquidation. No Jing allocation or Pyth argument.
 (define-public (router-swap-split-dia
     (amount uint)
+    (zest uint)
+    (zest-ticks (list 32 int))
     (dlmm uint)
     (xyk uint)
     (velar uint)
   )
   (begin
     (try! (is-dao-or-extension))
-    (asserts! (is-eq amount (+ dlmm xyk velar)) ERR_SPLIT_MISMATCH)
+    (asserts! (is-eq amount (+ zest dlmm xyk velar)) ERR_SPLIT_MISMATCH)
     (asserts! (window-elapsed) ERR_WINDOW_OPEN)
     (asserts! (<= amount (var-get max-chunk-sats)) ERR_CHUNK_TOO_BIG)
     (try! (check-amount amount))
@@ -764,6 +784,7 @@
       (let (
           (limit (get limit price))
           (mins {
+            zest: (floor-out zest limit),
             dlmm: (floor-out dlmm limit),
             xyk: (floor-out xyk limit),
             velar: (floor-out velar limit),
@@ -772,11 +793,12 @@
         (let ((result (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount))
             (try! (contract-call? JING_ROUTER swap-sbtc-for-stx amount u0 limit none
               none {
+              zest: zest,
               dlmm: dlmm,
               xyk: xyk,
               velar: velar,
             }
-              mins (floor-out amount limit)
+              mins (floor-out amount limit) (zest-route zest-ticks)
             ))
           ))))
           (close-if-empty)
@@ -784,6 +806,7 @@
             notification: "router-swap-split-dia",
             payload: {
               amount: amount,
+              zest: zest,
               dlmm: dlmm,
               xyk: xyk,
               velar: velar,
