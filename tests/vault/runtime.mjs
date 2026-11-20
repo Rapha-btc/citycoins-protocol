@@ -37,14 +37,14 @@ eq(clock()['window-open'].type,'false');eq(clock()['window-elapsed'].type,'false
 err(vault('close-batch'),16032);err(vault('fund-from-treasury'),16010);err(vault('fuel-fair-book'),16006);err(gov('dao-recall-sbtc'),16006);
 err(vault('jing-place',[update]),16030);err(vault('jing-reclaim',[Cl.some(update)]),16031);err(gov('jing-take',[u(1),update]),16031);
 err(vault('jing-refloor',[update]),16000);err(gov('jing-refloor',[update]),16034);err(vault('jing-take',[u(1),update]),16000);
-err(vault('router-swap-split',[u(1),u(0),u(0),zl,u(1),u(0),u(0),update]),16000);
-err(vault('router-swap-split-dia',[u(1),u(0),zl,u(1),u(0),u(0)]),16000);
+err(vault('router-swap-split',[u(1),u(0),u(0),zl,u(1),u(0),u(0),update,Cl.none()]),16000);
+err(vault('router-swap-split-dia',[u(1),u(0),zl,u(1),u(0),u(0),Cl.none()]),16000);
 resetWorld();ok(sim.transferSTX(100000000000n,p('mock-router'),admin));
 // Direct donations do not start the clock; first treasury funding does.
 ok(call('mock-ft','mint',[u(1000),cp(V)]));eq(clock()['batch-start'].type,'none');fund(100000);
 eq(clock()['window-open'].type,'true');eq(clock()['window-ends'].type,'some');const initialStart=clock()['batch-start'].value.value;
 fund(1000);eq(clock()['batch-start'].value.value,initialStart);
-err(vault('close-batch'),16043);err(vault('router-swap',[update]),16031);err(gov('router-swap-split',[u(1),u(0),u(0),zl,u(1),u(0),u(0),update]),16031);err(gov('router-swap-split-dia',[u(1),u(0),zl,u(1),u(0),u(0)]),16031);
+err(vault('close-batch'),16043);err(vault('router-swap',[update]),16031);err(gov('router-swap-split',[u(1),u(0),u(0),zl,u(1),u(0),u(0),update,Cl.none()]),16031);err(gov('router-swap-split-dia',[u(1),u(0),zl,u(1),u(0),u(0),Cl.none()]),16031);
 ok(vault('jing-place',[update]));err(vault('jing-place',[update]),16006);
 err(vault('jing-reclaim',[Cl.some(update)]),16031);ok(gov('jing-refloor',[update]));
 const order=read('v6-market','get-token-x-order',[cp(V)]).value;eq(order['spread-bps'].value.value,1n);
@@ -55,9 +55,9 @@ ok(gov('set-maker-spread-bps',[u(1)]));ok(gov('jing-refloor',[update]));eq(sprea
 // DAO can change the window during a batch: zero immediately elapses it.
 ok(gov('set-window-blocks',[u(0)]));eq(clock()['window-elapsed'].type,'true');ok(gov('jing-refloor',[update]));
 ok(vault('jing-reclaim',[Cl.some(update)]));ok(vault('jing-reclaim',[Cl.some(update)]));ok(gov('dao-reclaim',[Cl.none()]));
-err(gov('router-swap-split',[u(2),u(0),u(0),zl,u(1),u(0),u(0),update]),16040);
-err(gov('router-swap-split',[u(1000001),u(0),u(0),zl,u(1000001),u(0),u(0),update]),16039);
-err(gov('router-swap-split',[u(0),u(0),u(0),zl,u(0),u(0),u(0),update]),16006);
+err(gov('router-swap-split',[u(2),u(0),u(0),zl,u(1),u(0),u(0),update,Cl.none()]),16040);
+err(gov('router-swap-split',[u(1000001),u(0),u(0),zl,u(1000001),u(0),u(0),update,Cl.none()]),16039);
+err(gov('router-swap-split',[u(0),u(0),u(0),zl,u(0),u(0),u(0),update,Cl.none()]),16006);
 // DIA cross-check accepts endpoints, rejects divergence and stale feeds.
 for(const [skew,want] of [[13000,16037],[8000,16037]]){ok(call('mock-dia','set-skew',[u(skew)]));err(vault('router-swap',[update]),want);}
 ok(call('mock-dia','set-skew',[u(10000)]));ok(call('mock-dia','set-stale',[Cl.bool(true)]));err(vault('router-swap',[update]),16036);
@@ -66,7 +66,7 @@ ok(call('v6-market','test-zero-price',[Cl.bool(true)]));err(vault('router-swap',
 // Cooldown is shared between required-Pyth and emergency paths in one burn block.
 ok(call('mock-ft','mint',[u(1000),cp('mock-treasury')]));fund(1000);
 sim.mineEmptyBurnBlock();
-const batch=sim.mineBlock([tx.callPublicFn(V,'router-swap-split',[u(1000),u(0),u(0),zl,u(400),u(300),u(300),update],admin),tx.callPublicFn(V,'router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0)],admin)]);
+const batch=sim.mineBlock([tx.callPublicFn(V,'router-swap-split',[u(1000),u(0),u(0),zl,u(400),u(300),u(300),update,Cl.none()],admin),tx.callPublicFn(V,'router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0),Cl.none()],admin)]);
 ok(batch[0]);err(batch[1],16044);sim.mineEmptyBurnBlock();ok(gov('set-router-cooldown',[u(0)]));
 // Quote/floor calculations, exact two-hour boundary and all response fallbacks.
 eq(quote().value.value.limit.value,28800000000000n);
@@ -77,22 +77,22 @@ ok(call('mock-native','set-failed',[Cl.bool(true)]));err({result:quote()},900);
 ok(call('mock-native','set-failed',[Cl.bool(false)]));ok(call('mock-native','set-mid',[u(0)]));err({result:quote()},16013);
 ok(call('mock-native','set-mid',[u(1)]));err({result:quote()},16013);
 resetWorld();ok(call('mock-dia','set-failed',[Cl.bool(true)]));eq(quote().value.value['dia-error'].value.value,16035n);
-let before=ft(p(V)),beforeSTX=stx(p(V));const native=ok(gov('router-swap-split-dia',[u(1000),u(0),zl,u(400),u(300),u(300)]));
+let before=ft(p(V)),beforeSTX=stx(p(V));const native=ok(gov('router-swap-split-dia',[u(1000),u(0),zl,u(400),u(300),u(300),Cl.none()]));
 eq(native.value.payload.value['price-source'].value,'native');eq(ft(p(V)),before-1000n);eq(stx(p(V)),beforeSTX+3200000n);
 resetWorld();
 // A valid but tiny cross ratio, then a nonzero mid whose tolerance floor rounds to zero.
 ok(call('mock-lazer-oracle','set-mid',[u(1)]));ok(call('mock-dia','set-stx-usd',[u(100000000000000000n)]));err({result:read(V,'get-dia-price')},16013);
 ok(call('mock-dia','set-stx-usd',[u(100000000)]));err({result:quote()},16013);resetWorld();
 ok(call('mock-ft','mint',[u(1),cp('mock-treasury')]));fund(1);
-for(const [a,c] of [[[u(2),u(0),zl,u(1),u(0),u(0)],16040],[[u(1000001),u(0),zl,u(1000001),u(0),u(0)],16039],[[u(0),u(0),zl,u(0),u(0),u(0)],16006],[[u(999999),u(0),zl,u(999999),u(0),u(0)],16006],[[u(2),u(1),zl,u(0),u(0),u(0)],16040],[[u(1000001),u(1000001),zl,u(0),u(0),u(0)],16039]])err(gov('router-swap-split-dia',a),c);
+for(const [a,c] of [[[u(2),u(0),zl,u(1),u(0),u(0),Cl.none()],16040],[[u(1000001),u(0),zl,u(1000001),u(0),u(0),Cl.none()],16039],[[u(0),u(0),zl,u(0),u(0),u(0),Cl.none()],16006],[[u(999999),u(0),zl,u(999999),u(0),u(0),Cl.none()],16006],[[u(2),u(1),zl,u(0),u(0),u(0),Cl.none()],16040],[[u(1000001),u(1000001),zl,u(0),u(0),u(0),Cl.none()],16039]])err(gov('router-swap-split-dia',a),c);
 // Price, min-out and transfer failures revert balances, clock and cooldown atomically.
 ok(call('mock-ft','mint',[u(1000),cp('mock-treasury')]));fund(1000);
 before=ft(p(V));beforeSTX=stx(p(V));const beforeConfig=config(),beforeClock=cvToString(read(V,'get-clock'));
-ok(call('mock-dia','set-skew',[u(13000)]));err(gov('router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0)]),3002);
+ok(call('mock-dia','set-skew',[u(13000)]));err(gov('router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0),Cl.none()]),3002);
 eq(ft(p(V)),before);eq(stx(p(V)),beforeSTX);eq(config(),beforeConfig);eq(cvToString(read(V,'get-clock')),beforeClock);resetWorld();
-ok(call('mock-ft','set-blocked-recipient',[Cl.some(cp('mock-router'))]));err(gov('router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0)]),402);eq(ft(p(V)),before);eq(config(),beforeConfig);ok(call('mock-ft','set-blocked-recipient',[Cl.none()]));
-ok(call('mock-dia','set-failed',[Cl.bool(true)]));ok(call('mock-native','set-failed',[Cl.bool(true)]));err(gov('router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0)]),900);eq(config(),beforeConfig);resetWorld();
-ok(gov('router-swap-split-dia',[u(before),u(0),zl,u(before),u(0),u(0)]));eq(read(V,'is-empty').type,'true');eq(clock()['batch-start'].type,'none');
+ok(call('mock-ft','set-blocked-recipient',[Cl.some(cp('mock-router'))]));err(gov('router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0),Cl.none()]),402);eq(ft(p(V)),before);eq(config(),beforeConfig);ok(call('mock-ft','set-blocked-recipient',[Cl.none()]));
+ok(call('mock-dia','set-failed',[Cl.bool(true)]));ok(call('mock-native','set-failed',[Cl.bool(true)]));err(gov('router-swap-split-dia',[u(1000),u(0),zl,u(1000),u(0),u(0),Cl.none()]),900);eq(config(),beforeConfig);resetWorld();
+ok(gov('router-swap-split-dia',[u(before),u(0),zl,u(before),u(0),u(0),Cl.none()]));eq(read(V,'is-empty').type,'true');eq(clock()['batch-start'].type,'none');
 const bookBefore=stx(p(B)),proceeds=stx(p(V));ok(vault('fuel-fair-book'));eq(stx(p(B)),bookBefore+proceeds);eq(stx(p(V)),0n);
 // DAO recall / reclaim in the patience phase, parked funds and a remaining live STX balance.
 ok(gov('set-window-blocks',[u(288)]));fund(10000);ok(vault('jing-place',[update]));ok(gov('dao-reclaim',[Cl.none()]));err(vault('dao-reclaim',[Cl.none()]),16000);
