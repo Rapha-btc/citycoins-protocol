@@ -194,8 +194,8 @@ for (const elapsed of [false, true]) {
   });
 }
 
-for (const remaining of [8n, 9n]) {
-  test(`mw4761 elapsed legacy dust boundary with ${remaining} sats and a 1-sat top-up`, async function () {
+for (const remaining of [72n, 73n]) {
+  test(`mw4761 elapsed dust boundary (ROUTER_SLACK_SATS u72) with ${remaining} sats and a 1-sat top-up`, async function () {
     // Arrange.
     const w = await setup();
     ok(w.fund(remaining));
@@ -205,10 +205,10 @@ for (const remaining of [8n, 9n]) {
     // Act.
     const receipt = w.fund(1n);
 
-    // Assert: legacy <=8 rule still opens; 9 sats cannot be re-armed for 1 sat.
-    expectFunding(w, receipt, 1n, remaining === 8n);
+    // Assert: <= 72 (ROUTER_SLACK_SATS) still opens; 73 sats cannot be re-armed for 1 sat.
+    expectFunding(w, receipt, 1n, remaining === 72n);
     expect(w.ft(VAULT)).toBe(remaining + 1n);
-    if (remaining === 8n) expectRestart(w, previous);
+    if (remaining === 72n) expectRestart(w, previous);
     else {
       expect(w.clock()['batch-start']).toEqual(Cl.some(Cl.uint(previous)));
       expect(w.clock()['window-elapsed']).toEqual(Cl.bool(true));
