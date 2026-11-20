@@ -5,8 +5,8 @@
 //
 // Exact repository bytes (sha256 pinned in _jing-live-v6-5.mjs), deployed with
 // the book and the ccip028 proposal from the real deployer. LIVE Jing market
-// v6-5, unchanged; router v6 (not on mainnet) deployed first from the jing
-// repo bytes as its real deployer. DAO actions are test proposals signalled by
+// v6-5, unchanged; router v6 LIVE since block 9525511 (used as-is when the fork has it, code-equal to the jing
+// repo bytes modulo comments; older forks deploy those bytes). DAO actions are test proposals signalled by
 // three real ccd001-direct-execute approvers and executed by base-dao; no
 // var-set, map-set or SetContractCode anywhere. Real sBTC holder transfers are
 // the only funding fixture. Unsigned simulated senders; nothing is broadcast.
@@ -28,7 +28,7 @@
 import fs from 'node:fs';
 import { Cl, ClarityVersion, cvToString, deserializeCV, makeUnsignedContractDeploy, PostConditionMode } from '@stacks/transactions';
 import { SimulationBuilder, getSimulationResult, getSimulationTip, submitSimulationSteps, callContract, getNonce, setSender } from 'stxer';
-import { exactSources, liveJingHashes, routerDeploy, VAULT_SHA, BOOK_SHA, lazerFeedTimes, SBTC_HOLDER } from './_jing-live-v6-5.mjs';
+import { exactSources, liveJingHashes, routerDeploy, routerV6Note, VAULT_SHA, BOOK_SHA, lazerFeedTimes, SBTC_HOLDER } from './_jing-live-v6-5.mjs';
 import { fetchLazerUpdateAny } from './_vault-lazer.mjs';
 import { createHash } from 'node:crypto';
 
@@ -140,12 +140,15 @@ async function main() {
     'sim-neg-v-recall-empty': `(try! (contract-call? '${VAULT} dao-recall-sbtc))`,
     'sim-neg-v-trim-500': `(try! (contract-call? '${TREASURY} withdraw-ft '${SBTC} (- ${sbtcOf(TREASURY)} u500) '${SBTC_HOLDER}))`,
     'sim-neg-v-slippage-0': `(try! (contract-call? '${VAULT} set-slippage-bps u0)) (try! (contract-call? '${VAULT} set-no-pyth-slippage-bps u0))`,
-    'sim-neg-v-dia-split': `(try! (contract-call? '${VAULT} router-swap-split-dia u1000000 u0 (list) u0 u1000000 u0))`,
+    'sim-neg-v-dia-split': `(try! (contract-call? '${VAULT} router-swap-split-dia u1000000 u0 (list) u0 u1000000 u0 none))`,
     'sim-neg-v-band-1': `(try! (contract-call? '${VAULT} set-dia-band-bps u1))`,
   };
-  // router v6 is not on mainnet: deployed first from the jing repo bytes as DEP
-  let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(height).withSender(DEP)
-    .addContractDeploy(routerDeploy())
+  // router v6 is LIVE from block 9525511: used as-is when the fork has it, else deployed first from the jing repo bytes as DEP
+  const routerTx = routerDeploy(height);
+  report.fixtures.push(routerV6Note(height)); console.log(`router: ${routerV6Note(height)}`);
+  let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(height).withSender(DEP);
+  if (routerTx) b = b.addContractDeploy(routerTx);
+  b = b
     .addContractDeploy({ contract_name: BOOK_NAME, source_code: book, clarity_version: 6 })
     .addContractDeploy({ contract_name: VAULT_NAME, source_code: vault, clarity_version: 6 })
     .addContractDeploy({ contract_name: PROPOSAL_NAME, source_code: proposalSrc, clarity_version: 6 });
@@ -153,7 +156,7 @@ async function main() {
   sid = await b.run();
   report.simulationId = sid; report.url = `https://stxer.xyz/simulations/mainnet/${sid}`; report.forkHeight = height;
   console.log(report.url); save();
-  const names = ['swap-router-sbtc-stx-jing-v6', BOOK_NAME, VAULT_NAME, PROPOSAL_NAME, ...Object.keys(statics)];
+  const names = [...(routerTx ? ['swap-router-sbtc-stx-jing-v6'] : []), BOOK_NAME, VAULT_NAME, PROPOSAL_NAME, ...Object.keys(statics)];
   const steps = (await getSimulationResult(sid)).steps.filter((s) => s.Result?.Transaction);
   names.forEach((n, i) => check(`deploy ${n}`, decode(steps[i]), (v) => v === 'true' || ok(v)));
   report.initialTip = await getSimulationTip(sid);
@@ -195,9 +198,9 @@ async function main() {
   const bad = Cl.bufferFromHex(truncate(hex));
   await refused('L501', 'jing-place with a tampered update', (l, c) => call(l, STRANGER, VAULT, 'jing-place', [bad], c), '(err u2101)');
   await refused('L534', 'jing-refloor with a tampered update', (l, c) => call(l, STRANGER, VAULT, 'jing-refloor', [bad], c), '(err u2101)');
-  await refused('L682', 'router-swap-split with a tampered update', (l, c) => call(l, STRANGER, VAULT, 'router-swap-split', [u(100500), u(100500), u(0), Cl.list([]), u(0), u(0), u(0), bad], c), '(err u2101)');
+  await refused('L682', 'router-swap-split with a tampered update', (l, c) => call(l, STRANGER, VAULT, 'router-swap-split', [u(100500), u(100500), u(0), Cl.list([]), u(0), u(0), u(0), bad, Cl.none()], c), '(err u2101)');
   await refused('L541', 'DAO jing-refloor with nothing resting', (l, c) => governFresh(`(try! (contract-call? '${VAULT} jing-refloor 0x${hex}))`, c), '(err u16034)');
-  await refused('L694', 'DAO router-swap-split while the window is open', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u1000 u1000 u0 (list) u0 u0 u0 0x${hex}))`, c), '(err u16031)');
+  await refused('L694', 'DAO router-swap-split while the window is open', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u1000 u1000 u0 (list) u0 u0 u0 0x${hex} none))`, c), '(err u16031)');
 
   // ---- place everything, elapse the window ----
   hex = await fresh();
@@ -214,8 +217,8 @@ async function main() {
   await call('real sBTC holder sends 30000 sats straight to the vault', SBTC_HOLDER, SBTC, 'transfer', [u(30000), P(SBTC_HOLDER), P(VAULT), Cl.none()], '(ok true)');
   hex = await fresh();
   await refused('L577', 'DAO jing-take while the vault rests in the market (u1018)', (l, c) => governFresh(`(try! (contract-call? '${VAULT} jing-take u30000 0x${hex}))`, c), '(err u1018)');
-  await refused('L695', 'DAO router-swap-split above max-chunk-sats (1000000)', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u1000001 u1000001 u0 (list) u0 u0 u0 0x${hex}))`, c), '(err u16039)');
-  await refused('L696', 'DAO router-swap-split above the wallet balance', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u30001 u30001 u0 (list) u0 u0 u0 0x${hex}))`, c), '(err u16006)');
+  await refused('L695', 'DAO router-swap-split above max-chunk-sats (1000000)', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u1000001 u1000001 u0 (list) u0 u0 u0 0x${hex} none))`, c), '(err u16039)');
+  await refused('L696', 'DAO router-swap-split above the wallet balance', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u30001 u30001 u0 (list) u0 u0 u0 0x${hex} none))`, c), '(err u16006)');
 
   // ---- router legs that cannot meet a zero-slippage floor ----
   // One full chunk (1,000,000 sats, the launch max-chunk-sats) on the XYK leg
@@ -228,7 +231,7 @@ async function main() {
   await call('real sBTC holder sends 970000 sats straight to the vault', SBTC_HOLDER, SBTC, 'transfer', [u(970000), P(SBTC_HOLDER), P(VAULT), Cl.none()], '(ok true)');
   await read('vault wallet = one full chunk', VAULT, sbtcOf(VAULT), 'u1000000');
   hex = await fresh();
-  await refused('L702', 'DAO router-swap-split, one full chunk on XYK at the exact mid', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u1000000 u0 u0 (list) u0 u1000000 u0 0x${hex}))`, c), '(err u1020)');
+  await refused('L702', 'DAO router-swap-split, one full chunk on XYK at the exact mid', (l, c) => governFresh(`(try! (contract-call? '${VAULT} router-swap-split u1000000 u0 u0 (list) u0 u1000000 u0 0x${hex} none))`, c), '(err u1020)');
   await refused('L756', 'DAO router-swap-split-dia, one full chunk on XYK at the exact DIA mid', (l, c) => govern('sim-neg-v-dia-split', c), '(err u1020)');
 
   // ---- DIA band 1 bp: the live Lazer mid sits outside it ----

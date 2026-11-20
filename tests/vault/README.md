@@ -1,5 +1,15 @@
 # CityCoins vault v2 runtime coverage and Rendezvous fuzzing
 
+2026-11-20 (bounty mwofjt42: split `fallback`, floor on what sold,
+`ROUTER_SLACK_SATS u72`): `npm run test:vault` **27/27**; RV invariants
+(`build.py --rv`, 2,000 runs, seeds 20261120 and 20261121; `rv:ccd016`
+1,000 runs) **all pass**. RV fixes: `build.py` now carries the market's
+`get-taker-rebate-bps-for` shim; the resting-peg and config invariants follow
+the vault's `maker-spread-bps` (default u1, cap `MAX_MAKER_SPREAD_BPS`) instead
+of spread `(some u0)`; `rv-admin` calls `(dao-reclaim none)`. stxer on the live
+router v6: coverage 113/113, emergency 41/41, negatives 123/123, ccip028
+activation 48/48.
+
 Latest Clarinet runs (2026-10-14): the vault suite passes **313 assertions**;
 the new standalone redemption-book suite passes **21/21 public functions**,
 **29/29 instrumented functions**, and **72/72 branches**. Eight prior RV

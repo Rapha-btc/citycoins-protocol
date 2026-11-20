@@ -1,8 +1,8 @@
 // Shared setup for the ccd016 v2 harnesses on the Jing stack this branch's
 // vault binds: the LIVE markets-sbtc-stx-jing-v6-5 at its real principal and
-// state, and swap-router-sbtc-stx-jing-v6, which is not on mainnet yet:
-// liveSession deploys it first from the jing repo bytes as its real deployer
-// (./_router-v6.mjs; no aliases). Zest pool u3 does not exist on mainnet, so
+// state, and swap-router-sbtc-stx-jing-v6, LIVE since block 9525511: used as-is
+// when the fork has it (code-equal check), else liveSession deploys the repo bytes
+// as its real deployer (./_router-v6.mjs; no aliases). Zest pool u3 does not exist on mainnet, so
 // the router skips its Zest leg (splits pass zest u0 + an empty tick list).
 // Mainnet fork only: unsigned simulated senders, nothing is broadcast.
 //
@@ -19,7 +19,7 @@ import { createHash } from "node:crypto";
 import { cvToString, deserializeCV, bufferCV, contractPrincipalCV, standardPrincipalCV, stringAsciiCV, ClarityVersion } from "@stacks/transactions";
 import { SimulationBuilder, getSimulationResult, getSimulationTip, submitSimulationSteps, callContract, getNonce, setSender } from "stxer";
 import { makeUnsignedSTXTokenTransfer } from "@stacks/transactions";
-import { routerV6Source, ROUTER_V6, ROUTER_V6_CLARITY, ROUTER_V6_SHA } from "./_router-v6.mjs";
+import { routerV6Source, ROUTER_V6, ROUTER_V6_CLARITY, ROUTER_V6_SHA, routerV6LiveAt, routerV6Note } from "./_router-v6.mjs";
 
 export const NODE = process.env.STACKS_API_URL || "http://77.42.3.101/stacks-api";
 process.env.STACKS_API_URL ||= NODE;
@@ -71,9 +71,12 @@ export async function freshUpdate(notBefore) {
 // source, clarityVersion]), at FORK_BLOCK or the node tip. Returns the session
 // and step helpers bound to the harness's `check`.
 export async function liveSession({ deploys: own, patches = [], check }) {
-  // router v6 first (Clarity 5, jing repo bytes, sha pinned), then the harness's contracts
-  const deploys = [[ROUTER, routerV6Source().source, ROUTER_V6_CLARITY], ...own];
   const tip = process.env.FORK_BLOCK ? await fetchJson(`/extended/v1/block/by_height/${process.env.FORK_BLOCK}`) : (await fetchJson("/extended/v1/block?limit=1")).results[0];
+  // router v6 is LIVE from block 9525511: used as-is when the fork has it (code-equal
+  // to the repo bytes, checked in _router-v6.mjs); on an older fork it deploys first
+  // (Clarity 5, jing repo bytes, sha pinned), then the harness's contracts
+  console.log(`router: ${routerV6Note(tip.height)}`);
+  const deploys = routerV6LiveAt(tip.height) ? [...own] : [[ROUTER, routerV6Source().source, ROUTER_V6_CLARITY], ...own];
   let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(tip.height).withSender(DEP);
   for (const [name, source, ver] of deploys) b = b.withSender(DEP).addContractDeploy({ contract_name: name, source_code: source, clarity_version: ver ?? ClarityVersion.Clarity6 });
   for (const [id, source, ver] of patches) b = b.addSetContractCode({ contract_id: id, source_code: source, clarity_version: ver ?? ClarityVersion.Clarity1 });

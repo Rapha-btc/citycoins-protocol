@@ -9,12 +9,6 @@
       "pass": true
     },
     {
-      "label": "deploy swap-router-sbtc-stx-jing-v6",
-      "actual": "(ok true)",
-      "expected": "(v) => v === 'true' || ok(v)",
-      "pass": true
-    },
-    {
       "label": "deploy ccd015-redemption-book-mia-stx",
       "actual": "(ok true)",
       "expected": "(v) => v === 'true' || ok(v)",
@@ -88,8 +82,8 @@
     },
     {
       "label": "L400 nothing moved",
-      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -100,8 +94,8 @@
     },
     {
       "label": "L261 nothing moved",
-      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -112,8 +106,8 @@
     },
     {
       "label": "L287 nothing moved",
-      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -124,8 +118,8 @@
     },
     {
       "label": "L316 nothing moved",
-      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -136,8 +130,8 @@
     },
     {
       "label": "L324 nothing moved",
-      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -196,8 +190,8 @@
     },
     {
       "label": "L288 nothing moved",
-      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -238,8 +232,8 @@
     },
     {
       "label": "L353 nothing moved",
-      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start none) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u1000) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -268,7 +262,7 @@
     },
     {
       "label": "permissionless fund-from-treasury (500 sats)",
-      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u500) (batch-start (some u976660)) (opened true)))))",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u500) (batch-start (some u976771)) (opened true)))))",
       "expected": "(v) => String(v).startsWith('(ok')",
       "pass": true
     },
@@ -286,8 +280,8 @@
     },
     {
       "label": "L508 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
       "pass": true
     },
     {
@@ -298,8 +292,8 @@
     },
     {
       "label": "L399 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u500) (vault-stx u0))",
       "pass": true
     },
     {
@@ -310,14 +304,14 @@
     },
     {
       "label": "fund-from-treasury 100000 (< MIN_RESTART_SATS) joins the open batch",
-      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976660)) (opened false)))))",
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976771)) (opened false)))))",
       "expected": "(v) => ok(v) && v.includes('(opened false)')",
       "pass": true
     },
     {
       "label": "vault 100500 sats, same batch clock",
-      "actual": "(tuple (b u100500) (s (some u976660)))",
-      "expected": "(tuple (b u100500) (s (some u976660)))",
+      "actual": "(tuple (b u100500) (s (some u976771)))",
+      "expected": "(tuple (b u100500) (s (some u976771)))",
       "pass": true
     },
     {
@@ -328,8 +322,8 @@
     },
     {
       "label": "L501 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
       "pass": true
     },
     {
@@ -340,8 +334,8 @@
     },
     {
       "label": "L534 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
       "pass": true
     },
     {
@@ -352,8 +346,8 @@
     },
     {
       "label": "L682 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
       "pass": true
     },
     {
@@ -388,8 +382,8 @@
     },
     {
       "label": "L541 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
       "pass": true
     },
     {
@@ -424,13 +418,13 @@
     },
     {
       "label": "L694 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u0) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u3301) (parked u0) (pending none) (resting u0) (treasury-sbtc u0) (vault-sbtc u100500) (vault-stx u0))",
       "pass": true
     },
     {
       "label": "permissionless jing-place (whole balance)",
-      "actual": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100500) (floor u21381733078267)))))",
+      "actual": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100500) (floor u22033498488465)))))",
       "expected": "(v) => String(v).startsWith('(ok')",
       "pass": true
     },
@@ -460,8 +454,8 @@
     },
     {
       "label": "L623 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -496,8 +490,8 @@
     },
     {
       "label": "L573 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u0) (vault-stx u0))",
       "pass": true
     },
     {
@@ -538,8 +532,8 @@
     },
     {
       "label": "L577 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
       "pass": true
     },
     {
@@ -574,8 +568,8 @@
     },
     {
       "label": "L695 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
       "pass": true
     },
     {
@@ -610,8 +604,8 @@
     },
     {
       "label": "L696 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u30000) (vault-stx u0))",
       "pass": true
     },
     {
@@ -682,8 +676,8 @@
     },
     {
       "label": "L702 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
       "pass": true
     },
     {
@@ -712,8 +706,8 @@
     },
     {
       "label": "L756 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
       "pass": true
     },
     {
@@ -735,15 +729,15 @@
       "pass": true
     },
     {
-      "label": "L1041 router-swap with the band at 1 bp (Lazer above DIA) -> (err u16037)",
+      "label": "L1038 router-swap with the band at 1 bp (Lazer below DIA) -> (err u16037)",
       "actual": "(err u16037)",
       "expected": "(err u16037)",
       "pass": true
     },
     {
-      "label": "L1041 nothing moved",
-      "actual": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
-      "expected": "(tuple (batch-start (some u976660)) (book-stx u0) (last-router-swap u0) (market-sbtc u100500) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "label": "L1038 nothing moved",
+      "actual": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
+      "expected": "(tuple (batch-start (some u976771)) (book-stx u0) (last-router-swap u0) (market-sbtc u103801) (parked u0) (pending none) (resting u100500) (treasury-sbtc u0) (vault-sbtc u1000000) (vault-stx u0))",
       "pass": true
     }
   ],
@@ -854,53 +848,54 @@
       "code": "(err u1020)"
     },
     {
-      "arm": "L1041",
-      "label": "router-swap with the band at 1 bp (Lazer above DIA)",
+      "arm": "L1038",
+      "label": "router-swap with the band at 1 bp (Lazer below DIA)",
       "code": "(err u16037)"
     }
   ],
   "sourceHashes": {
-    "ccd016-swap-vault-mia-v2": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
+    "ccd016-swap-vault-mia-v2": "237e2f007825b40a1b6f62fab6aae0e154eb11f0d0ac026a53df5a7a830f8382",
     "ccd015-redemption-book-mia-stx": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a",
     "ccip028-activate-mia-fair-redemption": "8826bc5d6abe38b7509a6693c1157b3479ecd357c646dddae733d2369dff6130",
-    "swap-router-sbtc-stx-jing-v6": "repo 8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84",
+    "swap-router-sbtc-stx-jing-v6": "live c213a264af2ab195ceb4733429ba56329ec404e6cdcbcbb2e68c8014441d4a96 (code-equal to repo 8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84)",
     "markets-sbtc-stx-jing-v6-5": "2e838afd3bac2e3de72f9e512912231c57c1c1f2120d41a6772ebbb4ed18b96f",
-    "sim-neg-v-1": "f3d7fbbeafc4641f14d13ae16626105f71c7514864cb1f9461fe889d984e6a93",
-    "sim-neg-v-2": "0aec386009065be9cbb9445afee6584c005ef565eb8a27791cca469fa1f1466e",
-    "sim-neg-v-3": "164a51495fe4c8e2efb6e5caacb78cd3d96ca49cf4a54c1d81d76b7329c2a499",
-    "sim-neg-v-4": "25ea7416aebe176f5366058e02570169995c25656af18822d6911cdfb1220c2e",
-    "sim-neg-v-5": "d371ba61b9e913283ae8fa4d46ddf972b924019c878d2f63956b767b359a3ea7",
-    "sim-neg-v-6": "835d333b3124409e833ad9edee3d73585254aa0626e7fe8b2c03b00a0964a626",
-    "sim-neg-v-7": "3d2d683de07ca59a982c73fd8a3f8bbed72eace3a1ab49b90d38fc5064dd4282"
+    "sim-neg-v-1": "f9e7facb2f2073245827ba48a6973a377ff3874835c15819cc3fa2524eb5d4d8",
+    "sim-neg-v-2": "e7fa126e0183bbd90fb654277d1d464784530cd70c3a6398089b97e605130d90",
+    "sim-neg-v-3": "247a1ab5c7adb7c8d03d52cc52463c97b282ce010bebb8b92a226c21bec30ef1",
+    "sim-neg-v-4": "6c7e170e12ebbd98f465d2d70dab3154ff989e5871a57da5786bff44a6e06652",
+    "sim-neg-v-5": "e698887e1fb8958fdcdee164dd820cf66ca8d6d019f2e9856303916c2a3f6979",
+    "sim-neg-v-6": "e49f238777a89e5937442fe0f422ae1536869434f30ab6f729d219432edbf58f",
+    "sim-neg-v-7": "975555d67b1d1e2c9d5911e6acc3cd7ea055fd731dd9f7bc3ce477752550e41e"
   },
   "fixtures": [
     "Unsigned simulated senders; nothing is broadcast.",
     "Real sBTC holder transfers into the rewards treasury and (once) straight into the vault.",
     "DAO calls: test proposals signalled by three real ccd001-direct-execute approvers, executed by base-dao.",
     "Bad Lazer update: the real signed update truncated by 10 bytes (oracle (err u2101)).",
-    "289 synthetic one-second burn blocks to elapse the 288-block window (as stxer-ccip028-activation.mjs)."
+    "289 synthetic one-second burn blocks to elapse the 288-block window (as stxer-ccip028-activation.mjs).",
+    "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6 LIVE (block 9525511, tx 0xe2abd694b4220f263217d3c37567f1c64906fbb8e932b509223b256494e5570a, deployed sha c213a264af2ab195ceb4733429ba56329ec404e6cdcbcbb2e68c8014441d4a96), code-equal to jing repo bytes 8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84 modulo comments/whitespace; not redeployed"
   ],
-  "passed": 124,
-  "total": 124,
-  "simulationId": "4fa9c84d6225bad2b33ad2fd33e4b5f7",
-  "url": "https://stxer.xyz/simulations/mainnet/4fa9c84d6225bad2b33ad2fd33e4b5f7",
-  "forkHeight": 9524765,
+  "passed": 123,
+  "total": 123,
+  "simulationId": "847d524bc3bb5444ad893a78fd7b5eb7",
+  "url": "https://stxer.xyz/simulations/mainnet/847d524bc3bb5444ad893a78fd7b5eb7",
+  "forkHeight": 9529757,
   "initialTip": {
     "synthetic": false,
-    "stacks_height": 9524765,
-    "burn_height": 976660,
-    "coinbase_height": 262869,
-    "block_time": 1795134909,
-    "burn_block_time": 1795134909,
-    "index_block_hash": "51128eb631b84364b6cc18e16ccf9256afab6119df2bb724ab4600bc815f8a07",
-    "consensus_hash": "ca63c565144c842ca2d6ec891e120e5c9fb3c0ec",
-    "burn_header_hash": "00000000000000000001b61bdb98aad034b1cee75c52414a0cc81f4be4b7557b",
-    "sortition_id": "81955e7d426c9bddca40579020e0ae4c4a22fe519c9d8f9d4b49a652eb2fdfac",
+    "stacks_height": 9529757,
+    "burn_height": 976771,
+    "coinbase_height": 262950,
+    "block_time": 1795200332,
+    "burn_block_time": 1795200332,
+    "index_block_hash": "57320ed21fae963b9000a2e0fc27863c09ef3dec0b492e8f53bb5e93e4bb1671",
+    "consensus_hash": "672621f1b97e21b2ac5e754195f2058ddfc3aac7",
+    "burn_header_hash": "00000000000000000001cceddcc0c866612fa3a8d9be1db088450c1f560935f3",
+    "sortition_id": "848a9d65c35acdac67c2c022313e2af6be8b19330b675779aefb47193832c8bf",
     "epoch": "4.0"
   },
   "diaSide": {
-    "dia": "23536608620527",
-    "lazer": "23754143730614",
-    "arm": "L1041"
+    "dia": "24512615797645",
+    "lazer": "24460991719343",
+    "arm": "L1038"
   }
 }
