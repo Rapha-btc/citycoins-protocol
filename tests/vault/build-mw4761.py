@@ -15,7 +15,7 @@ subprocess.run([sys.executable, str(HERE / 'build.py'), *sys.argv[1:]], check=Tr
 OUT = Path(sys.argv[sys.argv.index('--output') + 1]).resolve() if '--output' in sys.argv else HERE / '.build'
 EXPECTED = {
     'ccd015-redemption-book-mia-stx': '8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a',
-    'ccd016-swap-vault-mia-v2': '67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935',
+    'ccd016-swap-vault-mia-v2': 'a496311d02766b1284b46d34f656845d27364860a2b6d4ae58c643b6eb26b29f',
 }
 hashes = json.loads((OUT / 'source-hashes.json').read_text())
 for name, expected in EXPECTED.items():

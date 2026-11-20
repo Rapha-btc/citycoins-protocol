@@ -53,7 +53,7 @@
   )
   (begin
     (var-set last-split (some { amount: amount, jing: jing-amount, amounts: amm-amounts,
-      mins: amm-mins, min-out: min-stx-out, route: zest-route }))
+      mins: amm-mins, min-out: min-stx-out, route: zest-route, fallback: fallback }))
     (sell amount min-stx-out)))
 
 ;; Test-only: the arguments of the last swap-sbtc-for-stx call, so tests can
@@ -61,5 +61,5 @@
 (define-data-var last-split (optional { amount: uint, jing: uint,
   amounts: { zest: uint, dlmm: uint, xyk: uint, velar: uint },
   mins: { zest: uint, dlmm: uint, xyk: uint, velar: uint },
-  min-out: uint, route: { ticks: (list 32 int), price: uint } }) none)
+  min-out: uint, route: { ticks: (list 32 int), price: uint }, fallback: (optional uint) }) none)
 (define-read-only (get-last-split) (var-get last-split))

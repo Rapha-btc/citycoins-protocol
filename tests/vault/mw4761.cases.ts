@@ -251,7 +251,7 @@ test('mw4761 DAO-only router-swap-split and jing-take still accept higher rebate
   w.sim.mineEmptyBurnBlocks(289);
   const stale = Cl.buffer(Uint8Array.of(69));
   expect(w.read('v6-market', 'get-taker-rebate-bps-for', [stale])).toEqual(Cl.uint(69));
-  const split = [Cl.uint(10_000), Cl.uint(0), Cl.uint(0), Cl.list([]), Cl.uint(10_000), Cl.uint(0), Cl.uint(0), stale];
+  const split = [Cl.uint(10_000), Cl.uint(0), Cl.uint(0), Cl.list([]), Cl.uint(10_000), Cl.uint(0), Cl.uint(0), stale, Cl.none()];
   const take = [Cl.uint(10_000), stale];
   const before = w.snapshot();
 
@@ -291,7 +291,7 @@ function lastSplit(w: World) {
   return v.value.value;
 }
 
-function expectForwarded(w: World, leg: Record<string, bigint>, mins: Record<string, bigint>, minOut: bigint, ticks: any[]) {
+function expectForwarded(w: World, leg: Record<string, bigint>, mins: Record<string, bigint>, minOut: bigint, ticks: any[], fallback: any = Cl.none()) {
   const last = lastSplit(w);
   for (const k of ['zest', 'dlmm', 'xyk', 'velar']) {
     expect(last.amounts.value[k]).toEqual(Cl.uint(leg[k]));
@@ -300,12 +300,13 @@ function expectForwarded(w: World, leg: Record<string, bigint>, mins: Record<str
   expect(last['min-out']).toEqual(Cl.uint(minOut));
   expect(last.route.value.ticks).toEqual(Cl.list(ticks));
   expect(last.route.value.price).toEqual(Cl.uint(0));
+  expect(last.fallback).toEqual(fallback);
 }
 
 test('zest router-swap-split with zest u0 + empty ticks skips the leg', async function () {
   // Arrange.
   const w = await splitWorld();
-  const args = [Cl.uint(10_000), Cl.uint(0), Cl.uint(0), Cl.list([]), Cl.uint(6_000), Cl.uint(4_000), Cl.uint(0), UPDATE];
+  const args = [Cl.uint(10_000), Cl.uint(0), Cl.uint(0), Cl.list([]), Cl.uint(6_000), Cl.uint(4_000), Cl.uint(0), UPDATE, Cl.none()];
 
   // Act.
   const value = ok(w.vault('router-swap-split', args, w.dao));
@@ -321,7 +322,7 @@ test('zest router-swap-split with zest u0 + empty ticks skips the leg', async fu
 test('zest router-swap-split forwards a zest slice, its floor and the ticks', async function () {
   // Arrange.
   const w = await splitWorld();
-  const args = [Cl.uint(10_000), Cl.uint(0), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(3_000), Cl.uint(2_000), Cl.uint(1_000), UPDATE];
+  const args = [Cl.uint(10_000), Cl.uint(0), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(3_000), Cl.uint(2_000), Cl.uint(1_000), UPDATE, Cl.none()];
   const velarLimit = (MID * (10_000n - 60n)) / 10_000n;
 
   // Act.
@@ -331,7 +332,7 @@ test('zest router-swap-split forwards a zest slice, its floor and the ticks', as
   expect(value.value.payload.value.zest).toEqual(Cl.uint(4_000));
   expectForwarded(w, { zest: 4_000n, dlmm: 3_000n, xyk: 2_000n, velar: 1_000n },
     { zest: floorOut(4_000n, LIMIT), dlmm: floorOut(3_000n, LIMIT), xyk: floorOut(2_000n, LIMIT), velar: floorOut(1_000n, velarLimit) },
-    floorOut(9_000n, LIMIT) + floorOut(1_000n, velarLimit), TICKS);
+    floorOut(5_000n, LIMIT) + floorOut(1_000n, velarLimit), TICKS);
   expect(w.ft(VAULT)).toBe(90_000n);
 });
 
@@ -341,13 +342,13 @@ test('zest router-swap-split counts zest in the split sum', async function () {
   const before = w.snapshot();
 
   // Act / assert: zest left out of amount, then zest alone over amount.
-  expect(cvToString(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(1), Cl.list([]), Cl.uint(10_000), Cl.uint(0), Cl.uint(0), UPDATE], w.dao).result)).toBe('(err u16040)');
-  expect(cvToString(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(10_001), Cl.list(TICKS), Cl.uint(0), Cl.uint(0), Cl.uint(0), UPDATE], w.dao).result)).toBe('(err u16040)');
-  expect(cvToString(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(10_000), Cl.list(TICKS), Cl.uint(0), Cl.uint(0), Cl.uint(0), UPDATE]).result)).toBe('(err u16000)');
+  expect(cvToString(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(1), Cl.list([]), Cl.uint(10_000), Cl.uint(0), Cl.uint(0), UPDATE, Cl.none()], w.dao).result)).toBe('(err u16040)');
+  expect(cvToString(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(10_001), Cl.list(TICKS), Cl.uint(0), Cl.uint(0), Cl.uint(0), UPDATE, Cl.none()], w.dao).result)).toBe('(err u16040)');
+  expect(cvToString(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(10_000), Cl.list(TICKS), Cl.uint(0), Cl.uint(0), Cl.uint(0), UPDATE, Cl.none()]).result)).toBe('(err u16000)');
   expect(w.snapshot()).toEqual(before);
-  ok(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(10_000), Cl.list(TICKS), Cl.uint(0), Cl.uint(0), Cl.uint(0), UPDATE], w.dao));
+  ok(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(10_000), Cl.list(TICKS), Cl.uint(0), Cl.uint(0), Cl.uint(0), UPDATE, Cl.none()], w.dao));
   expectForwarded(w, { zest: 10_000n, dlmm: 0n, xyk: 0n, velar: 0n },
-    { zest: floorOut(10_000n, LIMIT), dlmm: 0n, xyk: 0n, velar: 0n }, floorOut(10_000n, LIMIT), TICKS);
+    { zest: floorOut(10_000n, LIMIT), dlmm: 0n, xyk: 0n, velar: 0n }, 0n, TICKS);
 });
 
 test('zest router-swap-split-dia with zest u0 + empty ticks skips the leg', async function () {
@@ -355,7 +356,7 @@ test('zest router-swap-split-dia with zest u0 + empty ticks skips the leg', asyn
   const w = await splitWorld();
 
   // Act.
-  const value = ok(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(0), Cl.list([]), Cl.uint(10_000), Cl.uint(0), Cl.uint(0)], w.dao));
+  const value = ok(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(0), Cl.list([]), Cl.uint(10_000), Cl.uint(0), Cl.uint(0), Cl.none()], w.dao));
 
   // Assert.
   expect(value.value.payload.value.zest).toEqual(Cl.uint(0));
@@ -370,15 +371,28 @@ test('zest router-swap-split-dia forwards a zest slice, its floor and the ticks'
   const before = w.snapshot();
 
   // Act / assert: sum check includes zest.
-  expect(cvToString(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(6_000), Cl.uint(1), Cl.uint(0)], w.dao).result)).toBe('(err u16040)');
-  expect(cvToString(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(6_000), Cl.uint(0), Cl.uint(0)]).result)).toBe('(err u16000)');
+  expect(cvToString(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(6_000), Cl.uint(1), Cl.uint(0), Cl.none()], w.dao).result)).toBe('(err u16040)');
+  expect(cvToString(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(6_000), Cl.uint(0), Cl.uint(0), Cl.none()]).result)).toBe('(err u16000)');
   expect(w.snapshot()).toEqual(before);
-  const value = ok(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(3_000), Cl.uint(2_000), Cl.uint(1_000)], w.dao));
+  const value = ok(w.vault('router-swap-split-dia', [Cl.uint(10_000), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(3_000), Cl.uint(2_000), Cl.uint(1_000), Cl.none()], w.dao));
 
   // Assert.
   expect(value.value.payload.value.zest).toEqual(Cl.uint(4_000));
   expectForwarded(w, { zest: 4_000n, dlmm: 3_000n, xyk: 2_000n, velar: 1_000n },
     { zest: floorOut(4_000n, DIA_LIMIT), dlmm: floorOut(3_000n, DIA_LIMIT), xyk: floorOut(2_000n, DIA_LIMIT), velar: floorOut(1_000n, DIA_LIMIT) },
-    floorOut(10_000n, DIA_LIMIT), TICKS);
+    floorOut(6_000n, DIA_LIMIT), TICKS);
   expect(w.ft(VAULT)).toBe(90_000n);
+});
+
+test('router-swap-split and -dia forward the fallback venue (bounty mwofjt42)', async function () {
+  // Arrange.
+  const w = await splitWorld();
+
+  // Act.
+  ok(w.vault('router-swap-split', [Cl.uint(10_000), Cl.uint(0), Cl.uint(4_000), Cl.list(TICKS), Cl.uint(6_000), Cl.uint(0), Cl.uint(0), UPDATE, Cl.some(Cl.uint(1))], w.dao));
+
+  // Assert: DLMM fallback reaches the router; the router min-out leaves Jing and Zest out.
+  expectForwarded(w, { zest: 4_000n, dlmm: 6_000n, xyk: 0n, velar: 0n },
+    { zest: floorOut(4_000n, LIMIT), dlmm: floorOut(6_000n, LIMIT), xyk: 0n, velar: 0n },
+    floorOut(6_000n, LIMIT), TICKS, Cl.some(Cl.uint(1)));
 });

@@ -708,6 +708,7 @@
     (xyk uint)
     (velar uint)
     (update (buff 8192))
+    (fallback (optional uint))
   )
   (let (
       (mid (try! (vault-mid update)))
@@ -732,17 +733,27 @@
           (with-stx (var-get pyth-fee-budget))
         )
         (try! (contract-call? JING_ROUTER swap-sbtc-for-stx amount jing limit
-          (some update) none {
+          (some update) fallback {
           zest: zest,
           dlmm: dlmm,
           xyk: xyk,
           velar: velar,
         }
           mins
-          (+ (floor-out (+ jing zest dlmm xyk) limit) (floor-out velar velar-limit))
+          (+ (floor-out (+ dlmm xyk) limit) (floor-out velar velar-limit))
           (zest-route zest-ticks)
         ))
       ))))
+      ;; the Jing and Zest legs may fill in part: the rest re-sells on `fallback`
+      ;; or, with none, stays unsold; the floor is checked on what sold
+      ;; (bounty mwofjt42)
+      (asserts!
+        (>= (get out result)
+          (+ (floor-out (- (+ jing zest dlmm xyk) (get unsold result)) limit)
+            (floor-out velar velar-limit)
+          ))
+        ERR_BELOW_FLOOR
+      )
       (close-if-empty)
       (ok (print {
         notification: "router-swap-split",
@@ -772,6 +783,7 @@
     (dlmm uint)
     (xyk uint)
     (velar uint)
+    (fallback (optional uint))
   )
   (begin
     (try! (is-dao-or-extension))
@@ -792,15 +804,20 @@
         )
         (let ((result (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC amount))
             (try! (contract-call? JING_ROUTER swap-sbtc-for-stx amount u0 limit none
-              none {
+              fallback {
               zest: zest,
               dlmm: dlmm,
               xyk: xyk,
               velar: velar,
             }
-              mins (floor-out amount limit) (zest-route zest-ticks)
+              mins (floor-out (- amount zest) limit) (zest-route zest-ticks)
             ))
           ))))
+          ;; a partial Zest fill re-sells on `fallback` or stays unsold: floor on what sold
+          (asserts!
+            (>= (get out result) (floor-out (- amount (get unsold result)) limit))
+            ERR_BELOW_FLOOR
+          )
           (close-if-empty)
           (ok (print {
             notification: "router-swap-split-dia",
