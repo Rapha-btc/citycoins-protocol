@@ -8,9 +8,10 @@ out=Path(sys.argv[sys.argv.index('--output')+1]).resolve() if '--output' in sys.
 import os
 EXPECTED_BOOK_SHA256=os.environ.get('BOOK_SHA256','8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a')  # 2440559 (bounty mw4761 fixes)
 replacements={
-# the -v6-5 / -v5-6 ids first: the bare -v6 / -v5 prefixes below would otherwise leave a stray suffix
+# the -v6-5 / -v5-6 / router -v6 ids first: the bare -v6 / -v5 prefixes below would otherwise leave a stray suffix
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5":'.v6-market',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6":'.mock-router',
+"'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6":'.mock-router',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6":'.v6-market',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5":'.mock-router',
 "'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.rfq-sbtc-stx-jing-v2-3":'.mock-native',

@@ -1,6 +1,9 @@
-// Shared setup for the ccd016 v2 harnesses on the LIVE Jing stack this branch's
-// vault binds: markets-sbtc-stx-jing-v6-5 + swap-router-sbtc-stx-jing-v5-6 at
-// their real principals and live state (no fresh v6-3 stack, no aliases).
+// Shared setup for the ccd016 v2 harnesses on the Jing stack this branch's
+// vault binds: the LIVE markets-sbtc-stx-jing-v6-5 at its real principal and
+// state, and swap-router-sbtc-stx-jing-v6, which is not on mainnet yet:
+// liveSession deploys it first from the jing repo bytes as its real deployer
+// (./_router-v6.mjs; no aliases). Zest pool u3 does not exist on mainnet, so
+// the router skips its Zest leg (splits pass zest u0 + an empty tick list).
 // Mainnet fork only: unsigned simulated senders, nothing is broadcast.
 //
 // Fixtures kept from the v2 harnesses (disclosed in each file): base-dao is
@@ -16,13 +19,15 @@ import { createHash } from "node:crypto";
 import { cvToString, deserializeCV, bufferCV, contractPrincipalCV, standardPrincipalCV, stringAsciiCV, ClarityVersion } from "@stacks/transactions";
 import { SimulationBuilder, getSimulationResult, getSimulationTip, submitSimulationSteps, callContract, getNonce, setSender } from "stxer";
 import { makeUnsignedSTXTokenTransfer } from "@stacks/transactions";
+import { routerV6Source, ROUTER_V6, ROUTER_V6_CLARITY, ROUTER_V6_SHA } from "./_router-v6.mjs";
 
 export const NODE = process.env.STACKS_API_URL || "http://77.42.3.101/stacks-api";
 process.env.STACKS_API_URL ||= NODE;
 const JING_SIM = process.env.JING_SIM || `${process.env.HOME}/projects/jing-contracts-v3/simulations`;
 const { fetchLazerUpdateAny, lazerFeedTimes } = await import(`${JING_SIM}/_lazer.js`);
 export const DEP = "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22";
-export const MKT = "markets-sbtc-stx-jing-v6-5", ROUTER = "swap-router-sbtc-stx-jing-v5-6";
+export const MKT = "markets-sbtc-stx-jing-v6-5", ROUTER = ROUTER_V6;
+export { ROUTER_V6_SHA };
 export const MKT_ID = `${DEP}.${MKT}`, ROUTER_ID = `${DEP}.${ROUTER}`;
 export const SBTC = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
 export const WSTX = "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2";
@@ -65,10 +70,12 @@ export async function freshUpdate(notBefore) {
 // Deploy `deploys` ([name, source]) as DEP and run `patches` ([contractId,
 // source, clarityVersion]), at FORK_BLOCK or the node tip. Returns the session
 // and step helpers bound to the harness's `check`.
-export async function liveSession({ deploys, patches = [], check }) {
+export async function liveSession({ deploys: own, patches = [], check }) {
+  // router v6 first (Clarity 5, jing repo bytes, sha pinned), then the harness's contracts
+  const deploys = [[ROUTER, routerV6Source().source, ROUTER_V6_CLARITY], ...own];
   const tip = process.env.FORK_BLOCK ? await fetchJson(`/extended/v1/block/by_height/${process.env.FORK_BLOCK}`) : (await fetchJson("/extended/v1/block?limit=1")).results[0];
   let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(tip.height).withSender(DEP);
-  for (const [name, source] of deploys) b = b.withSender(DEP).addContractDeploy({ contract_name: name, source_code: source, clarity_version: ClarityVersion.Clarity6 });
+  for (const [name, source, ver] of deploys) b = b.withSender(DEP).addContractDeploy({ contract_name: name, source_code: source, clarity_version: ver ?? ClarityVersion.Clarity6 });
   for (const [id, source, ver] of patches) b = b.addSetContractCode({ contract_id: id, source_code: source, clarity_version: ver ?? ClarityVersion.Clarity1 });
   const sid = await b.run();
   const url = `https://stxer.xyz/simulations/mainnet/${sid}`;
@@ -159,6 +166,6 @@ export function writeResult(name, st, S, extra = {}) {
   console.log(`\n${st.checks - st.failures}/${st.checks} checks green${st.failed.length ? `; FAILED: ${st.failed.join("; ")}` : ""}\n${S.url}`);
   const dir = process.env.SIM_RESULTS_DIR || "simulations/results/ccd016-v2";
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(`${dir}/${name}.json`, JSON.stringify({ simulationId: S.sid, url: S.url, checks: st.checks, failures: st.failures, failed: st.failed, liveStack: { market: MKT_ID, router: ROUTER_ID }, fork: S.tip0, vaultSha256: sha("contracts/extensions/ccd016-swap-vault-mia-v2.clar"), bookSha256: sha("contracts/extensions/ccd015-redemption-book-mia-stx.clar"), ...extra, steps: S.record }, null, 2) + "\n");
+  fs.writeFileSync(`${dir}/${name}.json`, JSON.stringify({ simulationId: S.sid, url: S.url, checks: st.checks, failures: st.failures, failed: st.failed, liveStack: { market: MKT_ID, router: ROUTER_ID, routerFromRepoSha256: ROUTER_V6_SHA }, fork: S.tip0, vaultSha256: sha("contracts/extensions/ccd016-swap-vault-mia-v2.clar"), bookSha256: sha("contracts/extensions/ccd015-redemption-book-mia-stx.clar"), ...extra, steps: S.record }, null, 2) + "\n");
   if (st.failures > 0) process.exitCode = 1;
 }

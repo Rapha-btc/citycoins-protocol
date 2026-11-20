@@ -1,7 +1,7 @@
 // stxer-ccd016-v2-maker-spread.js
 // stxer MAINNET-FORK proof (nothing is broadcast) for ccd016-swap-vault-mia-v2
 // maker-spread-bps (0462e6a, default u1, max u50) on the LIVE Jing stack:
-// markets-sbtc-stx-jing-v6-5 + swap-router-sbtc-stx-jing-v5-6 + the seated
+// markets-sbtc-stx-jing-v6-5 + swap-router-sbtc-stx-jing-v6 (jing repo bytes, deployed first) + the seated
 // jing-{buy,sell}-stx-20-v2 rungs, at their real principals and live state.
 // (Ported 2026-11-18 from v6-4 / v5-5: the vault now binds v6-5 / v5-6. The
 // live v6-5 book has no spread-0 rung: jing-buy-stx-20-v2 rests an sBTC ask at
@@ -57,7 +57,9 @@ const TREASURY = `${DAO}.ccd002-treasury-mia-rewards-v3`;
 const SBTC = "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token";
 const WSTX = "SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2";
 const DIA = `${DIA_UPDATER}.dia-oracle`;
-const MK = `${DEP}.markets-sbtc-stx-jing-v6-5`, ROUTER = `${DEP}.swap-router-sbtc-stx-jing-v5-6`;
+// router v6 is not on mainnet: deployed first (S0) from the jing repo bytes as DEP
+const { routerV6Source, ROUTER_V6, ROUTER_V6_ID, ROUTER_V6_CLARITY } = await import("./_router-v6.mjs");
+const MK = `${DEP}.markets-sbtc-stx-jing-v6-5`, ROUTER = ROUTER_V6_ID;
 const B0 = `${DEP}.jing-buy-stx-20-v2`, B0_SPREAD = 20n;
 const BOOK = "ccd015-redemption-book-mia-stx", VAULT = "ccd016-swap-vault-mia-v2", PROXY = "sim-dao-proxy";
 const V = `${DEP}.${VAULT}`, PX = `${DEP}.${PROXY}`;
@@ -69,7 +71,7 @@ const FUND = 100_000n, TOPUP = 10_000n, HUGE = 999_999_999_999_999n;
 const strip = (f) => fs.readFileSync(f, "utf8").split("\n").filter((l) => !/^\s*;;/.test(l)).join("\n");
 const vaultFile = `contracts/extensions/${VAULT}.clar`;
 const vaultSrc = strip(vaultFile), bookSrc = strip(`contracts/extensions/${BOOK}.clar`);
-if (!vaultSrc.includes(`'${MK})`) || !vaultSrc.includes(`'${ROUTER})`)) throw new Error("vault does not bind live market v6-5 / router v5-6");
+if (!vaultSrc.includes(`'${MK})`) || !vaultSrc.includes(`'${ROUTER})`)) throw new Error("vault does not bind live market v6-5 / router v6");
 if (!/\(define-data-var maker-spread-bps uint u1\)/.test(vaultSrc)) throw new Error("vault has no maker-spread-bps var at u1");
 const vaultSha = createHash("sha256").update(fs.readFileSync(vaultFile)).digest("hex");
 const PROXY_SRC = `
@@ -148,6 +150,8 @@ let b = SimulationBuilder.new({ stacksNodeAPI: NODE }).useBlockHeight(tipBlock.h
 const plan = [];
 const add = (id, label, f, want) => { b = f(b); plan.push({ id, label, want }); };
 const deploy = (name, src) => (bb) => bb.withSender(DEP).addContractDeploy({ contract_name: name, source_code: src, clarity_version: ClarityVersion.Clarity6 });
+const routerV6 = routerV6Source();
+add("S0", `deploy ${ROUTER_V6} (jing repo, sha ${routerV6.sha.slice(0, 12)}, not on mainnet)`, (bb) => bb.withSender(DEP).addContractDeploy({ contract_name: ROUTER_V6, source_code: routerV6.source, clarity_version: ROUTER_V6_CLARITY }), (v) => !v.includes("ERR"));
 add("S1", `deploy ${BOOK} (repo, comments stripped)`, deploy(BOOK, bookSrc), (v) => !v.includes("ERR"));
 add("S2", `deploy ${VAULT} (repo, sha ${vaultSha.slice(0, 12)}, comments stripped)`, deploy(VAULT, vaultSrc), (v) => !v.includes("ERR"));
 add("S3", `deploy ${PROXY} (passed-proposal stand-in)`, deploy(PROXY, PROXY_SRC), (v) => !v.includes("ERR"));

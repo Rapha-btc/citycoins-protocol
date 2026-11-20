@@ -257,3 +257,27 @@ do not restart, 600k does), 1M vault (600k does not restart).
 Not covered: `stxer-ccd016-v2-emergency.cjs --recovery` (needs the core-v6 /
 ladder multisig owner); the v3 rung vault and old oracle-book sims are
 obsolete on this branch. Clarinet suites are updated in a separate change.
+
+## Router v6 rebind (Zest leg), 2026-11-19
+
+The vault now binds `swap-router-sbtc-stx-jing-v6`. `router-swap-split` and
+`router-swap-split-dia` take `zest` and `zest-ticks` after jing / amount.
+New ccd016 sha256 `67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935`;
+ccd015 and ccip028 are unchanged. Router v6 is not on mainnet, so every fork sim
+first deploys it from jing-contracts-v3 bytes (sha256 `8325e0c5...`, Clarity 5)
+as SPV9K21... (`simulations/_router-v6.mjs`). Zest pool u3 does not exist on
+mainnet, so splits pass zest u0 and an empty list. One zest > 0 case per split
+checks that the leg is skipped and the router's min-out refuses (`u3002`).
+
+| Suite / sim | Checks |
+|---|---|
+| `npm run test:vault` (runtime.mjs 327 checks + mw4761 vitest 26, 5 new zest cases) / `test:book` 2 / `test:ccip028` 11 | green |
+| `stxer-ccip028-activation.mjs` with `OFFER_ASK_USTX=5000000` (https://stxer.xyz/simulations/mainnet/1a2b710441fb70a0ae4b9771ad5875d3) | 49/49 |
+| recall-fix 40, window-restart 104, router-stale 28, change-offer-partial 30, dao-recall-stx 34 | green |
+| v2-negatives 124, emergency DIA 42 / native 42, coverage 113, clock-keyless 96, fixes 92, pyth-fee 65, parked 174 | green |
+| v2-happy-path 39/54, v2-maker-spread 51/56 | live-book state; HEAD on router v5-6 fails the same checks |
+
+The activation sim's default 100 STX ask fails at the same check on HEAD:
+the live AMMs sit more than 1% below the Lazer mid, so 100k sats raise about
+8.8 STX. At the same fork height, `smart-swap-sbtc-for-stx` returns identical
+fills on router v5-6 and v6.

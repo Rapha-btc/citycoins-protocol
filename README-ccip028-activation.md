@@ -18,15 +18,17 @@ All three must use the **same deployer**, retaining these contract names.
 Relative references bind the vault's destination and the proposal's targets to that deployer.
 The DAO and rewards treasury are fully qualified mainnet references at
 `SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH`.
-The existing vault binds to `SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-4`
-and `.swap-router-sbtc-stx-jing-v5-5`.
+The vault binds to `SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5`
+and `.swap-router-sbtc-stx-jing-v6` (Zest leg in `router-swap-split` /
+`router-swap-split-dia`). Router v6 is not on mainnet yet: it must be deployed
+by that deployer before the vault (jing-contracts-v3 sha256
+`8325e0c5300b3c9b65dc6d89ba70c1f4067add9515640efd2ca325c32b4e7a84`).
 The test manifest compiles the book, vault and proposal as Clarity 6;
 the existing DAO, Direct Execute and treasury policies run as Clarity 2.
 
-Book SHA-256: `b3526d4ce89e615108c1b6781bf67b6f8354e3880adb404883a30fbdd36ec65f`.
-Vault SHA-256: `ac0c305f8bfcfd9f210fb37cba6e1f4d61a26ad40ed7ca4792beca948778502e`.
-The vault's comments were refreshed (maker spread +1 bp, 0.01 sBTC chunk); code is
-unchanged from the reviewed version. The executable defaults
+Book SHA-256: `8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a` (2440559, bounty mw4761 fixes).
+Vault SHA-256: `67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935`
+(mw4761 fixes + router v6 rebind: `zest` / `zest-ticks` split arguments). The executable defaults
 and explicit activation values below are authoritative.
 
 ## What the proposal does atomically
@@ -162,6 +164,12 @@ privileged state was injected through Eval. Eval steps only read state.
 | Book funding | All 223.166660 STX forwarded to the book |
 | Crossing and burn | Seller paid 100 STX; real MIA supply reduced by exactly 100,000 MIA |
 | Remaining balances | 123.166660 STX in the book; 1 sat and 0 STX in the vault |
+
+2026-11-19 rerun on router v6 (deployed on the fork first from jing repo bytes):
+49/49 with `OFFER_ASK_USTX=5000000`
+(https://stxer.xyz/simulations/mainnet/1a2b710441fb70a0ae4b9771ad5875d3). The live
+AMMs were more than 1% below the Lazer mid, so the router sold only the book
+leg (about 8.8 STX). The 100 STX ask fails the same way on router v5-6.
 
 The rewards treasury was empty at the pinned block, so an existing sBTC holder
 transferred 100,000 sats into it **on the fork**. An existing MIA holder offered

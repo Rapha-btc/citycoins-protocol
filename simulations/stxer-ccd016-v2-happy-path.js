@@ -1,7 +1,7 @@
 // stxer-ccd016-v2-happy-path.js
 // SELF-VERIFYING stxer mainnet-fork harness for ccd016-swap-vault-mia-v2 on
 // the LIVE Jing stack the vault binds (markets-sbtc-stx-jing-v6-5 +
-// swap-router-sbtc-stx-jing-v5-6, real principals, live state). 2026-11-18
+// swap-router-sbtc-stx-jing-v6 (jing repo bytes, deployed first), real principals, live state). 2026-11-18
 // port of the v6-3 version; shared setup in simulations/_vault-live-v6-5.mjs.
 //
 // FIXTURES (disclosed, unchanged): base-dao patched (SetContractCode) so

@@ -4,7 +4,7 @@
 // Celestial Mast: a free start-clock, or 1 sat into the treasury plus
 // fund-from-treasury, re-armed the patience window forever on leftovers).
 // 2026-11-18 port: the vault binds the LIVE markets-sbtc-stx-jing-v6-5 +
-// swap-router-sbtc-stx-jing-v5-6, so nothing of Jing is deployed any more;
+// swap-router-sbtc-stx-jing-v6 (jing repo bytes, deployed first), so nothing of Jing is deployed any more;
 // shared setup in simulations/_vault-live-v6-5.mjs. Nothing is placed on
 // the book; the sats stay home, the window is shortened by proposal and the
 // chain advanced, and every clock path is exercised on the leftovers.

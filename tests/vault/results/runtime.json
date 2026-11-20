@@ -1,9 +1,9 @@
 {
   "sourceHashes": {
-    "ccd016-swap-vault-mia-v2": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
+    "ccd016-swap-vault-mia-v2": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
     "ccd015-redemption-book-mia-stx": "8982d30e17db7f92cd8cdb902464d508aaa65ca389dac6bd0920a3e694c3f34a"
   },
-  "checks": 325,
+  "checks": 327,
   "status": "passed",
   "branchTotal": 126,
   "branchHits": 123,
@@ -27,8 +27,8 @@
       "hits": "0"
     }
   ],
-  "lineTotal": 490,
-  "lineHits": 465,
+  "lineTotal": 500,
+  "lineHits": 475,
   "zeroHitLines": [
     409,
     421,
@@ -39,22 +39,22 @@
     639,
     664,
     670,
-    702,
-    732,
-    766,
-    785,
-    844,
-    845,
-    851,
-    855,
-    861,
-    877,
+    716,
+    749,
+    786,
+    807,
+    867,
+    868,
+    874,
     878,
     884,
-    891,
-    897,
-    921,
-    922
+    900,
+    901,
+    907,
+    914,
+    920,
+    944,
+    945
   ],
   "scope": "Current full vault/book source; dependency addresses and asset names rebound to declared fixtures. DAO equality and extension gates retained."
 }

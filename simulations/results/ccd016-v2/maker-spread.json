@@ -1,25 +1,38 @@
 {
-  "simulationId": "493219d68c3595248bf3a28879bf2c41",
-  "url": "https://stxer.xyz/simulations/mainnet/493219d68c3595248bf3a28879bf2c41",
+  "simulationId": "f4169b41cdc67f823c866771642de5a9",
+  "url": "https://stxer.xyz/simulations/mainnet/f4169b41cdc67f823c866771642de5a9",
   "fork": {
     "synthetic": false,
-    "stacks_height": 9518314,
-    "burn_height": 976509,
-    "coinbase_height": 262765,
-    "block_time": 1795051492,
-    "burn_block_time": 1795051492,
-    "index_block_hash": "4dada711a576ecccaa4e25c82feff0491e50c9aa2b35f98071d0b40f58e5b48e",
-    "consensus_hash": "821bb2df1c42e8591e306c1d22c8a738185f8328",
-    "burn_header_hash": "000000000000000000012dd0da669d631c949621728a2feec24a039be0ebfc3b",
-    "sortition_id": "864dfd8e787de0f9ddf17507158cb147b7cf590b1ae41e7136e8909d20daf8e8",
+    "stacks_height": 9525377,
+    "burn_height": 976672,
+    "coinbase_height": 262876,
+    "block_time": 1795142962,
+    "burn_block_time": 1795142962,
+    "index_block_hash": "71907b1cab3a33e6a6a093b3b4744ee55dcb8b6520237c43e389806202e9c8f9",
+    "consensus_hash": "44e083eeb9c5aaad96d18372f3824f6696226e73",
+    "burn_header_hash": "00000000000000000000c2ae4c25135e89a6319b8f94cecdbb5c368785bb6569",
+    "sortition_id": "7def4ffa11c5ea2791fefaa9211b5010ab125f98562daad832bec511dd6d5fb0",
     "epoch": "4.0"
   },
-  "mid": "23005044253588",
-  "vaultSourceSha256": "9516a3afb21785fc4a8f9fb2a234284003b63c438d699d95a6d72750bcc49e05",
-  "checks": 55,
-  "passed": 55,
-  "fails": [],
+  "mid": "23791264155049",
+  "vaultSourceSha256": "67cc859e005b8920c65183c5a346624fa3f2b159c2f5e8bb8b1d7d7793595935",
+  "checks": 56,
+  "passed": 51,
+  "fails": [
+    "L1 live: jing-buy-stx-20-v2 rests sBTC on X",
+    "L2 live: its order is a peg at spread (some u20)",
+    "L3 live: its ask at the update mid = mid + 20 bp",
+    "A9 buy-20-v2 still at mid + 20 bp, behind it",
+    "B0 buy-20-v2 sats before the taker"
+  ],
   "log": [
+    {
+      "id": "S0",
+      "label": "deploy swap-router-sbtc-stx-jing-v6 (jing repo, sha 8325e0c5300b, not on mainnet)",
+      "passed": true,
+      "expected": "deployed",
+      "actual": "(ok true)"
+    },
     {
       "id": "S1",
       "label": "deploy ccd015-redemption-book-mia-stx (repo, comments stripped)",
@@ -29,7 +42,7 @@
     },
     {
       "id": "S2",
-      "label": "deploy ccd016-swap-vault-mia-v2 (repo, sha 9516a3afb217, comments stripped)",
+      "label": "deploy ccd016-swap-vault-mia-v2 (repo, sha 67cc859e005b, comments stripped)",
       "passed": true,
       "expected": "deployed",
       "actual": "(ok true)"
@@ -65,23 +78,23 @@
     {
       "id": "L1",
       "label": "live: jing-buy-stx-20-v2 rests sBTC on X",
-      "passed": true,
+      "passed": false,
       "expected": "u > 0",
-      "actual": "u175746"
+      "actual": "u0"
     },
     {
       "id": "L2",
       "label": "live: its order is a peg at spread (some u20)",
-      "passed": true,
+      "passed": false,
       "expected": "predicate",
-      "actual": "(tuple (limit u9172561566233) (set-at u1794883792) (spread-bps (some u20)))"
+      "actual": "(tuple (limit u0) (set-at u0) (spread-bps none))"
     },
     {
       "id": "L3",
       "label": "live: its ask at the update mid = mid + 20 bp",
-      "passed": true,
-      "expected": "u23051054342095",
-      "actual": "u23051054342095"
+      "passed": false,
+      "expected": "u23838846683359",
+      "actual": "u0"
     },
     {
       "id": "L4",
@@ -109,7 +122,7 @@
       "label": "get-config: maker-spread-bps u1 (default), live market + router",
       "passed": true,
       "expected": "predicate",
-      "actual": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v5-6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
+      "actual": "(tuple (dia-band-bps u1000) (jing-market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (jing-router SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6) (last-router-swap u0) (leeway-bps u500) (maker-spread-bps u1) (max-chunk-sats u1000000) (no-pyth-slippage-bps u1000) (pyth-fee-budget u0) (router-cooldown-blocks u1) (slippage-bps u100) (stx-destination SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd015-redemption-book-mia-stx) (window-blocks u288))"
     },
     {
       "id": "C1",
@@ -172,21 +185,21 @@
       "label": "stranger fund-from-treasury: empty vault, window opens",
       "passed": true,
       "expected": "predicate",
-      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976509)) (opened true)))))"
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u100000) (batch-start (some u976672)) (opened true)))))"
     },
     {
       "id": "A3",
       "label": "stranger jing-place(update)",
       "passed": true,
       "expected": "predicate",
-      "actual": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100000) (floor u21854792040908)))))"
+      "actual": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u100000) (floor u22601700947296)))))"
     },
     {
       "id": "A4",
       "label": "pending escrow carries spread-bps (some u1)",
       "passed": true,
       "expected": "predicate",
-      "actual": "(some (tuple (amount u100000) (limit u21854792040908) (spread-bps (some u1)) (submitted-at u1795051830)))"
+      "actual": "(some (tuple (amount u100000) (limit u22601700947296) (spread-bps (some u1)) (submitted-at u1795143957)))"
     },
     {
       "id": "A5",
@@ -200,28 +213,28 @@
       "label": "settle placed it: deposit-x event, no pending-refund",
       "passed": true,
       "expected": "deposit-x, no pending-refund-x",
-      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (amount u100000) (cycle u26) (delta u100000) (depositor SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (equity-x u100000) (event \"deposit-x\") (limit u21854792040908) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (parked none) (parked-amount u0) (parked-equity-x none) (readmitted u0) (spread-bps (some u1)) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
+      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (amount u100000) (cycle u29) (delta u100000) (depositor SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (equity-x u100000) (event \"deposit-x\") (limit u22601700947296) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (parked none) (parked-amount u0) (parked-equity-x none) (readmitted u0) (spread-bps (some u1)) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
     },
     {
       "id": "A7",
       "label": "vault rests on X at spread (some u1)",
       "passed": true,
       "expected": "predicate",
-      "actual": "(tuple (dep u100000) (order (tuple (limit u21854792040908) (set-at u1795051830) (spread-bps (some u1)))))"
+      "actual": "(tuple (dep u100000) (order (tuple (limit u22601700947296) (set-at u1795143957) (spread-bps (some u1)))))"
     },
     {
       "id": "A8",
       "label": "its ask at the mid = mid + 1 bp",
       "passed": true,
-      "expected": "u23007344758013",
-      "actual": "u23007344758013"
+      "expected": "u23793643281464",
+      "actual": "u23793643281464"
     },
     {
       "id": "A9",
       "label": "buy-20-v2 still at mid + 20 bp, behind it",
-      "passed": true,
-      "expected": "u23051054342095",
-      "actual": "u23051054342095"
+      "passed": false,
+      "expected": "u23838846683359",
+      "actual": "u0"
     },
     {
       "id": "A10",
@@ -233,13 +246,13 @@
     {
       "id": "B0",
       "label": "buy-20-v2 sats before the taker",
-      "passed": true,
+      "passed": false,
       "expected": "u > 0",
-      "actual": "u175746"
+      "actual": "u0"
     },
     {
       "id": "B1",
-      "label": "real STX holder swaps 46106721 uSTX for sBTC, limit mid + 1 bp (eats part of the vault)",
+      "label": "real STX holder swaps 47682463 uSTX for sBTC, limit mid + 1 bp (eats part of the vault)",
       "passed": true,
       "expected": "(ok ...)",
       "actual": "(ok (tuple (rebate-refunded u1) (token-x-received u19980) (token-x-rolled u0) (token-y-received u0) (token-y-rolled u2)))"
@@ -248,15 +261,15 @@
       "id": "B2",
       "label": "the walk matched the vault at mid + 1 bp",
       "passed": true,
-      "expected": "match with maker SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2 at u23007344758013",
-      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (cycle u26) (event \"match\") (maker SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (mid u23005044253588) (price u23007344758013) (taker SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2) (x-traded u20000) (y-is-taker true) (y-traded u46014689))"
+      "expected": "match with maker SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2 at u23793643281464",
+      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (cycle u29) (event \"match\") (maker SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (mid u23791264155049) (price u23793643281464) (taker SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2) (x-traded u20000) (y-is-taker true) (y-traded u47587286))"
     },
     {
       "id": "B3",
       "label": "no X ask at or below the mid; buy-20-v2 untouched",
       "passed": true,
-      "expected": "(tuple (d u175746) (t false))",
-      "actual": "(tuple (d u175746) (t false))"
+      "expected": "(tuple (d u0) (t false))",
+      "actual": "(tuple (d u0) (t false))"
     },
     {
       "id": "B4",
@@ -284,7 +297,7 @@
       "label": "the at-mid bid rested (vault ask at mid+1bp does not cross it)",
       "passed": true,
       "expected": "deposit-y, no pending-refund-y",
-      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (amount u300000000) (cycle u27) (delta u300000000) (depositor SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV) (equity-y u300000000) (event \"deposit-y\") (limit u999999999999999) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (parked none) (parked-amount u0) (parked-equity-y none) (readmitted u0) (spread-bps (some u0)) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
+      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (amount u300000000) (cycle u30) (delta u300000000) (depositor SP2XXSW2KPPTY7KJDYS9RQ868D7JH58QSZKK8KXAV) (equity-y u300000000) (event \"deposit-y\") (limit u999999999999999) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (parked none) (parked-amount u0) (parked-equity-y none) (readmitted u0) (spread-bps (some u0)) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
     },
     {
       "id": "B8",
@@ -305,7 +318,7 @@
       "label": "DAO refloor at the var (u1) -> goes pending",
       "passed": true,
       "expected": "predicate",
-      "actual": "(ok (tuple (notification \"jing-refloor\") (payload (tuple (floor u21854792040908) (resting u80000)))))"
+      "actual": "(ok (tuple (notification \"jing-refloor\") (payload (tuple (floor u22601700947296) (resting u80000)))))"
     },
     {
       "id": "B11",
@@ -326,14 +339,14 @@
       "label": "CONTROL DAO refloor at u0 -> goes pending",
       "passed": true,
       "expected": "(ok ...)",
-      "actual": "(ok (tuple (notification \"jing-refloor\") (payload (tuple (floor u21854792040908) (resting u80000)))))"
+      "actual": "(ok (tuple (notification \"jing-refloor\") (payload (tuple (floor u22601700947296) (resting u80000)))))"
     },
     {
       "id": "B14",
       "label": "CONTROL pending limit carries spread (some u0): the refloor reads the var",
       "passed": true,
       "expected": "predicate",
-      "actual": "(some (tuple (limit u21854792040908) (spread-bps (some u0)) (submitted-at u1795051830)))"
+      "actual": "(some (tuple (limit u22601700947296) (spread-bps (some u0)) (submitted-at u1795143957)))"
     },
     {
       "id": "B15",
@@ -347,14 +360,14 @@
       "label": "CONTROL u0 refloor is refused \"crossing\"",
       "passed": true,
       "expected": "reason \"crossing\"",
-      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (action \"limit\") (amount u0) (depositor SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (event \"settle-refused-x\") (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (price u23005044253588) (reason \"crossing\") (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
+      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (action \"limit\") (amount u0) (depositor SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (event \"settle-refused-x\") (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (price u23791264155049) (reason \"crossing\") (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
     },
     {
       "id": "B17",
       "label": "CONTROL vault order unchanged at (some u1), still resting",
       "passed": true,
       "expected": "predicate",
-      "actual": "(tuple (dep u80000) (order (tuple (limit u21854792040908) (set-at u1795051830) (spread-bps (some u1)))))"
+      "actual": "(tuple (dep u80000) (order (tuple (limit u22601700947296) (set-at u1795143957) (spread-bps (some u1)))))"
     },
     {
       "id": "B18",
@@ -375,14 +388,14 @@
       "label": "fund-from-treasury while resting: joins, opens nothing",
       "passed": true,
       "expected": "predicate",
-      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u10000) (batch-start (some u976509)) (opened false)))))"
+      "actual": "(ok (tuple (notification \"fund-from-treasury\") (payload (tuple (amount u10000) (batch-start (some u976672)) (opened false)))))"
     },
     {
       "id": "B21",
       "label": "stranger jing-place the top-up under the at-mid bid",
       "passed": true,
       "expected": "predicate",
-      "actual": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u10000) (floor u21854792040908)))))"
+      "actual": "(ok (tuple (notification \"jing-place\") (payload (tuple (amount u10000) (floor u22601700947296)))))"
     },
     {
       "id": "B22",
@@ -396,14 +409,14 @@
       "label": "top-up rested: deposit-x, not refunded \"crossing\"",
       "passed": true,
       "expected": "deposit-x, no pending-refund-x",
-      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (amount u90000) (cycle u27) (delta u10000) (depositor SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (equity-x u90000) (event \"deposit-x\") (limit u21854792040908) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (parked none) (parked-amount u0) (parked-equity-x none) (readmitted u0) (spread-bps (some u1)) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
+      "actual": "SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.jing-core-v6: (tuple (amount u90000) (cycle u30) (delta u10000) (depositor SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.ccd016-swap-vault-mia-v2) (equity-x u90000) (event \"deposit-x\") (limit u22601700947296) (market SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5) (parked none) (parked-amount u0) (parked-equity-x none) (readmitted u0) (spread-bps (some u1)) (token-x SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token) (token-y SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2))"
     },
     {
       "id": "B24",
       "label": "vault rests rest + top-up at mid + 1 bp",
       "passed": true,
       "expected": "predicate",
-      "actual": "(tuple (dep u90000) (px u23007344758013))"
+      "actual": "(tuple (dep u90000) (px u23793643281464))"
     }
   ]
 }
