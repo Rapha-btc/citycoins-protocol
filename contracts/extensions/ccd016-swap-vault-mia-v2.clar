@@ -161,7 +161,7 @@
 ;; the maker venue and the price oracle. The smart router splits a taker
 ;; order across the book, Bitflow DLMM, Bitflow XYK and Velar at execution.
 (define-constant JING_MARKET 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5)
-(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6)
+(define-constant JING_ROUTER 'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.swap-router-sbtc-stx-jing-v6-1)
 (define-constant WSTX_TOKEN 'SM1793C4R5PZ4NS4VQ4WMP7SKKYVH8JZEWSZ9HCCR.token-stx-v-1-2)
 (define-constant ASSET_WSTX "wstx")
 
@@ -680,15 +680,15 @@
   )
 )
 
-;; Zest leg of a split sale (router v6). Selling sBTC is Zest's y -> x, so the
-;; caller passes the ticks walking down from the market, as the FE does. The
-;; route price (Zest's min-price) is 0: the leg's floor is `amm-mins.zest`,
+;; Zest leg of a split sale (router v6-1). Selling sBTC is Zest's x -> y (pool
+;; u3: x = sBTC), so the caller passes the ticks walking up from the market. The
+;; route price (Zest's max-price) is Zest's PRICE-SATURATION (no cap): the leg's floor is `amm-mins.zest`,
 ;; floor-out of the same oracle limit as dlmm and xyk, and the router scales
 ;; it to what Zest filled. zest u0 with an empty list skips the leg.
 (define-private (zest-route (ticks (list 32 int)))
   {
     ticks: ticks,
-    price: u0,
+    price: u295147905179352825856000000000000000000,
   }
 )
 
