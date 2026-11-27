@@ -118,9 +118,14 @@
 (define-constant ERR_SOME_FUNDS (err u16043))
 (define-constant ERR_COOLDOWN (err u16044))
 (define-constant ERR_BELOW_FLOOR (err u16047))
+(define-constant ERR_NOTHING_SOLD (err u16050))
 ;; the router lets each leg land up to ROUND_SLACK (2) sats under the limit;
 ;; four legs at most (8), plus the Zest walk: up to 32 bins, each rounding up
 ;; to 2 sats against the seller (64; bounty mwofjt42, Valiant Brio F-01)
+;; Also the dust line: sBTC transfers in are permissionless, and a leftover
+;; at or under the slack can't be sold (a router sale needs more), so it
+;; counts as empty and rides into the next batch instead of holding the
+;; batch open until the 432-block recovery (bounty mwofjt42 #38).
 (define-constant ROUTER_SLACK_SATS u72)
 ;; least a fund must bring to restart the window, open or elapsed (bounty mw4761 H2)
 (define-constant MIN_RESTART_SATS u500000)
@@ -134,17 +139,6 @@
 (define-constant PRICE_PRECISION u100000000)
 (define-constant DECIMAL_FACTOR u100)
 (define-constant BPS_PRECISION u10000)
-;; most rebate dust the market (markets-sbtc-stx-jing-v6-5) refunds: under
-;; 1 sat per rounding, 1 for net + 1 for the batch share + 49 walk fills.
-;; Router v5-3 sizes the book leg at the market's gross-cap, so the leg
-;; trades in full and only this rounding comes back.
-(define-constant JING_REBATE_DUST_SATS u51)
-;; highest taker rebate the market pays (bps). The market refunds the untraded
-;; rebate share of a sub-min rest rem < min-x too, and the router re-sells it:
-;; rest + left < min-x * (1 + bps / 1e4) + 51.007 (the bid list caps fills at
-;; 50), so in integers router-swap allows ceil(min-x * MAX_TAKER_REBATE_BPS /
-;; BPS_PRECISION) on top of min-x + 51 (audit F1, Celestial Shark)
-(define-constant MAX_TAKER_REBATE_BPS u70)
 
 (define-constant SBTC_TOKEN 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token)
 (define-constant ASSET_SBTC "sbtc-token")
@@ -171,13 +165,6 @@
 (define-constant MAX_SLIPPAGE_BPS u1000) ;; -10%
 (define-constant MAX_DIA_BAND_BPS u5000) ;; 50%
 (define-constant MAX_CHUNK_SATS u100000000) ;; 1 BTC
-
-;; sBTC transfers in are permissionless, so anyone can leave a sat or two in the
-;; vault. Dust that small cannot be sold - every router stage skips it and the
-;; swap returns zero - so an exact-zero emptiness test would let a 1-sat gift
-;; hold a batch open until the 432-block recovery. Treat it as empty instead;
-;; it simply rides into the next batch.
-(define-constant DUST_SATS u2)
 
 (define-constant MAX_COOLDOWN_BLOCKS u144) ;; one day
 ;; Velar's own floor: twice its 30 bps fee, so a sandwich there breaks even too
@@ -447,12 +434,12 @@
 
 ;; dust on the market (a 1-sat jing-place after the sell-out) would keep
 ;; is-empty false until the window ends: when wallet + market is at most
-;; DUST_SATS, cancel it home first (no oracle), so the batch closes now
+;; ROUTER_SLACK_SATS, cancel it home first (no oracle), so the batch closes now
 (define-public (close-batch)
   (let ((on-market (market-total)))
     (and
       (> on-market u0)
-      (<= (+ on-market (sbtc-balance)) DUST_SATS)
+      (<= (+ on-market (sbtc-balance)) ROUTER_SLACK_SATS)
       (is-ok (reclaim-core))
     )
     (asserts! (is-empty) ERR_SOME_FUNDS)
@@ -641,15 +628,10 @@
     (try! (check-amount amount))
     (try! (cooldown-tick))
     (let ((result (try! (as-contract?
-        ;; the market refunds the unfilled rest (under min-x), the rebate share
-        ;; on it (at most ceil(min-x * 70 bps)) and the unused rebate dust, and the
-        ;; router re-sells all three: allow that on top of `amount`
-        ((with-ft SBTC_TOKEN ASSET_SBTC
-          (+ amount (get min-token-x mins) JING_REBATE_DUST_SATS
-            (/ (+ (* (get min-token-x mins) MAX_TAKER_REBATE_BPS) (- BPS_PRECISION u1))
-              BPS_PRECISION
-            )
-          ))
+        ;; the market refunds the unfilled rest (under min-x), the rebate on it (at
+        ;; most 0.7% of min-x) and rebate rounding dust (at most 51 sats), and the
+        ;; router re-sells them: 2 x min-x covers it while min-x >= 52 (it is 1000)
+        ((with-ft SBTC_TOKEN ASSET_SBTC (+ amount (* u2 (get min-token-x mins))))
           (with-stx (var-get pyth-fee-budget))
         )
         (try! (contract-call? JING_ROUTER smart-swap-sbtc-for-stx amount limit
@@ -730,7 +712,11 @@
     (try! (check-amount amount))
     (try! (cooldown-tick))
     (let ((result (try! (as-contract?
-        ((with-ft SBTC_TOKEN ASSET_SBTC (+ amount (get min-token-x market-mins)))
+        ;; with a fallback the router re-sells the market's refund (unfilled
+        ;; rest < min-x, plus at most 0.7% of min-x and 51 sats of rebate),
+        ;; pulled from the vault again: 2 x min-x covers it (bounty mwofjt42 #27)
+        ((with-ft SBTC_TOKEN ASSET_SBTC
+          (+ amount (* u2 (get min-token-x market-mins))))
           (with-stx (var-get pyth-fee-budget))
         )
         (try! (contract-call? JING_ROUTER swap-sbtc-for-stx amount jing limit
@@ -747,7 +733,9 @@
       ))))
       ;; the Jing and Zest legs may fill in part: the rest re-sells on `fallback`
       ;; or, with none, stays unsold; the floor is checked on what sold
-      ;; (bounty mwofjt42)
+      ;; (bounty mwofjt42). A split that sold nothing fails, so it doesn't use
+      ;; up the router cooldown (bounty mwofjt42 #32, Rare Jett F-2).
+      (asserts! (> (- amount (get unsold result)) u0) ERR_NOTHING_SOLD)
       (asserts!
         (>= (get out result)
           (+ (floor-out (- (+ jing zest dlmm xyk) (get unsold result)) limit)
@@ -815,6 +803,7 @@
             ))
           ))))
           ;; a partial Zest fill re-sells on `fallback` or stays unsold: floor on what sold
+          (asserts! (> (- amount (get unsold result)) u0) ERR_NOTHING_SOLD)
           (asserts!
             (>= (get out result) (floor-out (- amount (get unsold result)) limit))
             ERR_BELOW_FLOOR
@@ -919,7 +908,7 @@
       get-current-cycle
     )))
     (and
-      (<= (sbtc-balance) DUST_SATS)
+      (<= (sbtc-balance) ROUTER_SLACK_SATS)
       (is-eq
         (contract-call?
           'SPV9K21TBFAK4KNRJXF5DFP8N7W46G4V9RCJDC22.markets-sbtc-stx-jing-v6-5
@@ -1059,6 +1048,40 @@
       balance
       chunk
     )
+  )
+)
+
+;; Sweep a retired vault. Once the DAO has moved to a new vault, this one keeps
+;; its dust (<= ROUTER_SLACK_SATS sBTC) and the Pyth fee reserve (STX), and
+;; nothing else can move them. The DAO sends both back to REWARDS_TREASURY.
+(define-public (sweep)
+  (let (
+      (sbtc (sbtc-balance))
+      (stx (stx-get-balance current-contract))
+    )
+    ;; the DAO only; it retires a vault by replacing the extension, so the
+    ;; DAO decides when this one is no longer used
+    (try! (is-dao-or-extension))
+    (and
+      (> sbtc u0)
+      (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC sbtc))
+        (try! (contract-call? SBTC_TOKEN transfer sbtc current-contract REWARDS_TREASURY none))
+      ))
+    )
+    (and
+      (> stx u0)
+      (try! (as-contract? ((with-stx stx))
+        (try! (stx-transfer? stx current-contract REWARDS_TREASURY))
+      ))
+    )
+    (ok (print {
+      notification: "sweep",
+      payload: {
+        recipient: REWARDS_TREASURY,
+        sbtc: sbtc,
+        stx: stx,
+      },
+    }))
   )
 )
 
