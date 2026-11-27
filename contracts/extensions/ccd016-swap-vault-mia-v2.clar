@@ -1047,6 +1047,40 @@
   )
 )
 
+;; Sweep a retired vault. Once the DAO has moved to a new vault, this one keeps
+;; its dust (<= ROUTER_SLACK_SATS sBTC) and the Pyth fee reserve (STX), and
+;; nothing else can move them. The DAO sends both back to REWARDS_TREASURY.
+(define-public (sweep)
+  (let (
+      (sbtc (sbtc-balance))
+      (stx (stx-get-balance current-contract))
+    )
+    ;; the DAO only; it retires a vault by replacing the extension, so the
+    ;; DAO decides when this one is no longer used
+    (try! (is-dao-or-extension))
+    (and
+      (> sbtc u0)
+      (try! (as-contract? ((with-ft SBTC_TOKEN ASSET_SBTC sbtc))
+        (try! (contract-call? SBTC_TOKEN transfer sbtc current-contract REWARDS_TREASURY none))
+      ))
+    )
+    (and
+      (> stx u0)
+      (try! (as-contract? ((with-stx stx))
+        (try! (stx-transfer? stx current-contract REWARDS_TREASURY))
+      ))
+    )
+    (ok (print {
+      notification: "sweep",
+      payload: {
+        recipient: REWARDS_TREASURY,
+        sbtc: sbtc,
+        stx: stx,
+      },
+    }))
+  )
+)
+
 (define-private (sbtc-balance)
   (unwrap-panic (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token
     get-balance current-contract
