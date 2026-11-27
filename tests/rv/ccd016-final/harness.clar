@@ -165,7 +165,7 @@
       (vl (/ (* mid (- BPS_PRECISION VELAR_SLIPPAGE_BPS)) BPS_PRECISION))
       (budget (var-get pyth-fee-budget))
       (elapsed-a (match (get start a) s (>= burn-block-height (+ s (var-get window-blocks))) false))
-      (empty-a (and (<= (get vsbtc a) DUST_SATS) (is-eq (get vmkt a) u0)))
+      (empty-a (and (<= (get vsbtc a) ROUTER_SLACK_SATS) (is-eq (get vmkt a) u0)))
       (empty-b (is-empty))
       (router (rv-in name RV-ROUTER-FNS))
       (split (rv-in name RV-SPLIT-FNS))
@@ -262,10 +262,10 @@
 (define-public (rv-treasury (raw uint))
   (contract-call? .mock-ft mint (+ u1000 (rv-r raw u3000000)) .mock-treasury))
 
-;; dust griefing: 1-2 sats straight into the vault (under DUST_SATS), one
-;; call in five 3-10 sats (over it: the vault is no longer empty)
+;; dust griefing: 1-72 sats straight into the vault (at or under ROUTER_SLACK_SATS), one
+;; call in five 73-80 sats (over it: the vault is no longer empty)
 (define-public (rv-donate (raw uint))
-  (contract-call? .mock-ft mint (if (is-eq (rv-r raw u5) u0) (+ u3 (rv-r raw u8)) (+ u1 (rv-r raw u2))) current-contract))
+  (contract-call? .mock-ft mint (if (is-eq (rv-r raw u5) u0) (+ ROUTER_SLACK_SATS u1 (rv-r raw u8)) (+ u1 (rv-r raw ROUTER_SLACK_SATS))) current-contract))
 
 (define-public (rv-fund-router (raw uint))
   (stx-transfer? (+ u1000000000 (rv-r raw u100000000000)) tx-sender .mock-router))

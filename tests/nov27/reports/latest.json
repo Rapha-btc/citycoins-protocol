@@ -1,0 +1,109 @@
+{
+  "toolchain": {
+    "clarinet": "3.23.2",
+    "sdk": "3.23.2",
+    "vitest": "3.2.4",
+    "rendezvous": "1.0.3"
+  },
+  "sources": {
+    "contracts/extensions/ccd016-swap-vault-mia-v2.clar": "0a56ce1f2b0f2a1e2578c0cf5019659a31c5a84c6b59314157d83a616d3f1c7a"
+  },
+  "test_files": [
+    {
+      "file": "tests/nov27/ccd016-swap-vault-mia-v2.test.ts",
+      "status": "passed",
+      "passed": 19,
+      "failed": 0
+    },
+    {
+      "file": "tests/nov27/rendezvous.test.ts",
+      "status": "passed",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "file": "tests/nov27/vault-lifecycle.test.ts",
+      "status": "passed",
+      "passed": 15,
+      "failed": 0
+    }
+  ],
+  "coverage": {
+    "vault": {
+      "source": "contracts/extensions/ccd016-swap-vault-mia-v2.clar",
+      "lines": {
+        "covered": 483,
+        "total": 527,
+        "percent": 91.65
+      },
+      "functions": {
+        "covered": 48,
+        "total": 49,
+        "percent": 97.96
+      },
+      "branches": {
+        "covered": 95,
+        "total": 138,
+        "percent": 68.84
+      },
+      "uncovered_functions": [
+        "callback"
+      ],
+      "uncovered_lines": [
+        245,
+        249,
+        394,
+        395,
+        396,
+        397,
+        409,
+        466,
+        477,
+        517,
+        551,
+        586,
+        627,
+        647,
+        653,
+        700,
+        744,
+        749,
+        787,
+        809,
+        814,
+        874,
+        875,
+        881,
+        885,
+        891,
+        907,
+        908,
+        914,
+        921,
+        927,
+        951,
+        952,
+        1049,
+        1079,
+        1120,
+        1123,
+        1127,
+        1154,
+        1173,
+        1204,
+        1216,
+        1217,
+        1218
+      ]
+    }
+  },
+  "fuzz": {
+    "engine": "Rendezvous SDK strategyFor + fast-check with shrinking",
+    "seeds": [
+      20261126,
+      20261127
+    ],
+    "runs_per_property": 500,
+    "generated_cases": 3000
+  }
+}

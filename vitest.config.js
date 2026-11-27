@@ -2,6 +2,7 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import { vitestSetupFilePath, getClarinetVitestsArgv } from "@hirosystems/clarinet-sdk/vitest";
 
 /*
@@ -21,6 +22,8 @@ import { vitestSetupFilePath, getClarinetVitestsArgv } from "@hirosystems/clarin
 
 export default defineConfig({
   test: {
+    // This suite has its own pinned SDK/Vitest and explicit setup.
+    exclude: [...configDefaults.exclude, "tests/nov27/**"],
     environment: "clarinet", // use vitest-environment-clarinet
     pool: "forks",
     poolOptions: {
