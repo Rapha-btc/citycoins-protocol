@@ -215,3 +215,21 @@ SHA-256 of the deployed sources:
 - `jing-ladder-v1`: `0f1e08b023272ed96a2653f727292626d4b0325dcf4e42963104d977860ec786`
 
 Run the set on one fork with `FORK_BLOCK=<height>`. The recovery matrix is `stxer-ccd016-v2-emergency.cjs --recovery`.
+
+## Bounty mwofjt42 fixes #38 and #27 (2026-11-27)
+
+- **#38 (Sacred Swan):** `DUST_SATS u2` vs `ROUTER_SLACK_SATS u72` left a 3-72 sat leftover that could neither sell (u16047) nor count as empty (u16043), so the batch waited for the 432-block recovery. `DUST_SATS` is removed; `ROUTER_SLACK_SATS` is the dust line.
+- **#27 (Giant Moth):** with a split `fallback`, the router re-sells the market refund (unfilled rest + rebate) and pulls it from the vault again, so the `amount + min-x` allowance aborted when the refund passed min-x. `router-swap` and `router-swap-split` now allow `amount + 2 x min-x`.
+
+stxer mainnet fork, block 9589221, router v6-1 fork-deployed; pre-fix source (git HEAD) and fixed source deployed side by side on the same Jing book:
+
+| Run | Result | stxer |
+|---|---|---|
+| Fastpool A/B (#27 + #38) | 43/43 | https://stxer.xyz/simulations/mainnet/201e0139a61d54cd4128cfb6176546db |
+| MIA A/B (#27 + #38) | 38/38 | https://stxer.xyz/simulations/mainnet/e3ac37e3c45a2f79f18e2bc594e001b0 |
+| Fastpool `router-swap` with a Jing partial, new allowance | 10/10 | https://stxer.xyz/simulations/mainnet/c13cf0da8ff45ecc1cc9cf3cc0b6f063 |
+| Fastpool lifecycle harness on the fixed source | 48/48 | https://stxer.xyz/simulations/mainnet/a75724ca204eb6beaf059408712ad7bb |
+
+- **#27:** a Jing-only split of 863,603 sats (fallback DLMM) leaves a refund of 999 + 3 = 1,002 sats: pre `(err u0)` (allowance abort, vault keeps all), fix `(ok ... unsold u0)`, vault drained. The partial fill needs a fork-only whale bid (2,000 STX at mid + 5%); the live book had no fill for a new seller.
+- **#38:** fund 20,050 sats, sell a 20,000 chunk, 50 sats left: pre the batch stays open (sell u16047, close-batch u16043, finish u16032); fix the sale closes the batch (50 <= 72), finish pays out.
+- Harness: fastpool-pox-5 `simulations/fixes-38-27-stxer.mjs` (modes cap, swap, full, rswap, mia); results in `simulations/results/fixes-38-27/`.
